@@ -1,0 +1,59 @@
+import { Box, FormLabel, Select, MenuItem } from "@mui/material";
+
+interface SelectFieldProps {
+  label: string;
+  name: string;
+  value: string | string[];
+  onChange?: (event: React.ChangeEvent<{ value: unknown }>) => void;
+  required?: boolean;
+  inputWidth?: string | number;
+  horizontal?: boolean;
+  options: { value: string; label: string }[]; // 선택 옵션
+  multiple?: boolean; // 다중 선택 여부
+}
+
+export default function SelectField({
+  label,
+  name,
+  value,
+  required = false,
+  inputWidth,
+  horizontal = false,
+  options,
+  multiple = false,
+}: SelectFieldProps) {
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: horizontal ? "row" : "column",
+        alignItems: horizontal ? "center" : "flex-start",
+        gap: 1,
+        mb: 2,
+      }}
+    >
+      <FormLabel
+        htmlFor={name}
+        required={required}
+        sx={{ minWidth: horizontal ? 100 : "auto" }}
+      >
+        {label}
+      </FormLabel>
+
+      <Select
+        id={name}
+        name={name}
+        value={value}
+        required={required}
+        multiple={multiple}
+        sx={{ width: inputWidth || "350px" }}
+      >
+        {options.map((opt) => (
+          <MenuItem key={opt.value} value={opt.value}>
+            {opt.label}
+          </MenuItem>
+        ))}
+      </Select>
+    </Box>
+  );
+}
