@@ -1,6 +1,6 @@
 import { Box, Button, Typography } from "@mui/material";
 import { useState } from "react";
-import type { BaseFormValues } from "./type";
+import type { BaseFormValues } from "../type";
 import FormField from "./components/FormField";
 import SelectField from "./components/SelectField";
 import { register } from "./BaseApi";
@@ -9,11 +9,17 @@ import "./baseForm.css";
 //BaseForm 컴포넌트가 받아야 하는 props의 타입을 정의
 //BaseForm을 사용할 때 반드시 초기값(initialValues)이라는 props를 넘겨야 하고, 그 값은 BaseFormValues 형태여야 한다
 //<BaseForm initialValues={...} />으로 사용됨
-interface BaseFormProps {
-  initialValues: BaseFormValues;
+export interface BaseFormProps<T extends BaseFormValues> {
+  //BaseForm이 어떤 타입(T)을 사용할지 제네릭으로 받는다
+  initialValues: T;
+  //api호출시 사용됨
+  onSubmit: (formData: FormData) => void;
 }
 
-export default function BaseForm({ initialValues }: BaseFormProps) {
+export default function BaseForm<T extends BaseFormValues>({
+  initialValues,
+  onSubmit,
+}: BaseFormProps<T>) {
   // const [formData, setFormData] = useState<BaseFormValues>({
   //   title: "",
   //   content: "",
@@ -45,8 +51,8 @@ export default function BaseForm({ initialValues }: BaseFormProps) {
     formData.member?.forEach((member) => formDataObj.append("member", member));
     formData.file?.forEach((file) => formDataObj.append("file", file));
 
-    // URL은 컴포넌트/페이지에 따라 바꿀 수 있음
-    await register("baseUrl", formDataObj);
+    //부모(<IssueRegister>)가 내려준 함수를 호출하고, BaseForm에서 만든 데이터를 전달함
+    onSubmit(formDataObj);
   };
 
   // 파일 입력창 열기

@@ -1,29 +1,12 @@
 import { Route, Routes } from "react-router-dom";
 import "./App.css";
-import BaseForm from "./BaseForm";
+import IssueRegister from "./issue/pages/IssueRegister";
 
 function App() {
   return (
     <>
       <Routes>
-        <Route
-          path="/"
-          element={
-            <BaseForm
-              initialValues={{
-                title: "",
-                content: "",
-                file: [],
-                status: "진행전",
-                host: "",
-                startDate: "",
-                category: "일반업무",
-                department: [],
-                member: [],
-              }}
-            />
-          }
-        />
+        <Route path="/" element={<IssueRegister />} />
       </Routes>
     </>
   );
