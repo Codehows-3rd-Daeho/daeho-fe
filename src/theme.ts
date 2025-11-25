@@ -40,6 +40,15 @@ const theme = createTheme({
         },
       },
     },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          fontSize: "20px", // 버튼 폰트 크기
+          fontWeight: 500, // 폰트 두께 (선택)
+          textTransform: "none", // 대문자 변환 비활성화
+        },
+      },
+    },
   },
 });
 

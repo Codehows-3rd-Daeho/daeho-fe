@@ -103,7 +103,7 @@ export default function BaseForm({ initialValues }: BaseFormProps) {
           inputHeight="300px"
         />
         {/* 첨부파일 영역 */}
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+        <Box>
           <input
             type="file"
             multiple
@@ -115,17 +115,14 @@ export default function BaseForm({ initialValues }: BaseFormProps) {
 
           <Button
             className="baseform-button file-select-button"
-            variant="outlined"
+            variant="contained"
             onClick={openFileInput}
           >
             파일 선택
           </Button>
           {/* 선택한 파일들 표시 및 삭제 버튼*/}
           {formData.file?.map((file, idx) => (
-            <Box
-              key={idx}
-              sx={{ display: "flex", alignItems: "center", gap: 1 }}
-            >
+            <Box key={idx}>
               <Typography>{file.name}</Typography>
               <Button
                 size="small"
@@ -249,7 +246,7 @@ export default function BaseForm({ initialValues }: BaseFormProps) {
         >
           <Typography sx={{ textAlign: "right" }}>참여자</Typography>
           <Button
-            variant="outlined"
+            variant="contained"
             className="baseform-button add-member-button"
             onClick={() => handleAddMember("홍길동")} // 예시로 "홍길동" 추가
           >
@@ -257,7 +254,7 @@ export default function BaseForm({ initialValues }: BaseFormProps) {
           </Button>
         </Box>
         <Button
-          variant="outlined"
+          variant="contained"
           className="baseform-button submit-button"
           onClick={handleSubmit}
         >
