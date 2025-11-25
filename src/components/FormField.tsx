@@ -1,4 +1,5 @@
 import { Box, FormLabel, OutlinedInput } from "@mui/material";
+import "../baseForm.css";
 
 interface FormFieldProps {
   label: string;
@@ -24,15 +25,7 @@ export default function FormField({
   horizontal = false, // 가로 정렬 여부
 }: FormFieldProps) {
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: horizontal ? "row" : "column",
-        alignItems: horizontal ? "center" : "flex-start",
-        gap: 1, // 라벨과 입력란 사이 간격
-        mb: 2, // 아래 여백
-      }}
-    >
+    <Box className={`form-field-box ${horizontal ? "horizontal" : ""}`}>
       <FormLabel
         htmlFor={name}
         required={required}
@@ -52,6 +45,7 @@ export default function FormField({
           width: inputWidth || "600px", // 기본 fullWidth
           height: inputHeight || "60px", // 기본 auto
         }}
+        className="form-field-input"
       />
     </Box>
   );

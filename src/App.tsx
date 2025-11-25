@@ -6,7 +6,24 @@ function App() {
   return (
     <>
       <Routes>
-        <Route path="/" element={<BaseForm />} />
+        <Route
+          path="/"
+          element={
+            <BaseForm
+              initialValues={{
+                title: "",
+                content: "",
+                file: [],
+                status: "진행전",
+                host: "",
+                startDate: "",
+                category: "일반업무",
+                department: [],
+                member: [],
+              }}
+            />
+          }
+        />
       </Routes>
     </>
   );

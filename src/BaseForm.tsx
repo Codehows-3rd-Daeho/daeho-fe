@@ -1,34 +1,88 @@
-import {
-  Box,
-  Button,
-  MenuItem,
-  OutlinedInput,
-  Select,
-  Typography,
-} from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import { useState } from "react";
 import type { BaseFormValues } from "./type";
 import FormField from "./components/FormField";
 import SelectField from "./components/SelectField";
+import { register } from "./BaseApi";
+import "./baseForm.css";
 
-export default function BaseForm() {
-  const [formData, setFormData] = useState<BaseFormValues>({
-    title: "",
-    content: "",
-    file: [],
-    status: "진행전",
-    createdBy: "",
-    startDate: "",
-    category: "일반업무",
-    department: [],
-    member: [],
-    onSubmit: undefined,
-  });
+//BaseForm 컴포넌트가 받아야 하는 props의 타입을 정의
+//BaseForm을 사용할 때 반드시 초기값(initialValues)이라는 props를 넘겨야 하고, 그 값은 BaseFormValues 형태여야 한다
+//<BaseForm initialValues={...} />으로 사용됨
+interface BaseFormProps {
+  initialValues: BaseFormValues;
+}
+
+export default function BaseForm({ initialValues }: BaseFormProps) {
+  // const [formData, setFormData] = useState<BaseFormValues>({
+  //   title: "",
+  //   content: "",
+  //   file: [],
+  //   status: "진행전",
+  //   host: "",
+  //   startDate: "",
+  //   category: "일반업무",
+  //   department: [],
+  //   member: [],
+  //   onSubmit: undefined,
+  // });
+
+  const [formData, setFormData] = useState<BaseFormValues>(initialValues);
+
+  const handleSubmit = async () => {
+    const formDataObj = new FormData();
+    formDataObj.append("title", formData.title);
+    formDataObj.append("content", formData.content);
+    formDataObj.append("status", formData.status);
+    formDataObj.append("host", formData.host);
+    formDataObj.append("startDate", formData.startDate);
+    formDataObj.append("endDate", formData.endDate ?? ""); //undefined으로 인한 오류 방지
+    formDataObj.append("category", formData.category ?? ""); //undefined으로 인한 오류 방지
+    //forEach로 배열 안의 파일을 하나씩 꺼내서 FormData에 추가
+    formData.department?.forEach((department) =>
+      formDataObj.append("department", department)
+    );
+    formData.member?.forEach((member) => formDataObj.append("member", member));
+    formData.file?.forEach((file) => formDataObj.append("file", file));
+
+    // URL은 컴포넌트/페이지에 따라 바꿀 수 있음
+    await register("baseUrl", formDataObj);
+  };
+
+  // 파일 입력창 열기
+  const openFileInput = () => {
+    document.getElementById("fileUpload")?.click();
+  };
+
+  // 파일 업로드 핸들러
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    //HTML input[type="file"]의 파일 목록 속성 이름은 files
+    const newFiles = Array.from(e.target.files || []);
+
+    setFormData((prev) => ({
+      ...prev,
+      // file?: File[] === file: File[] | undefined이기 때문에 undefined으로 인한 오류 방지
+      file: [...(prev.file ?? []), ...newFiles],
+    }));
+  };
+
+  // 관련 부서 다중 선택
+  const handleDepartmentChange = (selected: string[]) => {
+    setFormData((prev) => ({ ...prev, department: selected }));
+  };
+
+  // 참여자 추가
+  const handleAddMember = (member: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      member: [...(prev.member ?? []), member],
+    }));
+  };
 
   return (
     <Box sx={{ display: "flex", gap: 2 }}>
       {/* 왼쪽 컬럼 */}
-      <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
+      <Box id="leftBox">
         <FormField
           label="제목"
           name="title"
@@ -48,11 +102,49 @@ export default function BaseForm() {
           required
           inputHeight="300px"
         />
-        {/* 첨부파일 */}
+        {/* 첨부파일 영역 */}
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <input
+            type="file"
+            multiple
+            id="fileUpload"
+            style={{ display: "none" }}
+            className="baseform-button file-select-button"
+            onChange={handleFileUpload}
+          />
+
+          <Button
+            className="baseform-button file-select-button"
+            variant="outlined"
+            onClick={openFileInput}
+          >
+            파일 선택
+          </Button>
+          {/* 선택한 파일들 표시 및 삭제 버튼*/}
+          {formData.file?.map((file, idx) => (
+            <Box
+              key={idx}
+              sx={{ display: "flex", alignItems: "center", gap: 1 }}
+            >
+              <Typography>{file.name}</Typography>
+              <Button
+                size="small"
+                onClick={() =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    file: prev.file?.filter((_, i) => i !== idx),
+                  }))
+                }
+              >
+                삭제
+              </Button>
+            </Box>
+          ))}
+        </Box>
       </Box>
 
       {/* 오른쪽 컬럼 */}
-      <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
+      <Box id="rightBox">
         <SelectField
           label="상태"
           name="status"
@@ -73,10 +165,10 @@ export default function BaseForm() {
         />
         <FormField
           label="주관자"
-          name="createdBy"
-          value={formData.createdBy}
+          name="host"
+          value={formData.host}
           onChange={(e) =>
-            setFormData((prev) => ({ ...prev, createdBy: e.target.value }))
+            setFormData((prev) => ({ ...prev, host: e.target.value }))
           }
           required
           inputWidth="350px"
@@ -105,8 +197,8 @@ export default function BaseForm() {
           />
           <FormField
             label="마감일"
-            name=""
-            value={formData.endDate}
+            name="endDate"
+            value={formData.endDate ?? ""} //없으면 빈문자열
             onChange={(e) =>
               setFormData((prev) => ({ ...prev, endDate: e.target.value }))
             }
@@ -117,7 +209,7 @@ export default function BaseForm() {
         <SelectField
           label="카테고리"
           name="category"
-          value={formData.category}
+          value={formData.category ?? ""} //없으면 빈문자열
           onChange={(e) =>
             setFormData((prev) => ({
               ...prev,
@@ -137,12 +229,7 @@ export default function BaseForm() {
           label="관련 부서"
           name="department"
           value={formData.department}
-          onChange={(e) =>
-            setFormData((prev) => ({
-              ...prev,
-              department: e.target.value as string[],
-            }))
-          }
+          onChange={(e) => handleDepartmentChange(e.target.value as string[])}
           required
           horizontal
           multiple
@@ -163,20 +250,16 @@ export default function BaseForm() {
           <Typography sx={{ textAlign: "right" }}>참여자</Typography>
           <Button
             variant="outlined"
-            sx={{
-              height: "60px", // FormField 입력창 높이와 맞춤
-              width: "350px",
-            }}
+            className="baseform-button add-member-button"
+            onClick={() => handleAddMember("홍길동")} // 예시로 "홍길동" 추가
           >
             참여자 추가
           </Button>
         </Box>
         <Button
           variant="outlined"
-          sx={{
-            width: "100px", // 원하는 너비
-            alignSelf: "flex-end", // 부모 flex 방향에서 왼쪽 정렬
-          }}
+          className="baseform-button submit-button"
+          onClick={handleSubmit}
         >
           등록
         </Button>

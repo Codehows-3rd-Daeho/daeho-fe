@@ -46,7 +46,10 @@ export default function SelectField({
         value={value}
         required={required}
         multiple={multiple}
-        sx={{ width: inputWidth || "350px" }}
+        sx={{
+          width: inputWidth || "350px",
+          backgroundColor: "#ffffff", // 배경 흰색
+        }}
       >
         {options.map((opt) => (
           <MenuItem key={opt.value} value={opt.value}>

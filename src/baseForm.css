@@ -1,0 +1,84 @@
+#leftBox {
+  flex: 1; /* flex-grow: 1과 동일 */
+  display: flex; /* Flexbox 활성화 */
+  flex-direction: column; /* 세로 방향 정렬 */
+  gap: 16px; /* MUI spacing 2 → 8px * 2 = 16px */
+  background-color: #d2d2d2; /* 연한 회색 배경 */
+  border: 2px solid #302522; /* 2px 두께, 실선, 진한 회색 */
+  border-radius: 8px; /* 8px 만큼 모서리 둥글게 */
+  padding: 30px; /* 안쪽 여백 16px */
+}
+
+#rightBox {
+  flex: 1; /* flex-grow: 1 의미 */
+  display: flex; /* Flexbox 활성화 */
+  flex-direction: column; /* 세로 방향 정렬 */
+  gap: 16px; /* MUI spacing 2 → 8px * 2 = 16px */
+  background-color: #d2d2d2; /* 연한 회색 배경 */
+  border: 2px solid #302522; /* 2px 두께, 실선, 진한 회색 */
+  border-radius: 8px; /* 8px 만큼 모서리 둥글게 */
+  padding: 30px; /* 안쪽 여백 16px */
+}
+
+.baseform-button {
+  border: 1px solid #1976d2; /* MUI outlined 기본 테두리 색상 */
+  background-color: #ffffff; /* 배경 흰색 */
+  color: #1976d2; /* 글자 색상 */
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  border-radius: 8px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+/* 호버 시 스타일 */
+.baseform-button:hover {
+  background-color: #1976d2;
+  color: #ffffff;
+}
+
+/* 파일 선택 버튼 */
+.file-select-button {
+  height: 60px;
+  width: 600px; /* 원하는 너비 */
+}
+
+/* 참여자 추가 버튼 */
+.add-member-button {
+  height: 60px;
+  width: 350px;
+}
+
+/* 등록 버튼 */
+.submit-button {
+  height: 60px;
+  width: 100px;
+  align-self: flex-end; /* 부모 flex 기준 오른쪽 정렬 */
+}
+
+/* FormField 전용 스타일 */
+.form-field-box {
+  display: flex;
+  flex-direction: column; /* horizontal일 때는 JS에서 row로 변경 */
+  align-items: flex-start; /* horizontal일 때는 center로 변경 */
+  gap: 8px; /* 라벨과 입력란 사이 간격 */
+  margin-bottom: 16px; /* 아래 여백 */
+}
+
+.form-field-box.horizontal {
+  flex-direction: row;
+  align-items: center;
+}
+
+.form-field-label {
+  min-width: auto; /* horizontal일 때는 JS에서 100px로 변경 */
+  font-weight: 500;
+}
+
+.form-field-label.horizontal {
+  min-width: 100px;
+}
+
+.form-field-input {
+  background-color: #ffffff;
+}
