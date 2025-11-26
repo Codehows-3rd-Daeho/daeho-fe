@@ -14,7 +14,7 @@ export interface BaseFormValues {
 }
 
 //등록시에 사용되지 않음. DB에서 읽어오는 용
-export interface FileInfo {
+export interface UploadFile {
   fileId?: number;
   path: string;
   originalName: string;

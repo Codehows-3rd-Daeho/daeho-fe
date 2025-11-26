@@ -3,7 +3,6 @@ import { useState } from "react";
 import type { BaseFormValues } from "../type";
 import FormField from "./components/FormField";
 import SelectField from "./components/SelectField";
-import { register } from "./BaseApi";
 import "./baseForm.css";
 
 //BaseForm 컴포넌트가 받아야 하는 props의 타입을 정의
@@ -33,26 +32,64 @@ export default function BaseForm<T extends BaseFormValues>({
   //   onSubmit: undefined,
   // });
 
-  const [formData, setFormData] = useState<BaseFormValues>(initialValues);
+  // const [formData, setFormData] = useState<BaseFormValues>(initialValues);
+
+  const [formData, setFormData] = useState<BaseFormValues>({
+    ...initialValues,
+    // formData 객체에 file 속성이 항상 존재함을 보장
+    file: initialValues.file ?? [],
+  });
 
   const handleSubmit = async () => {
     const formDataObj = new FormData();
-    formDataObj.append("title", formData.title);
-    formDataObj.append("content", formData.content);
-    formDataObj.append("status", formData.status);
-    formDataObj.append("host", formData.host);
-    formDataObj.append("startDate", formData.startDate);
-    formDataObj.append("endDate", formData.endDate ?? ""); //undefined으로 인한 오류 방지
-    formDataObj.append("category", formData.category ?? ""); //undefined으로 인한 오류 방지
-    //forEach로 배열 안의 파일을 하나씩 꺼내서 FormData에 추가
-    formData.department?.forEach((department) =>
-      formDataObj.append("department", department)
-    );
-    formData.member?.forEach((member) => formDataObj.append("member", member));
+
+    // 1. DTO에 해당하는 데이터 객체 생성
+    // 백엔드의 IssueDto에 매핑되어야 할 모든 필드(파일 제외)
+    const issueDto = {
+      title: formData.title, //속성(키): 넣을 값
+      content: formData.content,
+      status: formData.status,
+      host: formData.host,
+      startDate: formData.startDate,
+      endDate: formData.endDate ?? "",
+      category: formData.category ?? "",
+      // department와 member의 배열 필드는 JSON 문자열 내의 배열로 포함됨.
+      department: formData.department,
+      member: formData.member,
+    };
+
+    // 2. issueDto를 JSON 문자열로 변환하여 "data" 파트에 추가
+    // 백엔드의 @RequestPart("data")와 매칭됩니다.
+    formDataObj.append("data", JSON.stringify(issueDto));
+
+    console.log("전체", formDataObj);
+    console.log("제목: ", formData.title);
+    console.log("부서: ", formData.department);
+    console.log("참여자: ", formData.member);
+
+    // 3. 파일 배열을 forEach로 순회하며 "file" 파트에 추가
+    // 백엔드의 @RequestPart(value = "file")과 매칭
     formData.file?.forEach((file) => formDataObj.append("file", file));
 
     //부모(<IssueRegister>)가 내려준 함수를 호출하고, BaseForm에서 만든 데이터를 전달함
     onSubmit(formDataObj);
+
+    // formDataObj.append("title", formData.title);
+    // formDataObj.append("content", formData.content);
+    // formDataObj.append("status", formData.status);
+    // formDataObj.append("host", formData.host);
+    // formDataObj.append("startDate", formData.startDate);
+    // formDataObj.append("endDate", formData.endDate ?? ""); //undefined으로 인한 오류 방지
+    // formDataObj.append("category", formData.category ?? ""); //undefined으로 인한 오류 방지
+    // //forEach로 배열 안의 파일을 하나씩 꺼내서 FormData에 추가
+    // formData.department?.forEach((department) =>
+    //   formDataObj.append("department", department)
+    // );
+    // formData.member?.forEach((member) => formDataObj.append("member", member));
+    // formData.file?.forEach((file) => formDataObj.append("file", file));
+
+    // //부모(<IssueRegister>)가 내려준 함수를 호출하고, BaseForm에서 만든 데이터를 전달함
+    // onSubmit(formDataObj);
   };
 
   // 파일 입력창 열기

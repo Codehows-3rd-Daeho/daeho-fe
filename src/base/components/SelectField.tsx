@@ -1,10 +1,16 @@
-import { Box, FormLabel, Select, MenuItem } from "@mui/material";
+import {
+  Box,
+  FormLabel,
+  Select,
+  MenuItem,
+  type SelectChangeEvent,
+} from "@mui/material";
 
 interface SelectFieldProps {
   label: string;
   name: string;
   value: string | string[];
-  onChange?: (event: React.ChangeEvent<{ value: unknown }>) => void;
+  onChange: (event: SelectChangeEvent<string | string[]>) => void;
   required?: boolean;
   inputWidth?: string | number;
   horizontal?: boolean;
@@ -16,6 +22,7 @@ export default function SelectField({
   label,
   name,
   value,
+  onChange,
   required = false,
   inputWidth,
   horizontal = false,
@@ -44,6 +51,7 @@ export default function SelectField({
         id={name}
         name={name}
         value={value}
+        onChange={onChange}
         required={required}
         multiple={multiple}
         sx={{
