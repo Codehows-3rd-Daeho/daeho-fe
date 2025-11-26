@@ -5,7 +5,8 @@ pipeline {
         IMAGE_NAME = 'react-frontend'
         CONTAINER_NAME = 'react-app'
         DOCKER_NETWORK = 'app-network'
-        PORT = '80'
+        HTTP_PORT = '80'
+        HTTPS_PORT = '443'
     }
     
     stages {
@@ -39,12 +40,13 @@ pipeline {
             }
         }
         
-        stage('Create Network') {
+        stage('Create Network and Volume') {
             steps {
                 script {
-                    echo 'Creating Docker network if not exists...'
+                    echo 'Creating Docker network and volume if not exists...'
                     sh """
                         docker network create ${DOCKER_NETWORK} || true
+                        docker volume create certbot-webroot || true
                     """
                 }
             }
@@ -58,7 +60,10 @@ pipeline {
                         docker run -d \
                             --name ${CONTAINER_NAME} \
                             --network ${DOCKER_NETWORK} \
-                            -p ${PORT}:80 \
+                            -p ${HTTP_PORT}:80 \
+                            -p ${HTTPS_PORT}:443 \
+                            -v /etc/letsencrypt:/etc/letsencrypt:ro \
+                            -v certbot-webroot:/var/www/certbot:ro \
                             --restart unless-stopped \
                             ${IMAGE_NAME}:latest
                     """

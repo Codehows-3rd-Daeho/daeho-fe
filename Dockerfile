@@ -22,6 +22,7 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 
 # 포트 노출
 EXPOSE 80
+EXPOSE 443
 
 # Nginx 실행
 CMD ["nginx", "-g", "daemon off;"]
