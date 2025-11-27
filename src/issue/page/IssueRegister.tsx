@@ -1,5 +1,5 @@
-import BaseForm from "../../base/BaseForm";
 import { issueRegister } from "../api/issueApi";
+import BaseForm from "../base/BaseForm";
 import type { BaseFormValues } from "../type/type";
 
 export default function IssueRegister() {

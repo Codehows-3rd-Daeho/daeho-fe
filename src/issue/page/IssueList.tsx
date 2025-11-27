@@ -1,7 +1,6 @@
 import { type GridColDef, type GridRenderCellParams } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
 import type { IssueListItem } from "../type/type";
-import { mockIssueList } from "../mock/issueListMock"; // 더미
 import { ListDataGrid } from "../../common/List/ListDataGrid";
 import { CommonPagination } from "../../common/Pagination/Pagination";
 import { useNavigate } from "react-router-dom";
@@ -10,6 +9,7 @@ import { PageHeader } from "../../common/PageHeader/PageHeader";
 import { Toggle } from "../../common/PageHeader/Toggle/Toggle";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { Box, Typography } from "@mui/material";
+import { getIssueList } from "../api/api";
 // import { getIssueList } from "../api/api"; // 백엔드 연결
 
 export default function IssueList() {
@@ -17,27 +17,27 @@ export default function IssueList() {
 
   // 페이징
   const [page, setPage] = useState(1);
-  const pageSize = 10;
+  // const pageSize = 10;
   const [data, setData] = useState<IssueListItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
 
-  // 더미
-  useEffect(() => {
-    const filtered = mockIssueList.filter((item) => item.isDel !== "Y"); // 삭제 항목 제외
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize;
-    const sliced = filtered.slice(start, end);
-
-    setData(sliced);
-    setTotalCount(filtered.length);
-  }, [page]);
-
+  // // 더미
   // useEffect(() => {
-  //   getIssueList(page, 10).then((data) => {
-  //     setData(data.content); // 데이터
-  //     setTotalCount(data.totalElements); // 전체 개수
-  //   });
+  //   const filtered = mockIssueList.filter((item) => item.isDel !== "Y"); // 삭제 항목 제외
+  //   const start = (page - 1) * pageSize;
+  //   const end = start + pageSize;
+  //   const sliced = filtered.slice(start, end);
+
+  //   setData(sliced);
+  //   setTotalCount(filtered.length);
   // }, [page]);
+
+  useEffect(() => {
+    getIssueList(page, 10).then((data) => {
+      setData(data.content); // 데이터
+      setTotalCount(data.totalElements); // 전체 개수
+    });
+  }, [page]);
 
   // 리스트 컬럼
   const allColumns: GridColDef[] = [

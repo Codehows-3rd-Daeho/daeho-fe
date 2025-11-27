@@ -46,10 +46,10 @@ export const useAuthStore = create<AuthStore>((set) => {
     isAuthenticated: !!savedToken,
     token: savedToken,
     loginId: decodedToken ? decodedToken.sub : null,
-    role: decodedToken ? decodedToken.role.replace(/^ROLE_/, "") : null, // "ROLE_"접두어 제거
+    role: decodedToken ? decodedToken.role.replace(/^ROLE_/, "") : null, // "ROLE_" 접두어 제거
+
     login: (token: string) => {
       sessionStorage.setItem("jwt", token);
-
       const decodedToken = decodeJwt(token);
       const loginId = decodedToken ? decodedToken.sub : null;
       const role = decodedToken
@@ -57,6 +57,7 @@ export const useAuthStore = create<AuthStore>((set) => {
         : null;
       set({ token, isAuthenticated: true, loginId, role });
     },
+
     logout: () => {
       sessionStorage.removeItem("jwt");
       set({
