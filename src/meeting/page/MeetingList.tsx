@@ -1,6 +1,6 @@
 import { type GridColDef, type GridRenderCellParams } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
-import type { MeetingListItem } from "../type";
+import type { MeetingListItem } from "../type/type";
 import { ListDataGrid } from "../../common/List/ListDataGrid";
 import { CommonPagination } from "../../common/Pagination/Pagination";
 import { mockMeetingList } from "../mock/meetingListMock";
@@ -10,7 +10,7 @@ import { Toggle } from "../../common/PageHeader/Toggle/Toggle";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { useNavigate } from "react-router-dom";
 
-export function MeetingList() {
+export default function MeetingList() {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [data, setData] = useState<MeetingListItem[]>([]);

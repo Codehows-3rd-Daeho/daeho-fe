@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { IssueListResponse } from "../type";
+import type { IssueListResponse } from "../type/type";
 
 // 이슈 목록 조회
 export const getIssueList = async (

@@ -1,6 +1,6 @@
 import BaseForm from "../../base/BaseForm";
-import type { BaseFormValues } from "../../type";
 import { issueRegister } from "../api/issueApi";
+import type { BaseFormValues } from "../type/type";
 
 export default function IssueRegister() {
   const initialValues: BaseFormValues = {

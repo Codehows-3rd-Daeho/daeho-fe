@@ -1,4 +1,21 @@
-// type.ts
+// 이슈 리스트 조회 타입
+export type IssueListItem = {
+  id: number;
+  title: string;
+  status: string; // 상태
+  startDate: Date;
+  endDate: Date;
+  category: string; // 주제
+  department: string[]; // 부서
+  isHost: string; // 주관자
+  isDel?: boolean; // 삭제상태
+};
+
+//
+export interface IssueListResponse {
+  content: IssueListItem[];
+  totalElements: number;
+}
 
 export interface BaseFormValues {
   title: string; // 제목
@@ -12,14 +29,3 @@ export interface BaseFormValues {
   department: string[] | number[]; // 관련 부서 (다중)
   member: string[]; // 관련 멤버 (다중)
 }
-
-//등록시에 사용되지 않음. DB에서 읽어오는 용
-// export interface UploadFile {
-//   fileId?: number;
-//   path: string;
-//   originalName: string;
-//   savedName: string;
-//   size: number;
-//   targetId: number;
-//   targetType: "issue" | "meeting" | "comment" | "stt";
-// }

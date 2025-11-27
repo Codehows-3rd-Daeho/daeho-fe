@@ -1,4 +1,4 @@
-import type { IssueListItem } from "../type";
+import type { IssueListItem } from "../type/type";
 
 export const mockIssueList: IssueListItem[] = [
   {
