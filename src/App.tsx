@@ -15,6 +15,7 @@ import AdminSetting from "./admin/pages/setting/AdminSetting";
 import Login from "./admin/pages/Login";
 import MemberList from "./admin/pages/member/MemberList";
 import { useAuthStore } from "./store/useAuthStore";
+import type { JSX } from "@emotion/react/jsx-runtime";
 
 /*===============================
   PrivateRoute 사용 안내
@@ -29,7 +30,10 @@ type PrivateRouteProps = {
   isAdmin?: boolean;
 };
 
-function PrivateRoute({ children, isAdmin = false }: PrivateRouteProps) {
+export default function PrivateRoute({
+  children,
+  isAdmin = false,
+}: PrivateRouteProps) {
   const { isAuthenticated, role } = useAuthStore();
   console.log(`isAuthentication : ${isAuthenticated}`);
   console.log(`role : ${role}`);

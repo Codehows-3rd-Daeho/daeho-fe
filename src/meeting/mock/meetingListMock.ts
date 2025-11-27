@@ -1,4 +1,4 @@
-import type { MeetingListItem } from "../type";
+import type { MeetingListItem } from "../type/type";
 
 export const mockMeetingList: MeetingListItem[] = [
   {

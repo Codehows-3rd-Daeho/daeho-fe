@@ -1,8 +1,8 @@
 import { Box, Button, Typography } from "@mui/material";
 import { useState } from "react";
 import type { BaseFormValues } from "../type";
-import FormField from "./components/FormField";
-import SelectField from "./components/SelectField";
+import FormField from "./component/FormField";
+import SelectField from "./component/SelectField";
 import "./baseForm.css";
 
 //BaseForm 컴포넌트가 받아야 하는 props의 타입을 정의

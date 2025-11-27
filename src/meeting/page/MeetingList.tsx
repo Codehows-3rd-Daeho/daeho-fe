@@ -1,6 +1,6 @@
 import { type GridColDef, type GridRenderCellParams } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
-import type { MeetingListItem } from "../type";
+import type { MeetingListItem } from "../type/type";
 import { ListDataGrid } from "../../common/List/ListDataGrid";
 import { CommonPagination } from "../../common/Pagination/Pagination";
 import { mockMeetingList } from "../mock/meetingListMock";
