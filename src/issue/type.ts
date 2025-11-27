@@ -10,3 +10,9 @@ export type IssueListItem = {
   isHost: string; // 주관자
   isDel?: boolean; // 삭제상태
 };
+
+//
+export interface IssueListResponse {
+  content: IssueListItem[];
+  totalElements: number;
+}

@@ -14,7 +14,7 @@ export function ListDataGrid<T extends { [key: string]: unknown }>({
         <Box sx={{ width: "100%" }}>
           <DataGrid<T>
             columnHeaderHeight={48}
-            rows={rows} // 더미사용중이라 rows 나중에 data로 변경
+            rows={rows} //
             columns={columns}
             getRowId={(row) => row[rowIdField] as string | number}
             disableRowSelectionOnClick

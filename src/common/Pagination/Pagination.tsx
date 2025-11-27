@@ -34,14 +34,12 @@ export const CommonPagination = ({
 //   const [data, setData] = useState<[]>([]);
 //   const [totalCount, setTotalCount] = useState(0);
 
-//     useEffect(() => {
-//       fetch(`/api/meeting?page=${page}&size=10`) 주소 수정
-//         .then((res) => res.json())
-//         .then((data) => {
-//           setData(data.content); 타입 명칭에 따라 수정필요하면 수정하기
-//           setTotalCount(data.totalElements);
-//         });
-//     }, [page]);
+// useEffect(() => {
+//   getIssueList(page, 10).then((data) => { // 수정
+//     setData(data.content); // 데이터
+//     setTotalCount(data.totalElements); // 전체 개수
+//   });
+// }, [page]);
 
 // return 내용
 //     <CommonPagination

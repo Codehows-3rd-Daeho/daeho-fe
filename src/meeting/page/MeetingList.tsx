@@ -1,27 +1,39 @@
 import { type GridColDef, type GridRenderCellParams } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
 import type { MeetingListItem } from "../type";
-import { mockMeetingList } from "../mock/meetingListMock";
 import { ListDataGrid } from "../../common/List/ListDataGrid";
 import { CommonPagination } from "../../common/Pagination/Pagination";
+import { mockMeetingList } from "../mock/meetingListMock";
+import { Box, Typography } from "@mui/material";
+import { PageHeader } from "../../common/PageHeader/PageHeader";
+import { Toggle } from "../../common/PageHeader/Toggle/Toggle";
+import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
+import { useNavigate } from "react-router-dom";
 
 export function MeetingList() {
-  const [meetings, setMeetings] = useState<MeetingListItem[]>(
-    mockMeetingList.map((item) => ({ ...item, isDel: false }))
-  );
-
+  const navigate = useNavigate();
   const [page, setPage] = useState(1);
-  const [data, setData] = useState<[]>([]);
+  const [data, setData] = useState<MeetingListItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 10;
 
+  //더미
   useEffect(() => {
-    fetch(`/api/meeting?page=${page}&size=10`)
-      .then((res) => res.json())
-      .then((data) => {
-        setData(data.content);
-        setTotalCount(data.totalElements);
-      });
+    const filtered = mockMeetingList.filter((item) => item.isDel !== "Y"); // 삭제 항목 제외
+    const start = (page - 1) * pageSize;
+    const end = start + pageSize;
+    const sliced = filtered.slice(start, end);
+
+    setData(sliced);
+    setTotalCount(filtered.length);
   }, [page]);
+
+  // useEffect(() => {
+  //   getMeetingList(page, 10).then((data) => {
+  //     setData(data.content); // 데이터
+  //     setTotalCount(data.totalElements); // 전체 개수
+  //   });
+  // }, [page]);
 
   const allColumns: GridColDef[] = [
     {
@@ -85,22 +97,33 @@ export function MeetingList() {
     },
   ];
 
-  const deleteMeeting = (id: number) => {
-    setMeetings((prev) =>
-      prev.map((meeting) =>
-        meeting.id === id ? { ...meeting, isDel: true } : meeting
-      )
-    );
-  };
-
   return (
     <>
+      <Box mb={2}>
+        <Typography
+          variant="h4"
+          component="h1"
+          textAlign="left"
+          fontWeight="bold"
+        >
+          회의
+        </Typography>
+      </Box>
+
+      <PageHeader>
+        <Toggle
+          options={[
+            { label: "리스트", value: "list", path: "/issue/list" },
+            { label: "칸반", value: "kanban", path: "/issue/kanban" },
+          ]}
+        />
+        <AddButton onClick={() => navigate("/meeing/create")} />
+      </PageHeader>
       {/* 리스트 */}
       <ListDataGrid<MeetingListItem>
-        rows={meetings}
+        rows={data}
         columns={allColumns}
         rowIdField="id"
-        onRowDelete={(row) => deleteMeeting(row.id)}
       />
       {/* 페이징 */}
       <CommonPagination

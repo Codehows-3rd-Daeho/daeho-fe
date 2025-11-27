@@ -10,3 +10,8 @@ export type MeetingListItem = {
   isHost: string; // 주관자
   isDel?: boolean; // 삭제상태
 };
+
+export interface MeetingListResponse {
+  content: MeetingListItem[];
+  totalElements: number;
+}
