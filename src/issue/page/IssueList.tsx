@@ -12,7 +12,7 @@ import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { Box, Typography } from "@mui/material";
 // import { getIssueList } from "../api/api"; // 백엔드 연결
 
-export function IssueList() {
+export default function IssueList() {
   const navigate = useNavigate();
 
   // 페이징
