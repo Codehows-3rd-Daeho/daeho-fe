@@ -14,8 +14,6 @@ import {
   FormControlLabel,
   Radio,
   InputAdornment,
-  Avatar,
-  Input,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
@@ -35,7 +33,7 @@ export default function MemberModal({ open, onClose }: ModalProps) {
   const [jobPosition, setJobPosition] = useState<MasterDataType[]>([]);
   const [showPassword, setShowPassword] = useState(false); // 비밀번호 숨기기
   const [isDuplicate, setIsDuplicate] = useState(false); // 아이디 중복여부
-  const [idCheckTimer, setIdCheckTimer] = useState<NodeJS.Timeout | null>(null); // 디바운스 타이머 상태 추가
+  const [idCheckTimer, setIdCheckTimer] = useState<number | null>(null); // 디바운스 타이머 상태 추가
 
   const [member, setMember] = useState<Member>({
     loginId: "",
@@ -211,15 +209,15 @@ export default function MemberModal({ open, onClose }: ModalProps) {
     onClose(); // 부모 컴포넌트에서 모달 닫기
   };
 
-  // 프로필 이미지 업로드
-  const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // createObjectURL을 사용하여 임시 URL 생성
-      const imageUrl = URL.createObjectURL(file);
-      handleChange("profileImage", imageUrl);
-    }
-  };
+  // // 프로필 이미지 업로드
+  // const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  //   const file = event.target.files?.[0];
+  //   if (file) {
+  //     // createObjectURL을 사용하여 임시 URL 생성
+  //     const imageUrl = URL.createObjectURL(file);
+  //     handleChange("profileImage", imageUrl);
+  //   }
+  // };
 
   return (
     <Dialog open={open} onClose={handleClose}>
@@ -240,7 +238,7 @@ export default function MemberModal({ open, onClose }: ModalProps) {
           component="form"
           sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}
         >
-          {/* 프로필 사진 */}
+          {/* 프로필 사진
           <Box sx={{ display: "flex", justifyContent: "center" }}>
             <Avatar
               sx={{ width: 150, height: 200, borderRadius: "4px" }}
@@ -260,7 +258,7 @@ export default function MemberModal({ open, onClose }: ModalProps) {
                 프로필 사진 업로드
               </Button>
             </label>
-          </Box>
+          </Box> */}
           {/* 아이디 & 비밀번호 */}
           <Box sx={{ display: "flex", gap: 2 }}>
             <TextField
@@ -422,7 +420,6 @@ export default function MemberModal({ open, onClose }: ModalProps) {
               ))}
             </TextField>
           </Box>
-
           <TextField
             label="이메일"
             variant="outlined"

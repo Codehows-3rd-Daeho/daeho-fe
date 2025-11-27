@@ -101,7 +101,7 @@ export default function AdminSetting() {
           key={data.id}
           label={data.label}
           deleteIcon={<CloseIcon sx={{ fontSize: "16px" }} />}
-          onDelete={() => handleDelete(list, setList, data, deleteApiFunction)}
+          onDelete={() => handleDelete(setList, data, deleteApiFunction)}
           sx={{
             fontSize: "13px",
             height: "24px",
@@ -124,7 +124,7 @@ export default function AdminSetting() {
 
   // Chip 삭제 핸들러
   const handleDelete = async (
-    list: TagItem[],
+    // list: TagItem[],
     setList: SetTagList,
     chipToDelete: TagItem,
     deleteApiFunction: (id: number) => Promise<void>

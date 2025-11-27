@@ -3,37 +3,36 @@ import { useEffect, useState } from "react";
 import type { MeetingListItem } from "../type/type";
 import { ListDataGrid } from "../../common/List/ListDataGrid";
 import { CommonPagination } from "../../common/Pagination/Pagination";
-import { mockMeetingList } from "../mock/meetingListMock";
 import { Box, Typography } from "@mui/material";
 import { PageHeader } from "../../common/PageHeader/PageHeader";
 import { Toggle } from "../../common/PageHeader/Toggle/Toggle";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { useNavigate } from "react-router-dom";
+import { getMeetingList } from "../api/api";
 
 export default function MeetingList() {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [data, setData] = useState<MeetingListItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
-  const pageSize = 10;
 
   //더미
-  useEffect(() => {
-    const filtered = mockMeetingList.filter((item) => item.isDel !== "Y"); // 삭제 항목 제외
-    const start = (page - 1) * pageSize;
-    const end = start + pageSize;
-    const sliced = filtered.slice(start, end);
-
-    setData(sliced);
-    setTotalCount(filtered.length);
-  }, [page]);
-
   // useEffect(() => {
-  //   getMeetingList(page, 10).then((data) => {
-  //     setData(data.content); // 데이터
-  //     setTotalCount(data.totalElements); // 전체 개수
-  //   });
+  //   const filtered = mockMeetingList.filter((item) => item.isDel !== "Y"); // 삭제 항목 제외
+  //   const start = (page - 1) * pageSize;
+  //   const end = start + pageSize;
+  //   const sliced = filtered.slice(start, end);
+
+  //   setData(sliced);
+  //   setTotalCount(filtered.length);
   // }, [page]);
+
+  useEffect(() => {
+    getMeetingList(page, 10).then((data) => {
+      setData(data.content); // 데이터
+      setTotalCount(data.totalElements); // 전체 개수
+    });
+  }, [page]);
 
   const allColumns: GridColDef[] = [
     {
