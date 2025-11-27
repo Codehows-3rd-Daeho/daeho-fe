@@ -1,6 +1,6 @@
 import { Box, Typography, TextField, Divider } from "@mui/material";
 import React, { useState } from "react";
-import type { SetTagList, TagItem } from "../../pages/setting/AdminSetting";
+import type { SetTagList, TagItem } from "../../page/setting/AdminSetting";
 import {
   createCategory,
   createDepartment,

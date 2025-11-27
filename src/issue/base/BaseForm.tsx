@@ -1,6 +1,6 @@
 import { Box, Button, Typography } from "@mui/material";
 import { useState } from "react";
-import type { BaseFormValues } from "../type";
+import type { BaseFormValues } from "../type/type";
 import FormField from "./component/FormField";
 import SelectField from "./component/SelectField";
 import "./baseForm.css";

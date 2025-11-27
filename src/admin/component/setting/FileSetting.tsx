@@ -1,6 +1,6 @@
 import { Box, Typography, TextField, Divider, Button } from "@mui/material";
 import React from "react";
-import type { SetTagList, TagItem } from "../../pages/setting/AdminSetting";
+import type { SetTagList, TagItem } from "../../page/setting/AdminSetting";
 
 interface FileSettingProps {
   fileExtensions: TagItem[];
