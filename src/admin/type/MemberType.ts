@@ -1,9 +1,8 @@
-
 export interface Member {
   loginId: string;
   password: string;
   name: string;
-  departmentId: number | ""; // 선택 전에는 빈 문자열
+  departmentId: number | "";
   jobPositionId: number | "";
   phone: string;
   email: string;

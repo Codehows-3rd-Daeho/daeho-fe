@@ -16,6 +16,7 @@ import {
   deleteCategory,
 } from "../../api/MasterDataApi";
 import FileSetting from "../../components/setting/FileSetting";
+import axios from "axios";
 
 export interface TagItem {
   id: number;
@@ -24,10 +25,9 @@ export interface TagItem {
 
 export type SetTagList = React.Dispatch<React.SetStateAction<TagItem[]>>;
 
-// 💡 API 응답을 TagItem 구조로 변환하는 헬퍼 함수
 const mapApiDataToTagItem = (data: MasterDataType[]): TagItem[] => {
   return data.map((item) => ({
-    id: item.id || Date.now(), // id가 없을 경우 임시 값 부여
+    id: item.id || Date.now(), // id가 없을 경우 임시 값
     label: item.name,
   }));
 };
@@ -40,7 +40,6 @@ const initialFileExtensions: TagItem[] = [
 ];
 
 export default function AdminSetting() {
-  // 💡 초기값을 빈 배열로 변경
   const [departments, setDepartments] = useState<TagItem[]>([]);
   const [jobPositions, setJobPositions] = useState<TagItem[]>([]);
   const [categories, setCategories] = useState<TagItem[]>([]);
@@ -103,19 +102,6 @@ export default function AdminSetting() {
           label={data.label}
           deleteIcon={<CloseIcon sx={{ fontSize: "16px" }} />}
           onDelete={() => handleDelete(list, setList, data, deleteApiFunction)}
-          // sx={{
-          //   fontSize: "13px",
-          //   height: "24px",
-          //   borderRadius: "6px",
-          //   backgroundColor: "#FAFAFA",
-          //   border: "1px solid #E5E7EB",
-          //   color: "#374151",
-          //   "& .MuiChip-deleteIcon": {
-          //     fontSize: "16px",
-          //     color: "#9CA3AF",
-          //     "&:hover": { color: "#6B7280" },
-          //   },
-          // }}
           sx={{
             fontSize: "13px",
             height: "24px",
@@ -145,13 +131,24 @@ export default function AdminSetting() {
   ) => {
     try {
       await deleteApiFunction(chipToDelete.id);
-
       setList((chips) => chips.filter((chip) => chip.id !== chipToDelete.id));
+      alert("삭제되었습니다.");
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error) && error.response) {
+        const status = error.response.status;
+        const errorMessage = error.response.data;
 
-      console.log(`ID ${chipToDelete.id} 삭제 성공`);
-    } catch (error) {
-      console.error("삭제 실패:", error);
-      alert("삭제 중 오류가 발생했습니다.");
+        if (status === 409) {
+          alert(`${errorMessage}`);
+        } else if (status === 404) {
+          alert(`${errorMessage}`);
+        } else {
+          alert(`오류 발생 (상태 코드: ${status})`);
+        }
+      } else {
+        console.error("삭제 실패:", error);
+        alert("삭제 중 오류가 발생했습니다.");
+      }
     }
   };
 
@@ -188,7 +185,7 @@ export default function AdminSetting() {
   };
 
   const handleSaveSettings = () => {
-    console.log("설정 저장됨:", notificationSetting);
+    console.log("알림 설정 저장됨:", notificationSetting);
     alert("알림 설정이 저장되었습니다.");
   };
 
@@ -223,10 +220,9 @@ export default function AdminSetting() {
           setFileExtensions={setFileExtensions}
           RenderChips={(props) => (
             <RenderChips
-              {...props} // FileManager는 삭제 API가 없으므로 더미 함수 전달
+              {...props} // FileManager는 삭제 API가 아직 없음.
               deleteApiFunction={async () => {
-                // API 호출 없이 로컬 상태만 변경됨
-                console.log("파일 확장자 삭제: API 호출 없음");
+                console.log("파일 확장자 삭제");
               }}
             />
           )}
