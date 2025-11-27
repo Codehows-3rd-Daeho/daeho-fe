@@ -1,13 +1,27 @@
 import { type GridColDef, type GridRenderCellParams } from "@mui/x-data-grid";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { MeetingListItem } from "../type";
 import { mockMeetingList } from "../mock/meetingListMock";
 import { ListDataGrid } from "../../common/List/ListDataGrid";
+import { CommonPagination } from "../../common/Pagination/Pagination";
 
 export function MeetingList() {
   const [meetings, setMeetings] = useState<MeetingListItem[]>(
     mockMeetingList.map((item) => ({ ...item, isDel: false }))
   );
+
+  const [page, setPage] = useState(1);
+  const [data, setData] = useState<[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+
+  useEffect(() => {
+    fetch(`/api/meeting?page=${page}&size=10`)
+      .then((res) => res.json())
+      .then((data) => {
+        setData(data.content);
+        setTotalCount(data.totalElements);
+      });
+  }, [page]);
 
   const allColumns: GridColDef[] = [
     {
@@ -80,12 +94,20 @@ export function MeetingList() {
   };
 
   return (
-    <ListDataGrid<MeetingListItem>
-      title="회의"
-      rows={meetings}
-      columns={allColumns}
-      rowIdField="id"
-      onRowDelete={(row) => deleteMeeting(row.id)}
-    />
+    <>
+      {/* 리스트 */}
+      <ListDataGrid<MeetingListItem>
+        rows={meetings}
+        columns={allColumns}
+        rowIdField="id"
+        onRowDelete={(row) => deleteMeeting(row.id)}
+      />
+      {/* 페이징 */}
+      <CommonPagination
+        page={page}
+        totalCount={totalCount}
+        onPageChange={setPage}
+      />
+    </>
   );
 }

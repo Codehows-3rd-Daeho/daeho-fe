@@ -1,14 +1,38 @@
 import { type GridColDef, type GridRenderCellParams } from "@mui/x-data-grid";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { IssueListItem } from "../type";
 import { mockIssueList } from "../mock/issueListMock";
 import { ListDataGrid } from "../../common/List/ListDataGrid";
+import { CommonPagination } from "../../common/Pagination/Pagination";
+import { useNavigate } from "react-router-dom";
+
+import { PageHeader } from "../../common/PageHeader/PageHeader";
+import { Toggle } from "../../common/PageHeader/Toggle/Toggle";
+import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
+import { Box, Typography } from "@mui/material";
 
 export function IssueList() {
+  const navigate = useNavigate();
+
   const [issues, setIssues] = useState<IssueListItem[]>(
     mockIssueList.map((item) => ({ ...item, isDel: false }))
   );
 
+  // 페이징
+  const [page, setPage] = useState(1);
+  const [data, setData] = useState<[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+
+  useEffect(() => {
+    fetch(`/api/issues?page=${page}&size=10`)
+      .then((res) => res.json())
+      .then((data) => {
+        setData(data.content);
+        setTotalCount(data.totalElements);
+      });
+  }, [page]);
+
+  // 리스트 컬럼
   const allColumns: GridColDef[] = [
     {
       field: "id",
@@ -22,9 +46,17 @@ export function IssueList() {
       field: "title",
       headerName: "제목",
       flex: 2,
-      minWidth: 180,
+      minWidth: 300,
       headerAlign: "center",
       align: "left",
+    },
+    {
+      field: "status",
+      headerName: "상태",
+      flex: 2,
+      minWidth: 80,
+      headerAlign: "center",
+      align: "center",
     },
     {
       field: "period",
@@ -78,12 +110,43 @@ export function IssueList() {
   };
 
   return (
-    <ListDataGrid<IssueListItem>
-      title="이슈"
-      rows={issues}
-      columns={allColumns}
-      rowIdField="id"
-      onRowDelete={(row) => deleteIssue(row.id)}
-    />
+    <>
+      {/* 타이틀 */}
+      <Box mb={2}>
+        {" "}
+        {/* 아래 여백 */}
+        <Typography
+          variant="h4" // 글자 크기
+          component="h1"
+          textAlign="left" // 왼쪽 정렬
+          fontWeight="bold" // 볼드
+        >
+          이슈
+        </Typography>
+      </Box>
+      <PageHeader>
+        <Toggle
+          options={[
+            { label: "리스트", value: "list", path: "/issue/list" },
+            { label: "칸반", value: "kanban", path: "/issue/kanban" },
+          ]}
+        />
+
+        <AddButton onClick={() => navigate("/issue/create")} />
+      </PageHeader>
+
+      <ListDataGrid<IssueListItem>
+        rows={issues}
+        columns={allColumns}
+        rowIdField="id"
+        onRowDelete={(row) => deleteIssue(row.id)}
+      />
+
+      <CommonPagination
+        page={page}
+        totalCount={totalCount}
+        onPageChange={setPage}
+      />
+    </>
   );
 }
