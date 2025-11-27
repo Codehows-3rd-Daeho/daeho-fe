@@ -9,12 +9,12 @@ import {
 interface SelectFieldProps {
   label: string;
   name: string;
-  value: string | string[];
+  value: string | string[] | number[]; //formdata의 속성에 담기는 값, 상태 -> string, 카테고리 및 참여자 -> number 변환 호환
   onChange: (event: SelectChangeEvent<string | string[]>) => void;
   required?: boolean;
   inputWidth?: string | number;
   horizontal?: boolean;
-  options: { value: string; label: string }[]; // 선택 옵션
+  options: { value: number | string; label: string }[]; // 상태 -> string, 카테고리 및 참여자 -> number 호환
   multiple?: boolean; // 다중 선택 여부
 }
 
