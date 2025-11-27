@@ -27,8 +27,8 @@ export function IssueList() {
     fetch(`/api/issues?page=${page}&size=10`)
       .then((res) => res.json())
       .then((data) => {
-        setData(data.content);
-        setTotalCount(data.totalElements);
+        setData(data.content); // 데이터
+        setTotalCount(data.totalElements); // 전체 개수
       });
   }, [page]);
 
