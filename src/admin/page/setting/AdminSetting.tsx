@@ -1,12 +1,10 @@
 import { Box, Chip } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import React, { useEffect, useState } from "react";
-import MasterData from "../../components/setting/MasterData";
 import type {
   MasterDataType,
   NotificationSettingType,
 } from "../../type/SettingType";
-import NotificationSetting from "../../components/setting/NotificationSetting";
 import {
   getDepartment,
   getJobPosition,
@@ -15,8 +13,10 @@ import {
   deleteJobPosition,
   deleteCategory,
 } from "../../api/MasterDataApi";
-import FileSetting from "../../components/setting/FileSetting";
 import axios from "axios";
+import MasterData from "../../component/setting/MasterData";
+import FileSetting from "../../component/setting/FileSetting";
+import NotificationSetting from "../../component/setting/NotificationSetting";
 
 export interface TagItem {
   id: number;

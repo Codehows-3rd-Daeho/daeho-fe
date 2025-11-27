@@ -1,5 +1,5 @@
 import axios from "axios";
-import type { MeetingListResponse } from "../type";
+import type { MeetingListResponse } from "../type/type";
 
 // 회의 목록 조회
 export const getMeetingList = async (

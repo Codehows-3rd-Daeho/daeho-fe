@@ -1,6 +1,6 @@
 import { type GridColDef, type GridRenderCellParams } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
-import type { IssueListItem } from "../type";
+import type { IssueListItem } from "../type/type";
 import { mockIssueList } from "../mock/issueListMock"; // 더미
 import { ListDataGrid } from "../../common/List/ListDataGrid";
 import { CommonPagination } from "../../common/Pagination/Pagination";
@@ -12,7 +12,7 @@ import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { Box, Typography } from "@mui/material";
 // import { getIssueList } from "../api/api"; // 백엔드 연결
 
-export function IssueList() {
+export default function IssueList() {
   const navigate = useNavigate();
 
   // 페이징

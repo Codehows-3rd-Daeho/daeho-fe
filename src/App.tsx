@@ -1,21 +1,18 @@
-import {
-  BrowserRouter as Router,
-  Routes,
-  Route,
-  Navigate,
-  BrowserRouter,
-} from "react-router-dom";
+import { Routes, Route, Navigate, BrowserRouter } from "react-router-dom";
 import Header from "./common/Header/Header";
 import Sidebar from "./common/Sidebar/Sidebar";
 import { sidebarItems } from "./common/Sidebar/SidebarItems";
-import { IssueList } from "./issue/page/IssueList";
 import { Box } from "@mui/material";
-import { MeetingList } from "./meeting/page/MeetingList";
-import AdminSetting from "./admin/pages/setting/AdminSetting";
-import Login from "./admin/pages/Login";
-import MemberList from "./admin/pages/member/MemberList";
 import { useAuthStore } from "./store/useAuthStore";
+import type { JSX } from "@emotion/react/jsx-runtime";
+import { lazy } from "react";
 
+const IssueList = lazy(() => import("./issue/page/IssueList"));
+const IssueRegister = lazy(() => import("./issue/page/IssueRegister"));
+const AdminSetting = lazy(() => import("./admin/page/setting/AdminSetting"));
+const MemberList = lazy(() => import("./admin/page/member/MemberList"));
+const MeetingList = lazy(() => import("./meeting/page/MeetingList"));
+const Login = lazy(() => import("./admin/page/Login"));
 /*===============================
   PrivateRoute 사용 안내
   ===============================
@@ -44,77 +41,106 @@ function PrivateRoute({ children, isAdmin = false }: PrivateRouteProps) {
   return children;
 }
 
-function App() {
+export default function App() {
   return (
     <BrowserRouter>
-      <Box
-        sx={{
-          display: "flex",
-          height: "100vh",
-          flexDirection: "row",
-        }}
-      >
-        {/* 사이드바 */}
-        <Box
-          sx={{
-            width: 300,
-            flexShrink: 0,
-          }}
-        >
-          <Sidebar items={sidebarItems} selectedId="dashboard" />
-        </Box>
+      <Routes>
+        <Route path="/login" element={<Login />}></Route>
+        <Route
+          path="*"
+          element={
+            <Box
+              sx={{
+                display: "flex",
+                height: "100vh",
+                flexDirection: "row",
+              }}
+            >
+              {/* 사이드바 */}
+              <Box
+                sx={{
+                  width: 300,
+                  flexShrink: 0,
+                }}
+              >
+                <Sidebar items={sidebarItems} selectedId="dashboard" />
+              </Box>
 
-        {/* 헤더 */}
-        <Box
-          sx={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-          }}
-        >
-          <Header name="홍길동" jobPosition="팀장" notifications={[]} />
-        </Box>
+              {/* 헤더 */}
+              <Box
+                sx={{
+                  flex: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  overflow: "hidden",
+                }}
+              >
+                <Header name="홍길동" jobPosition="팀장" notifications={[]} />
+              </Box>
 
-        {/* 페이지 콘텐츠 */}
+              {/* 페이지 콘텐츠 */}
 
-        <Box
-          sx={{
-            flex: 1,
-            width: "100%",
-            mt: "62px",
-            maxWidth: "1600px", // ★ 화면설계처럼 넓게 퍼지도록
-            margin: 0,
-            p: { xs: 2, md: 4 }, // ★ 반응형 padding
-          }}
-        >
-          <Routes>
-            {/* 이슈리스트 */}
-            <Route path="/issue/list" element={<IssueList />} />
+              <Box
+                sx={{
+                  flex: 1,
+                  width: "100%",
+                  mt: "62px",
+                  maxWidth: "1600px", // ★ 화면설계처럼 넓게 퍼지도록
+                  margin: 0,
+                  p: { xs: 2, md: 4 }, // ★ 반응형 padding
+                }}
+              >
+                <Routes>
+                  <Route
+                    path="/issue/register"
+                    element={
+                      <PrivateRoute>
+                        <IssueRegister />
+                      </PrivateRoute>
+                    }
+                  />
 
-            {/* 회의 리스트 */}
-            <Route path="/meeting/list" element={<MeetingList />} />
+                  <Route
+                    path="/issue/list"
+                    element={
+                      <PrivateRoute>
+                        <IssueList />
+                      </PrivateRoute>
+                    }
+                  />
 
-            <Route
-              path="/admin/member"
-              element={
-                <PrivateRoute isAdmin>
-                  <MemberList />
-                </PrivateRoute>
-              }
-            ></Route>
-            <Route
-              path="/admin/setting"
-              element={
-                <PrivateRoute isAdmin>
-                  <AdminSetting />
-                </PrivateRoute>
-              }
-            ></Route>
-            <Route path="/login" element={<Login />}></Route>
-          </Routes>
-        </Box>
-      </Box>
+                  <Route
+                    path="/meeting/list"
+                    element={
+                      <PrivateRoute>
+                        <MeetingList />
+                      </PrivateRoute>
+                    }
+                  />
+
+                  {/* 관리자 */}
+                  <Route
+                    path="/admin/member"
+                    element={
+                      <PrivateRoute isAdmin>
+                        <MemberList />
+                      </PrivateRoute>
+                    }
+                  ></Route>
+                  <Route
+                    path="/admin/setting"
+                    element={
+                      <PrivateRoute isAdmin>
+                        <AdminSetting />
+                      </PrivateRoute>
+                    }
+                  ></Route>
+                </Routes>
+              </Box>
+            </Box>
+          }
+        />
+      </Routes>
     </BrowserRouter>
   );
 }
