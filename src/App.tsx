@@ -6,6 +6,8 @@ import { Box } from "@mui/material";
 import { useAuthStore } from "./store/useAuthStore";
 import type { JSX } from "@emotion/react/jsx-runtime";
 import { lazy } from "react";
+import KanbanBoard from "./common/Kanban/Kanban";
+import MeetingScheduler from "./meeting/page/MeetingScheduler";
 
 const IssueList = lazy(() => import("./issue/page/IssueList"));
 const IssueRegister = lazy(() => import("./issue/page/IssueRegister"));
@@ -110,10 +112,28 @@ export default function App() {
                   />
 
                   <Route
+                    path="/issue/kanban"
+                    element={
+                      <PrivateRoute>
+                        <KanbanBoard />
+                      </PrivateRoute>
+                    }
+                  />
+
+                  <Route
                     path="/meeting/list"
                     element={
                       <PrivateRoute>
                         <MeetingList />
+                      </PrivateRoute>
+                    }
+                  />
+
+                  <Route
+                    path="/meeting/schedule"
+                    element={
+                      <PrivateRoute>
+                        <MeetingScheduler />
                       </PrivateRoute>
                     }
                   />

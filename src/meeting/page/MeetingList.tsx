@@ -16,17 +16,6 @@ export default function MeetingList() {
   const [data, setData] = useState<MeetingListItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
 
-  //더미
-  // useEffect(() => {
-  //   const filtered = mockMeetingList.filter((item) => item.isDel !== "Y"); // 삭제 항목 제외
-  //   const start = (page - 1) * pageSize;
-  //   const end = start + pageSize;
-  //   const sliced = filtered.slice(start, end);
-
-  //   setData(sliced);
-  //   setTotalCount(filtered.length);
-  // }, [page]);
-
   useEffect(() => {
     getMeetingList(page, 10).then((data) => {
       setData(data.content); // 데이터

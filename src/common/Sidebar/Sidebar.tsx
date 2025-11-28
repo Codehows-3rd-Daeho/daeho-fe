@@ -18,6 +18,7 @@ import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import type { SidebarProps } from "./type";
 import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "../../store/useAuthStore";
 
 export default function Sidebar({
   items,
@@ -26,6 +27,13 @@ export default function Sidebar({
   width = 300,
 }: SidebarProps & { isAdmin?: boolean }) {
   const navigate = useNavigate();
+  const { logout } = useAuthStore();
+
+  //로그아웃
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   // 초기 open 상태
   const [open, setOpen] = useState<{ [key: string]: boolean }>(() => {
@@ -222,7 +230,7 @@ export default function Sidebar({
             color: "#1a1a1adb",
             "&:focus": { outline: "none", boxShadow: "none" },
           }}
-          onClick={() => console.log("로그아웃 클릭")}
+          onClick={handleLogout}
         >
           Logout
         </Button>
