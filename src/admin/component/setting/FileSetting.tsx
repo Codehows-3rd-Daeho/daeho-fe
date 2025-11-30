@@ -1,6 +1,13 @@
 import { Box, Typography, TextField, Divider, Button } from "@mui/material";
-import React from "react";
+import React, { useEffect, useState, type KeyboardEvent } from "react";
 import type { SetTagList, TagItem } from "../../page/setting/AdminSetting";
+import type { MasterDataType } from "../../type/SettingType";
+import {
+  getFileSize,
+  saveExtension,
+  saveFileSize,
+} from "../../api/FileSettingApi";
+import axios from "axios";
 
 interface FileSettingProps {
   fileExtensions: TagItem[];
@@ -13,6 +20,93 @@ export default function FileSetting({
   setFileExtensions,
   RenderChips,
 }: FileSettingProps) {
+  const [fileSizeInput, setFileSizeInput] = useState<string>(""); // masterDataType이 string이라서
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [extensionInput, setExtensionInput] = useState("");
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await getFileSize();
+        const byteValue = response.name;
+        const mbValue = parseInt(byteValue) / (1024 * 1024);
+        setFileSizeInput(mbValue.toString());
+      } catch (error) {
+        console.log("파일 설정 불러오기 실패 ", error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const handleFileSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // 숫자가 아닌 입력은 무시
+    if (value === "" || /^\d+$/.test(value)) {
+      setFileSizeInput(value);
+    }
+  };
+  const handleFileSizeSave = async () => {
+    const size = parseInt(fileSizeInput);
+    if (isNaN(size) || size < 0) {
+      alert("유효한 값을 입력해주세요.");
+      return;
+    }
+    setIsSaving(true);
+
+    const data: MasterDataType = {
+      name: fileSizeInput,
+    };
+
+    try {
+      await saveFileSize(data);
+      alert("저장되었습니다.");
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        return;
+      }
+      // 다른 alert
+      alert("오류가 발생했습니다.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleExtensionKeyDown = async (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== "Enter") return; //Enter 말고
+
+    // 양쪽 공백 제거
+    const rawValue = extensionInput.trim();
+    if (!rawValue) return; // 빈문자
+
+    // 소문자로 변환, 점 제거
+    const ext = rawValue.toLowerCase().replace(".", "");
+    const data: MasterDataType = {
+      name: ext,
+    };
+
+    try {
+      const response = await saveExtension(data);
+      const newTag: TagItem = {
+        id: response.id || Date.now(),
+        label: response.name,
+      };
+      setFileExtensions((prev) => [...prev, newTag]);
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        const { status, data } = error.response;
+        if (status === 400) {
+          // 중복
+          alert(data);
+          return;
+        }
+        if (status === 401) return;
+      }
+      console.error("등록 실패:", error);
+      alert("등록 중 오류가 발생했습니다.");
+    }
+    setExtensionInput("");
+  };
+
   return (
     <Box sx={{ mb: 4 }}>
       <Typography
@@ -26,7 +120,7 @@ export default function FileSetting({
       <Box
         sx={{
           display: "flex",
-          gap: 3, // 항목 간 간격 조정
+          gap: 3,
           flexDirection: "column",
         }}
       >
@@ -36,14 +130,14 @@ export default function FileSetting({
             sx={{
               display: "flex",
               alignItems: "center",
-              gap: 2, // 제목과 입력 그룹 사이 간격
+              gap: 2,
             }}
           >
             <Typography
               variant="subtitle1"
               sx={{ textAlign: "left", width: 140, whiteSpace: "nowrap" }}
             >
-              파일 용량 설정 (MB)
+              최대 용량 설정 (MB)
             </Typography>
 
             {/* 입력 필드와 버튼 그룹 */}
@@ -51,21 +145,26 @@ export default function FileSetting({
               sx={{
                 display: "flex",
                 alignItems: "center",
-                flexGrow: 1, // 남은 공간을 차지
+                flexGrow: 1,
               }}
             >
               <TextField
                 type="number"
                 variant="outlined"
                 size="small"
-                sx={{ flexGrow: 1, mr: 2 }} // 버튼과의 간격 mr: 2로 조정
+                placeholder="숫자(MB)만 입력해주세요"
+                value={fileSizeInput}
+                onChange={handleFileSizeChange}
+                sx={{ flexGrow: 1, mr: 2 }}
               />
               <Button
                 variant="outlined"
                 color="primary"
-                sx={{ height: "40px", minWidth: "auto" }} // 버튼 크기 유지
+                sx={{ height: "40px", minWidth: "auto" }}
+                onClick={handleFileSizeSave}
+                disabled={isSaving}
               >
-                저장
+                {isSaving ? "저장 중..." : "저장"}
               </Button>
             </Box>
           </Box>
@@ -84,7 +183,7 @@ export default function FileSetting({
               variant="subtitle1"
               sx={{ textAlign: "left", width: 140, whiteSpace: "nowrap" }}
             >
-              파일 확장자 설정
+              허용 확장자 설정
             </Typography>
 
             <Box
@@ -98,13 +197,18 @@ export default function FileSetting({
                 placeholder="Enter 로 등록"
                 variant="outlined"
                 size="small"
+                value={extensionInput}
+                onKeyDown={handleExtensionKeyDown}
+                onChange={(e) => {
+                  setExtensionInput(e.target.value);
+                }}
                 sx={{ flexGrow: 1 }}
               />
             </Box>
             <Button
               variant="outlined"
               color="primary"
-              sx={{ height: "40px", minWidth: "auto", visibility: "hidden" }} // 버튼 크기 유지
+              sx={{ height: "40px", minWidth: "auto", visibility: "hidden" }}
             >
               저장
             </Button>

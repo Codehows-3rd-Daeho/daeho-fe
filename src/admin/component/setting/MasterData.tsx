@@ -7,6 +7,7 @@ import {
   createJobPosition,
 } from "../../api/MasterDataApi";
 import type { MasterDataType } from "../../type/SettingType";
+import axios from "axios";
 
 interface MasterDataProps {
   departments: TagItem[];
@@ -65,7 +66,17 @@ export default function MasterData({
         // 입력 필드 초기화
         setInput("");
       } catch (error) {
-        console.error("부서 등록 실패:", error);
+        if (axios.isAxiosError(error) && error.response) {
+          const { status, data } = error.response;
+
+          if (status === 400) {
+            alert(data);
+            return;
+          }
+
+          if (status === 401) return;
+        }
+        console.error("등록 실패:", error);
         alert("등록 중 오류가 발생했습니다.");
       }
     })();

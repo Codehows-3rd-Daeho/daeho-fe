@@ -1,3 +1,8 @@
+export interface Login {
+  loginId: string;
+  password: string;
+}
+
 export interface Member {
   loginId: string;
   password: string;
@@ -9,7 +14,12 @@ export interface Member {
   isEmployed: boolean;
 }
 
-export interface Login {
-  loginId: string;
-  password: string;
+export interface MemberList {
+  id: number;
+  name: string;
+  departmentName: string;
+  jobPositionName: string;
+  phone: string;
+  email: string;
+  isEmployed: string;
 }

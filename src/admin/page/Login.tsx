@@ -8,7 +8,9 @@ import {
   InputAdornment,
   IconButton,
 } from "@mui/material";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+
 import { useNavigate } from "react-router-dom";
 import { loginAndGetToken } from "../api/MemberApi";
 import { useAuthStore } from "../../store/useAuthStore";
@@ -92,9 +94,9 @@ export default function Login() {
               <InputAdornment position="end">
                 <IconButton onClick={() => setShowPassword(!showPassword)}>
                   {showPassword ? (
-                    <VisibilityOff fontSize="small" />
+                    <VisibilityOffIcon fontSize="small" />
                   ) : (
-                    <Visibility fontSize="small" />
+                    <VisibilityIcon fontSize="small" />
                   )}
                 </IconButton>
               </InputAdornment>

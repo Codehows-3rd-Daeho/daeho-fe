@@ -1,6 +1,5 @@
 import axios from "axios";
-
-export const BASE_URL = import.meta.env.VITE_API_URL;
+import { BASE_URL } from "../../config/api/httpClient";
 
 //등록
 export const issueRegister = async (formData: FormData) => {

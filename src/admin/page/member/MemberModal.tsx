@@ -16,7 +16,8 @@ import {
   InputAdornment,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { useEffect, useState } from "react";
 import { checkId, createMember } from "../../api/MemberApi";
 import { getDepartment, getJobPosition } from "../../api/MasterDataApi";
@@ -33,7 +34,7 @@ export default function MemberModal({ open, onClose }: ModalProps) {
   const [jobPosition, setJobPosition] = useState<MasterDataType[]>([]);
   const [showPassword, setShowPassword] = useState(false); // 비밀번호 숨기기
   const [isDuplicate, setIsDuplicate] = useState(false); // 아이디 중복여부
-  const [idCheckTimer, setIdCheckTimer] = useState<number | null>(null); // 디바운스 타이머 상태 추가
+  const [isChecked, setIsChecked] = useState(false); // 중복 검사 버튼 클릭
 
   const [member, setMember] = useState<Member>({
     loginId: "",
@@ -49,7 +50,6 @@ export default function MemberModal({ open, onClose }: ModalProps) {
   // 부서 직급 가져오기
   useEffect(() => {
     if (open) {
-      // 모달이 열릴 때 부서와 직급 데이터를 불러옵니다.
       async function fetchData() {
         try {
           const dep = await getDepartment();
@@ -102,7 +102,7 @@ export default function MemberModal({ open, onClose }: ModalProps) {
   const validateField = (field: string, value: string) => {
     let errorMsg = "";
 
-    // 값이 비어있을 경우, 유효성 검사(형식 검사)를 건너뛰고 에러 메시지를 초기화합니다.
+    // 값이 비어있을 경우, 유효성 검사(형식 검사)를 건너뛰고 에러 메시지를 초기화
     if (value.trim() === "") {
       setErrors((prev) => ({ ...prev, [field]: "" }));
       return "";
@@ -122,7 +122,11 @@ export default function MemberModal({ open, onClose }: ModalProps) {
         break;
 
       case "phone":
-        if (!value.includes("-")) {
+        if (!/^[0-9-]+$/.test(value)) {
+          errorMsg = "숫자와 하이픈(-)만 입력 가능합니다.";
+        }
+        // 하이픈(-) 포함
+        else if (!value.includes("-")) {
           errorMsg = "하이픈(-)을 포함해주세요.";
         }
         break;
@@ -143,6 +147,15 @@ export default function MemberModal({ open, onClose }: ModalProps) {
 
   // 등록 버튼 클릭 시
   const handleSubmit = async () => {
+    if (!isChecked) {
+      alert("아이디 중복 확인을 완료해주세요.");
+      return;
+    }
+    if (isDuplicate) {
+      alert("이미 사용 중인 아이디입니다.");
+      return;
+    }
+
     // 각 필드 유효성 검사
     validateField("loginId", member.loginId);
     validateField("password", member.password);
@@ -259,39 +272,31 @@ export default function MemberModal({ open, onClose }: ModalProps) {
               </Button>
             </label>
           </Box> */}
-          {/* 아이디 & 비밀번호 */}
-          <Box sx={{ display: "flex", gap: 2 }}>
+          {/* 아이디 + 중복확인 버튼 */}
+          <Box sx={{ display: "flex", gap: 1 }}>
             <TextField
               label="아이디"
               variant="outlined"
               fullWidth
               value={member.loginId}
-              //(사용자가 입력 중일 때는 요청 안 보내고, 타이핑 멈춘 뒤 300ms 정도 후에 자동 중복 체크)
               onChange={(e) => {
                 const value = e.target.value;
                 handleChange("loginId", value);
-                // 실시간 유효성 검사
                 validateField("loginId", value);
-                // 이전 타이머 있으면 제거
-                if (idCheckTimer) clearTimeout(idCheckTimer);
-                // 새 타이머 설정 (입력 멈추면 300ms 후 실행)
-                const timer = setTimeout(() => {
-                  if (value.trim() !== "") {
-                    checkDuplicate(value);
-                  }
-                }, 300);
-
-                setIdCheckTimer(timer);
+                setIsDuplicate(false); // 입력 시 중복 초기화
+                setIsChecked(false); // 입력하면 검사 초기화
               }}
-              error={isDuplicate || Boolean(errors.loginId)} // true면 아웃라인이 빨간색으로 바뀜.
+              error={isDuplicate || Boolean(errors.loginId)}
               helperText={
                 member.loginId === ""
                   ? ""
-                  : errors.loginId // 유효성 에러 우선
+                  : errors.loginId
                   ? errors.loginId
-                  : isDuplicate // 중복 에러 다음
-                  ? "이미 사용 중인 아이디입니다."
-                  : "사용 가능한 아이디입니다."
+                  : isChecked
+                  ? isDuplicate
+                    ? "이미 사용 중인 아이디입니다."
+                    : "사용 가능한 아이디입니다."
+                  : ""
               }
               slotProps={{
                 formHelperText: {
@@ -299,7 +304,7 @@ export default function MemberModal({ open, onClose }: ModalProps) {
                     color:
                       isDuplicate || errors.loginId
                         ? "red"
-                        : member.loginId === ""
+                        : member.loginId === "" || !isChecked
                         ? "inherit"
                         : "green",
                     fontWeight: 500,
@@ -307,38 +312,59 @@ export default function MemberModal({ open, onClose }: ModalProps) {
                 },
               }}
             />
-            <TextField
-              label="비밀번호"
-              type={showPassword ? "text" : "password"} // 비밀번호 보이기/숨기기
+
+            {/* 중복 확인 버튼 */}
+            <Button
               variant="outlined"
-              fullWidth
-              value={member.password}
-              onChange={(e) => {
-                const value = e.target.value;
-                handleChange("password", value);
-                validateField("password", value); // 실시간 검사
+              color="primary"
+              sx={{ whiteSpace: "nowrap", width: "120px", height: "56px" }}
+              onClick={async () => {
+                if (!member.loginId || errors.loginId) {
+                  setErrors((prev) => ({
+                    ...prev,
+                    loginId: "영문 또는 숫자 4~20자로 입력하세요.",
+                  }));
+                  return;
+                }
+                await checkDuplicate(member.loginId);
+                setIsChecked(true); // 검사 완료 표시
               }}
-              error={Boolean(errors.password)}
-              helperText={errors.password}
-              slotProps={{
-                input: {
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? (
-                          <VisibilityOff fontSize="small" />
-                        ) : (
-                          <Visibility fontSize="small" />
-                        )}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
+            >
+              중복확인
+            </Button>
           </Box>
+
+          {/* 비밀번호 */}
+          <TextField
+            label="비밀번호"
+            type={showPassword ? "text" : "password"}
+            variant="outlined"
+            fullWidth
+            value={member.password}
+            onChange={(e) => {
+              const value = e.target.value;
+              handleChange("password", value);
+              validateField("password", value);
+            }}
+            error={Boolean(errors.password)}
+            helperText={errors.password}
+            slotProps={{
+              input: {
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton onClick={() => setShowPassword(!showPassword)}>
+                      {showPassword ? (
+                        <VisibilityOffIcon fontSize="small" />
+                      ) : (
+                        <VisibilityIcon fontSize="small" />
+                      )}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
+
           {/* 이름 & 전화번호 */}
           <Box sx={{ display: "flex", gap: 2 }}>
             <TextField
@@ -442,8 +468,6 @@ export default function MemberModal({ open, onClose }: ModalProps) {
               onChange={(e) =>
                 handleChange("isEmployed", e.target.value === "true")
               }
-              // e:클릭시 발생한 이벤트.
-              // e.target.value : 클릭한 라디오 버튼의 value 속성값.
             >
               <FormControlLabel
                 value={true}

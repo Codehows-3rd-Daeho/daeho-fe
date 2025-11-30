@@ -42,10 +42,16 @@ function PrivateRoute({ children, isAdmin = false }: PrivateRouteProps) {
 }
 
 export default function App() {
+  const { isAuthenticated } = useAuthStore();
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<Login />}></Route>
+        <Route
+          path="/login"
+          // 로그인한 상태에서 로그인 페이지 접근 불가.
+          element={isAuthenticated ? <Navigate to="/" replace /> : <Login />}
+          // element={<Login />}
+        ></Route>
         <Route
           path="*"
           element={
@@ -91,6 +97,15 @@ export default function App() {
                 }}
               >
                 <Routes>
+                  <Route
+                    path="/"
+                    element={
+                      <PrivateRoute>
+                        <IssueRegister />
+                      </PrivateRoute>
+                    }
+                  />
+
                   <Route
                     path="/issue/register"
                     element={
