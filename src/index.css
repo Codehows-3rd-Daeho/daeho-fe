@@ -1,3 +1,12 @@
+/*
+* base:body, h1~h6, p 기본 폰트, margin 등의 기본 스타일
+* components: 버튼, form 기본 스타일 등 재사용 가능한 컴포넌트 스타일 
+* utilities: flex, text-center, bg-blue-500 등 모든 유틸리티 클래스 적용
+*/
+/* @tailwind base;
+@tailwind components;
+@tailwind utilities; */
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

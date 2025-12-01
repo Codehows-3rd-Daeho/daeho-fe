@@ -1,9 +1,10 @@
 import { issueCreate } from "../api/issueApi";
-import { Box, Button, Typography } from "@mui/material";
+import { Box, Button, TextField, Typography } from "@mui/material";
 import { useState } from "react";
 import type { BaseFormValues } from "../type/type";
-import FormField from "../base/component/FormField";
-import SelectField from "../base/component/SelectField";
+import { Select, MenuItem, FormControl, InputAdornment } from "@mui/material";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 export default function IssueCreate() {
   const [formData, setFormData] = useState<BaseFormValues>({
@@ -115,186 +116,445 @@ export default function IssueCreate() {
   };
 
   return (
-    <Box sx={{ display: "flex", gap: 2 }}>
-      {/* 왼쪽 컬럼 */}
-      <Box id="leftBox">
-        <FormField
-          label="제목"
-          name="title"
-          value={formData.title}
-          onChange={(e) =>
-            setFormData((prev) => ({ ...prev, title: e.target.value }))
-          }
-          required
-        />
-        <FormField
-          label="본문"
-          name="content"
-          value={formData.content}
-          onChange={(e) =>
-            setFormData((prev) => ({ ...prev, content: e.target.value }))
-          }
-          required
-          inputHeight="300px"
-        />
-        {/* 첨부파일 영역 */}
-        <Box>
-          <input
-            type="file"
-            multiple
-            id="fileUpload"
-            style={{ display: "none" }}
-            className="baseform-button file-select-button"
-            onChange={handleFileUpload}
-          />
+    <Box>
+      <Box
+        sx={{
+          display: "flex",
+          gap: 3,
+          p: 3,
+          bgcolor: "#f5f5f5",
+          minHeight: "100vh",
+          minWidth: "1000px",
+        }}
+      >
+        {/* 왼쪽 섹션 */}
+        <Box
+          sx={{
+            flex: 1,
+            bgcolor: "white",
+            borderRadius: 2,
+            p: 3,
+            boxShadow: 1,
+          }}
+        >
+          {/* 제목 */}
+          <Box sx={{ mb: 3 }}>
+            <Typography sx={{ fontWeight: 600, fontSize: "0.875rem", mb: 1 }}>
+              제목
+            </Typography>
+            <TextField
+              fullWidth
+              placeholder="제목을 입력해주세요"
+              value={formData.title}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, title: e.target.value }))
+              }
+              size="small"
+              sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
+            />
+          </Box>
 
-          <Button
-            className="baseform-button file-select-button"
-            variant="contained"
-            onClick={openFileInput}
-          >
-            파일 선택
-          </Button>
-          {/* 선택한 파일들 표시 및 삭제 버튼*/}
-          {formData.file?.map((file, idx) => (
-            <Box key={idx}>
-              <Typography>{file.name}</Typography>
-              <Button
-                size="small"
-                onClick={() =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    file: prev.file?.filter((_, i) => i !== idx),
-                  }))
-                }
+          {/* 본문 */}
+          <Box sx={{ mb: 3 }}>
+            <Typography sx={{ fontWeight: 600, fontSize: "0.875rem", mb: 1 }}>
+              본문
+            </Typography>
+            <TextField
+              fullWidth
+              multiline
+              rows={10}
+              placeholder="내용을 입력해주세요"
+              value={formData.content}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, content: e.target.value }))
+              }
+              sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
+            />
+          </Box>
+
+          {/* 첨부 파일 */}
+          <Box sx={{ mb: 3 }}>
+            <Typography sx={{ fontWeight: 600, fontSize: "0.875rem", mb: 1 }}>
+              첨부 파일
+            </Typography>
+
+            <input
+              type="file"
+              multiple
+              id="fileUpload"
+              style={{ display: "none" }}
+              onChange={handleFileUpload}
+            />
+
+            <Box
+              sx={{
+                border: "2px dashed #d0d0d0",
+                borderRadius: 2,
+                p: 3,
+                textAlign: "center",
+                cursor: "pointer",
+                transition: "all 0.2s",
+                "&:hover": {
+                  bgcolor: "#fafafa",
+                  borderColor: "#999",
+                },
+              }}
+              onClick={openFileInput}
+            >
+              <UploadFileIcon sx={{ fontSize: 48, color: "#9e9e9e", mb: 1 }} />
+              <Typography
+                sx={{ fontSize: "0.875rem", fontWeight: 500, mb: 0.5 }}
               >
-                삭제
+                Choose a file or drag & drop it here.
+              </Typography>
+
+              {/* <Button
+                variant="outlined"
+                size="small"
+                onClick={openFileInput}
+                sx={{ borderRadius: 1.5 }}
+              >
+                Browse files
+              </Button> */}
+            </Box>
+
+            {/* 업로드된 파일 목록 */}
+            {formData.file && formData.file.length > 0 && (
+              <Box sx={{ mt: 2 }}>
+                {formData.file.map((file, idx) => (
+                  <Box
+                    key={idx}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      p: 1.5,
+                      bgcolor: "#f5f5f5",
+                      borderRadius: 1.5,
+                      mb: 1,
+                    }}
+                  >
+                    <Box
+                      sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+                    >
+                      <Box
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          bgcolor: "#e0e0e0",
+                          borderRadius: 1,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Typography sx={{ fontSize: "1.2rem" }}>📄</Typography>
+                      </Box>
+                      <Box>
+                        <Typography
+                          sx={{ fontSize: "0.875rem", fontWeight: 500 }}
+                        >
+                          {file.name}
+                        </Typography>
+                        <Typography
+                          sx={{ fontSize: "0.75rem", color: "text.secondary" }}
+                        >
+                          {(file.size / 1024 / 1024).toFixed(1)}MB · Uploading
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Button
+                      size="small"
+                      onClick={() =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          file: prev.file?.filter((_, i) => i !== idx),
+                        }))
+                      }
+                      sx={{ minWidth: "auto", p: 1 }}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </Button>
+                  </Box>
+                ))}
+              </Box>
+            )}
+          </Box>
+        </Box>
+
+        {/* 오른쪽 섹션 */}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column", // 세로 배치
+            alignItems: "center", // 가로 가운데 정렬
+            justifyContent: "center", // 세로 가운데 정렬
+            height: "100%", // 또는 원하는 높이 값
+          }}
+        >
+          <Box
+            sx={{
+              height: 400,
+              width: 380,
+              display: "flex",
+              flexDirection: "column",
+              gap: 2,
+              bgcolor: "white",
+            }}
+          >
+            {/* 상태 */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 2,
+                borderRadius: 2,
+                px: 2,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontWeight: 600,
+                  fontSize: "0.875rem",
+                  width: "80px",
+                }}
+              >
+                상태
+              </Typography>
+              <Select
+                fullWidth
+                size="small"
+                value={formData.status}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, status: e.target.value }))
+                }
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
+              >
+                <MenuItem value="PLANNED">진행전</MenuItem>
+                <MenuItem value="IN_PROGRESS">진행중</MenuItem>
+                <MenuItem value="COMPLETED">진행 완료</MenuItem>
+              </Select>
+            </Box>
+            {/* 주관자 */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 2,
+                borderRadius: 2,
+                px: 2,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontWeight: 600,
+                  fontSize: "0.875rem",
+                  width: "80px",
+                }}
+              >
+                주관자
+              </Typography>
+              <TextField
+                fullWidth
+                size="small"
+                value={formData.host}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, host: e.target.value }))
+                }
+                placeholder="홍길동 과장"
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
+              />
+            </Box>
+            {/* 시작일/마감일 */}
+            <Box sx={{ borderRadius: 2, p: 2 }}>
+              <Box
+                sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+              >
+                <Box>
+                  <Typography
+                    sx={{ fontWeight: 600, fontSize: "0.875rem", mb: 1.5 }}
+                  >
+                    시작일
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    type="date"
+                    value={formData.startDate}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        startDate: e.target.value,
+                      }))
+                    }
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
+                    InputProps={{
+                      endAdornment: <InputAdornment position="end" />,
+                    }}
+                  />
+                </Box>
+                <Box>
+                  <Typography
+                    sx={{ fontWeight: 600, fontSize: "0.875rem", mb: 1.5 }}
+                  >
+                    마감일
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    type="date"
+                    value={formData.endDate ?? ""}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        endDate: e.target.value,
+                      }))
+                    }
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
+                    InputProps={{
+                      endAdornment: <InputAdornment position="end" />,
+                    }}
+                  />
+                </Box>
+              </Box>
+            </Box>
+            {/* 카테고리 */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 2,
+                borderRadius: 2,
+                px: 2,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontWeight: 600,
+                  fontSize: "0.875rem",
+                  width: "80px",
+                }}
+              >
+                카테고리
+              </Typography>
+              <FormControl fullWidth size="small">
+                <Select
+                  value={formData.category}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      category: e.target.value,
+                    }))
+                  }
+                  displayEmpty
+                  sx={{ borderRadius: 1.5 }}
+                >
+                  <MenuItem value="">영업/고객</MenuItem>
+                  <MenuItem value="1">일반업무</MenuItem>
+                  <MenuItem value="2">영업/고객</MenuItem>
+                  <MenuItem value="3">연구 개발</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+            {/* 관련 부서 */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 2,
+                borderRadius: 2,
+                px: 2,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontWeight: 600,
+                  fontSize: "0.875rem",
+                  width: "80px",
+                }}
+              >
+                관련 부서
+              </Typography>
+              <FormControl fullWidth size="small">
+                <Select<string[]>
+                  multiple
+                  value={formData.department.map(String)}
+                  onChange={(e) =>
+                    handleDepartmentChange(e.target.value as string[])
+                  }
+                  sx={{ borderRadius: 1.5 }}
+                >
+                  <MenuItem value="1">기획</MenuItem>
+                  <MenuItem value="2">디자인</MenuItem>
+                  <MenuItem value="3">개발</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+            {/* 참여자 */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 2,
+                borderRadius: 2,
+                px: 2,
+              }}
+            >
+              <Typography
+                sx={{
+                  fontWeight: 600,
+                  fontSize: "0.875rem",
+                  width: "80px",
+                }}
+              >
+                참여자
+              </Typography>
+              <Button
+                fullWidth
+                variant="outlined"
+                size="small"
+                onClick={() => handleAddMember("1")}
+                sx={{
+                  justifyContent: "flex-start",
+                  color: "text.secondary",
+                  borderRadius: 1.5,
+                  textTransform: "none",
+                }}
+              >
+                참여자 추가
               </Button>
             </Box>
-          ))}
+          </Box>
+          {/* 등록 버튼 */}
+          <Box sx={{ display: "flex" }}>
+            <Box
+              sx={{
+                width: 250,
+              }}
+            ></Box>
+            <Button
+              variant="contained"
+              onClick={handleSubmit}
+              sx={{
+                width: 100,
+                p: 2,
+                m: 3,
+                fontWeight: 600,
+                borderRadius: 1.5,
+                "&:hover": {
+                  boxShadow: 3,
+                },
+              }}
+            >
+              등록
+            </Button>
+          </Box>
         </Box>
-      </Box>
-
-      {/* 오른쪽 컬럼 */}
-      <Box id="rightBox">
-        <SelectField
-          label="상태"
-          name="status"
-          value={formData.status} //여기가 한글이면 안됨
-          onChange={(e) =>
-            setFormData((prev) => ({
-              ...prev,
-              status: e.target.value as string,
-            }))
-          }
-          required
-          horizontal
-          options={[
-            { value: "PLANNED", label: "진행전" },
-            { value: "IN_PROGRESS", label: "진행중" },
-            { value: "COMPLETED", label: "진행 완료" },
-          ]}
-        />
-        <FormField
-          label="주관자"
-          name="host"
-          value={formData.host}
-          onChange={(e) =>
-            setFormData((prev) => ({ ...prev, host: e.target.value }))
-          }
-          required
-          inputWidth="350px"
-          horizontal
-        />
-
-        {/* 시작일, 마감일 */}
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "row", // 가로 정렬
-            justifyContent: "center", // 수평 중앙 정렬
-            alignItems: "center", // 수직 중앙 정렬
-            gap: 2, // 요소 간 간격
-          }}
-        >
-          <FormField
-            label="시작일"
-            name="startDate"
-            value={formData.startDate}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, startDate: e.target.value }))
-            }
-            required
-            inputWidth="220px"
-          />
-          <FormField
-            label="마감일"
-            name="endDate"
-            value={formData.endDate ?? ""} //없으면 빈문자열
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, endDate: e.target.value }))
-            }
-            required
-            inputWidth="220px"
-          />
-        </Box>
-        <SelectField
-          label="카테고리"
-          name="category"
-          value={formData.category}
-          onChange={(e) =>
-            setFormData((prev) => ({
-              ...prev,
-              category: e.target.value as string,
-            }))
-          }
-          required
-          horizontal
-          options={[
-            { value: "1", label: "일반업무" },
-            { value: "2", label: "영업/고객" },
-            { value: "3", label: "연구 개발" },
-          ]}
-        />
-
-        <SelectField
-          label="관련 부서"
-          name="department"
-          value={formData.department}
-          onChange={(e) => handleDepartmentChange(e.target.value as string[])}
-          required
-          horizontal
-          multiple
-          options={[
-            { value: "1", label: "기획" },
-            { value: "2", label: "디자인" },
-            { value: "3", label: "개발" },
-          ]}
-        />
-        {/* 버튼과 라벨 텍스트를 함께 넣기 */}
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-          }}
-        >
-          <Typography sx={{ textAlign: "right" }}>참여자</Typography>
-          <Button
-            variant="contained"
-            className="baseform-button add-member-button"
-            onClick={() => handleAddMember("1")} // 예시로 "홍길동" 추가
-          >
-            참여자 추가
-          </Button>
-        </Box>
-        <Button
-          variant="contained"
-          className="baseform-button submit-button"
-          onClick={handleSubmit}
-        >
-          등록
-        </Button>
       </Box>
     </Box>
   );
