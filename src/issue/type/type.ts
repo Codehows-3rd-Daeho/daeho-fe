@@ -28,4 +28,5 @@ export interface BaseFormValues {
   category: string; // 카테고리
   department: string[] | number[]; // 관련 부서 (다중)
   member: string[]; // 관련 멤버 (다중)
+  isDel: string;
 }

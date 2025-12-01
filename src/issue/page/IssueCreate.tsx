@@ -1,34 +1,29 @@
+import { issueCreate } from "../api/issueApi";
 import { Box, Button, Typography } from "@mui/material";
 import { useState } from "react";
 import type { BaseFormValues } from "../type/type";
-import FormField from "./component/FormField";
-import SelectField from "./component/SelectField";
-import "./baseForm.css";
+import FormField from "../base/component/FormField";
+import SelectField from "../base/component/SelectField";
 
-//BaseForm 컴포넌트가 받아야 하는 props의 타입을 정의
-//BaseForm을 사용할 때 반드시 초기값(initialValues)이라는 props를 넘겨야 하고, 그 값은 BaseFormValues 형태여야 한다
-//<BaseForm initialValues={...} />으로 사용됨
-export interface BaseFormProps<T extends BaseFormValues> {
-  //BaseForm이 어떤 타입(T)을 사용할지 제네릭으로 받는다
-  initialValues: T;
-  //api호출시 사용됨
-  onSubmit: (formData: FormData) => void;
-}
-
-export default function BaseForm<T extends BaseFormValues>({
-  initialValues,
-  onSubmit,
-}: BaseFormProps<T>) {
+export default function IssueCreate() {
   const [formData, setFormData] = useState<BaseFormValues>({
-    ...initialValues,
-    // formData 객체에 file 속성이 항상 존재함을 보장
-    file: initialValues.file ?? [],
+    title: "",
+    content: "",
+    file: [],
+    status: "",
+    host: "",
+    startDate: "",
+    endDate: "",
+    category: "",
+    department: [],
+    member: [],
+    isDel: "false",
   });
 
   const handleSubmit = async () => {
     const formDataObj = new FormData();
 
-    // 1. DTO에 해당하는 데이터 객체 생성ㄴ
+    // 1. DTO에 해당하는 데이터 객체 생성
     // 백엔드의 IssueDto에 매핑되어야 할 모든 필드(파일 제외)
     const issueDto = {
       title: formData.title, //속성(키): 넣을 값 | 백엔드 Dto 필드명: 프론트 필드명
@@ -39,26 +34,51 @@ export default function BaseForm<T extends BaseFormValues>({
       endDate: formData.endDate ?? "",
       //서버로 전송 시 string -> Number 변환
       categoryId: Number(formData.category),
-      departmentId: formData.department.map(Number),
-      membersId: formData.member.map(Number),
+      departmentIds: formData.department.map(Number),
+      memberIds: formData.member.map(Number),
+      isDel: "false",
     };
 
     // 2. issueDto를 JSON 문자열로 변환하여 "data" 파트에 추가
     // 백엔드의 @RequestPart("data")와 매칭됩니다.
-    formDataObj.append("data", JSON.stringify(issueDto));
-
-    console.log("전체", formDataObj);
-    console.log("제목: ", formData.title);
-    console.log("참여자: ", issueDto.categoryId);
-    console.log("부서: ", issueDto.departmentId);
-    console.log("참여자: ", issueDto.membersId);
+    // formDataObj.append("data", JSON.stringify(issueDto));
+    // Spring에서 DTO로 자동 매핑
+    formDataObj.append(
+      "data",
+      new Blob([JSON.stringify(issueDto)], { type: "application/json" })
+    );
 
     // 3. 파일 배열을 forEach로 순회하며 "file" 파트에 추가
     // 백엔드의 @RequestPart(value = "file")과 매칭
     formData.file?.forEach((file) => formDataObj.append("file", file));
 
-    //부모(<IssueRegister>)가 내려준 함수를 호출하고, BaseForm에서 만든 데이터를 전달함
-    onSubmit(formDataObj);
+    console.log("====== React State(formData) ======");
+    console.log(JSON.stringify(formData, null, 2));
+    console.log("전체", formDataObj);
+    console.log("제목: ", formData.title);
+
+    console.log("====== DTO 내용(issueDto) ======");
+    console.log(JSON.stringify(issueDto, null, 2));
+    console.log("카테고리: ", issueDto.categoryId);
+    console.log("부서: ", issueDto.departmentIds);
+    console.log("참여자: ", issueDto.memberIds);
+    console.log("진행상태: ", issueDto.status);
+    console.log("삭제상태: ", issueDto.isDel);
+
+    console.log("====== FormData 실제 값 ======");
+    // FormData 객체 내부 확인 (중요!!)
+    for (const [key, value] of formDataObj.entries()) {
+      if (value instanceof Blob) {
+        console.log(
+          `key: ${key}, value: Blob(size=${value.size}, type=${value.type})`
+        );
+      } else {
+        console.log(`key: ${key}, value:`, value);
+      }
+    }
+    console.log("보내는 데이터", issueDto);
+    await issueCreate(formDataObj);
+    alert("이슈가 등록되었습니다!");
   };
 
   // 파일 입력창 열기
@@ -160,7 +180,7 @@ export default function BaseForm<T extends BaseFormValues>({
         <SelectField
           label="상태"
           name="status"
-          value={formData.status}
+          value={formData.status} //여기가 한글이면 안됨
           onChange={(e) =>
             setFormData((prev) => ({
               ...prev,
@@ -170,9 +190,9 @@ export default function BaseForm<T extends BaseFormValues>({
           required
           horizontal
           options={[
-            { value: "진행전", label: "진행전" },
-            { value: "진행중", label: "진행중" },
-            { value: "진행 완료", label: "진행 완료" },
+            { value: "PLANNED", label: "진행전" },
+            { value: "IN_PROGRESS", label: "진행중" },
+            { value: "COMPLETED", label: "진행 완료" },
           ]}
         />
         <FormField
