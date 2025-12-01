@@ -5,6 +5,10 @@ import type { BaseFormValues } from "../type/type";
 import { Select, MenuItem, FormControl, InputAdornment } from "@mui/material";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { LocalizationProvider } from "@mui/x-date-pickers-pro";
+import { AdapterDayjs } from "@mui/x-date-pickers-pro/AdapterDayjs";
+import { StaticDateRangePicker } from "@mui/x-date-pickers-pro/StaticDateRangePicker";
+import dayjs, { Dayjs } from "dayjs";
 
 export default function IssueCreate() {
   const [formData, setFormData] = useState<BaseFormValues>({
@@ -113,6 +117,21 @@ export default function IssueCreate() {
       ...prev,
       member: [...(prev.member ?? []), member],
     }));
+  };
+
+  //DatePicker와 TextField연결
+  const [value, setValue] = useState<[Dayjs | null, Dayjs | null]>([
+    dayjs(formData.startDate),
+    dayjs(formData.endDate),
+  ]);
+
+  const handleDateChange = (newValue: [Dayjs | null, Dayjs | null]) => {
+    setValue(newValue); // 달력 선택 반영
+    setFormData((prev) => ({
+      ...prev,
+      startDate: newValue[0] ? newValue[0].format("YYYY-MM-DD") : "",
+      endDate: newValue[1] ? newValue[1].format("YYYY-MM-DD") : "",
+    })); // TextField에 반영
   };
 
   return (
@@ -292,9 +311,10 @@ export default function IssueCreate() {
             height: "100%", // 또는 원하는 높이 값
           }}
         >
+          {/* 흰색 박스 영역 */}
           <Box
             sx={{
-              height: 400,
+              height: 1000,
               width: 380,
               display: "flex",
               flexDirection: "column",
@@ -369,56 +389,73 @@ export default function IssueCreate() {
             </Box>
             {/* 시작일/마감일 */}
             <Box sx={{ borderRadius: 2, p: 2 }}>
-              <Box
-                sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
-              >
-                <Box>
-                  <Typography
-                    sx={{ fontWeight: 600, fontSize: "0.875rem", mb: 1.5 }}
-                  >
-                    시작일
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    type="date"
-                    value={formData.startDate}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        startDate: e.target.value,
-                      }))
-                    }
-                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
-                    InputProps={{
-                      endAdornment: <InputAdornment position="end" />,
-                    }}
-                  />
+              {/* 캘린더 영역 */}
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 2,
+                  }}
+                >
+                  <Box>
+                    <Typography
+                      sx={{ fontWeight: 600, fontSize: "0.875rem", mb: 1.5 }}
+                    >
+                      시작일
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      type="date"
+                      value={formData.startDate}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          startDate: e.target.value,
+                        }))
+                      }
+                      sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
+                      InputProps={{
+                        endAdornment: <InputAdornment position="end" />,
+                      }}
+                    />
+                  </Box>
+                  <Box>
+                    <Typography
+                      sx={{ fontWeight: 600, fontSize: "0.875rem", mb: 1.5 }}
+                    >
+                      마감일
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      type="date"
+                      value={formData.endDate ?? ""}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          endDate: e.target.value,
+                        }))
+                      }
+                      sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
+                      InputProps={{
+                        endAdornment: <InputAdornment position="end" />,
+                      }}
+                    />
+                  </Box>
                 </Box>
-                <Box>
-                  <Typography
-                    sx={{ fontWeight: 600, fontSize: "0.875rem", mb: 1.5 }}
-                  >
-                    마감일
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    size="small"
-                    type="date"
-                    value={formData.endDate ?? ""}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        endDate: e.target.value,
-                      }))
-                    }
-                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
-                    InputProps={{
-                      endAdornment: <InputAdornment position="end" />,
-                    }}
-                  />
-                </Box>
-              </Box>
+
+                <StaticDateRangePicker
+                  displayStaticWrapperAs="desktop" //항상 화면에 표시
+                  calendars={1} //한달만 표시
+                  value={value}
+                  onChange={handleDateChange}
+                  slotProps={{
+                    actionBar: { sx: { display: "none" } }, // 확인/취소 버튼 숨김
+                  }}
+                />
+              </LocalizationProvider>
             </Box>
             {/* 카테고리 */}
             <Box
@@ -452,7 +489,6 @@ export default function IssueCreate() {
                   displayEmpty
                   sx={{ borderRadius: 1.5 }}
                 >
-                  <MenuItem value="">영업/고객</MenuItem>
                   <MenuItem value="1">일반업무</MenuItem>
                   <MenuItem value="2">영업/고객</MenuItem>
                   <MenuItem value="3">연구 개발</MenuItem>
