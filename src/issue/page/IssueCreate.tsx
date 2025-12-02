@@ -1,7 +1,7 @@
 import { issueCreate } from "../api/issueApi";
 import { Box, Button, TextField, Typography } from "@mui/material";
-import { useState } from "react";
-import type { BaseFormValues } from "../type/type";
+import { useEffect, useState } from "react";
+import type { IssueFormValues } from "../type/type";
 import { Select, MenuItem, FormControl, InputAdornment } from "@mui/material";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -9,6 +9,8 @@ import { DateRange } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import dayjs from "dayjs";
+import { getCategory, getDepartment } from "../../admin/api/MasterDataApi";
+import type { MasterDataType } from "../../admin/type/SettingType";
 
 interface DateRangeType {
   selection: {
@@ -19,11 +21,11 @@ interface DateRangeType {
 }
 
 export default function IssueCreate() {
-  const [formData, setFormData] = useState<BaseFormValues>({
+  const [formData, setFormData] = useState<IssueFormValues>({
     title: "",
     content: "",
     file: [],
-    status: "",
+    status: "PLANNED",
     host: "",
     startDate: "",
     endDate: "",
@@ -32,6 +34,26 @@ export default function IssueCreate() {
     member: [],
     isDel: "false",
   });
+
+  // 카테고리와 부서 상태
+  const [categories, setCategories] = useState<MasterDataType[]>([]);
+  const [departments, setDepartments] = useState<MasterDataType[]>([]);
+  // 부서 직급 가져오기
+  useEffect(() => {
+    // 모달이 열릴 때 부서와 직급 데이터를 불러옵니다.
+    async function fetchData() {
+      try {
+        const dep = await getDepartment();
+        const cat = await getCategory();
+
+        setDepartments(dep); // 부서 데이터 저장
+        setCategories(cat); // 카테고리 데이터 저장
+      } catch (error) {
+        console.log("데이터를 불러오는 중 오류 발생", error);
+      }
+    }
+    fetchData();
+  }, []);
 
   const handleSubmit = async () => {
     const formDataObj = new FormData();
@@ -127,30 +149,16 @@ export default function IssueCreate() {
     }));
   };
 
-  //DatePicker와 TextField연결
-  // const [value, setValue] = useState<[Dayjs | null, Dayjs | null]>([
-  //   dayjs(formData.startDate),
-  //   dayjs(formData.endDate),
-  // ]);
-
-  // const handleDateChange = (newValue: [Dayjs | null, Dayjs | null]) => {
-  //   setValue(newValue); // 달력 선택 반영
-  //   setFormData((prev) => ({
-  //     ...prev,
-  //     startDate: newValue[0] ? newValue[0].format("YYYY-MM-DD") : "",
-  //     endDate: newValue[1] ? newValue[1].format("YYYY-MM-DD") : "",
-  //   })); // TextField에 반영
-  // };
-
-  //DatePicker와 TextField연결
+  // range : 현재 달력에서 선택된 날짜 범위를 담는 상태
   const [range, setRange] = useState([
     {
-      startDate: new Date(),
+      startDate: new Date(), //오늘 날짜
       endDate: new Date(),
-      key: "selection",
+      key: "selection", //react-date-range에서 범위를 구분
     },
   ]);
 
+  //DatePicker와 TextField연결
   const handleSelect = (ranges: DateRangeType) => {
     const { startDate, endDate } = ranges.selection;
 
@@ -255,15 +263,6 @@ export default function IssueCreate() {
               >
                 Choose a file or drag & drop it here.
               </Typography>
-
-              {/* <Button
-                variant="outlined"
-                size="small"
-                onClick={openFileInput}
-                sx={{ borderRadius: 1.5 }}
-              >
-                Browse files
-              </Button> */}
             </Box>
 
             {/* 업로드된 파일 목록 */}
@@ -474,7 +473,7 @@ export default function IssueCreate() {
                 </Box>
               </Box>
 
-              {/* 📌 react-date-range 달력은 여기! */}
+              {/* react-date-range 달력*/}
               <Box sx={{ mt: 2 }}>
                 <DateRange
                   ranges={range}
@@ -517,9 +516,15 @@ export default function IssueCreate() {
                   displayEmpty
                   sx={{ borderRadius: 1.5 }}
                 >
-                  <MenuItem value="1">일반업무</MenuItem>
-                  <MenuItem value="2">영업/고객</MenuItem>
-                  <MenuItem value="3">연구 개발</MenuItem>
+                  {/* categories.map : 배열을 돌면서 <MenuItem> 컴포넌트 생성
+                  key: React 내부에서 사용하는 키
+                  value: 선택 값, formData에 저장
+                  {cat.name}: 화면에 표시되는 텍스트 */}
+                  {categories.map((cat) => (
+                    <MenuItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Box>
@@ -552,9 +557,11 @@ export default function IssueCreate() {
                   }
                   sx={{ borderRadius: 1.5 }}
                 >
-                  <MenuItem value="1">기획</MenuItem>
-                  <MenuItem value="2">디자인</MenuItem>
-                  <MenuItem value="3">개발</MenuItem>
+                  {departments.map((dep) => (
+                    <MenuItem key={dep.id} value={dep.id}>
+                      {dep.name}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Box>

@@ -17,7 +17,7 @@ export interface IssueListResponse {
   totalElements: number;
 }
 
-export interface BaseFormValues {
+export interface IssueFormValues {
   title: string; // 제목
   content: string; // 내용
   file?: File[]; // 첨부 파일 (다중)
@@ -29,4 +29,12 @@ export interface BaseFormValues {
   department: string[] | number[]; // 관련 부서 (다중)
   member: string[]; // 관련 멤버 (다중)
   isDel: string;
+}
+
+//이슈 등록시 사용, 주관자,
+export interface IssueMemberData {
+  id: number;
+  name: string;
+  departmentName: string;
+  jobPositionName: string;
 }
