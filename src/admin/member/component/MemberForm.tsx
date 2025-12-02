@@ -10,6 +10,8 @@ import {
   InputAdornment,
   IconButton,
   Button,
+  Input,
+  Avatar,
 } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
@@ -24,6 +26,9 @@ type MemberFormProps = {
   showPassword?: boolean;
   onTogglePassword?: () => void;
   handleChange: <K extends keyof Member>(field: K, value: Member[K]) => void;
+  handleImageChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  profileUrl?: string;
+  handleRemoveProfile?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   errors: Record<string, string>;
   validateField: (field: string, value: string) => void;
   isDuplicate: boolean;
@@ -42,6 +47,9 @@ export default function MemberForm({
   showPassword,
   onTogglePassword,
   handleChange,
+  handleImageChange,
+  profileUrl,
+  handleRemoveProfile,
   errors,
   validateField,
   isDuplicate,
@@ -60,27 +68,48 @@ export default function MemberForm({
         mt: 2,
       }}
     >
-      {/* 프로필 사진
-        <Box sx={{ display: "flex", justifyContent: "center" }}>
-            <Avatar
-                sx={{ width: 150, height: 200, borderRadius: "4px" }}
-                src={member.profileImage || "/default-profile.png"} // 기본 이미지 추가
-            />
-            </Box>
-            <Box sx={{ display: "flex", justifyContent: "center", mb: 1 }}>
-            <Input
-                accept="image/*"
-                type="file"
-                onChange={handleImageChange}
-                sx={{ display: "none" }}
-                id="upload-photo"
-            />
-            <label htmlFor="upload-photo">
-                <Button variant="outlined" component="span">
-                프로필 사진 업로드
-                </Button>
-            </label>
-        </Box> */}
+      <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
+        <Box sx={{ position: "relative", width: 150, height: 200 }}>
+          <Avatar
+            sx={{ width: "100%", height: "100%", borderRadius: "4px" }}
+            src={profileUrl || "/default-profile.png"}
+          />
+          {profileUrl && (
+            <IconButton
+              size="small"
+              onClick={handleRemoveProfile}
+              sx={{
+                position: "absolute",
+                top: 4,
+                right: 4,
+                borderRadius: "4px",
+                padding: "2px 6px",
+                backgroundColor: "rgba(128,128,128,0.6)",
+                color: "white",
+                "&:hover": { backgroundColor: "rgba(0,0,0,0.8)" },
+              }}
+            >
+              ✕
+            </IconButton>
+          )}
+        </Box>
+      </Box>
+
+      {/* 사진 업로드 버튼 */}
+      <Box sx={{ display: "flex", justifyContent: "center", mb: 1 }}>
+        <Input
+          inputProps={{ accept: "image/*" }}
+          type="file"
+          onChange={handleImageChange}
+          sx={{ display: "none" }}
+          id="upload-photo"
+        />
+        <label htmlFor="upload-photo">
+          <Button variant="outlined" component="span">
+            프로필 사진 업로드
+          </Button>
+        </label>
+      </Box>
 
       {/* 아이디 + 중복확인 버튼 */}
       <Box sx={{ display: "flex", gap: 1 }}>
@@ -135,7 +164,6 @@ export default function MemberForm({
           중복확인
         </Button>
       </Box>
-
       {/* 비밀번호 */}
       <Box sx={{ display: "flex", gap: 1 }}>
         <TextField
@@ -178,7 +206,6 @@ export default function MemberForm({
           </Button>
         )}
       </Box>
-
       {/* 이름 & 전화번호 */}
       <Box sx={{ display: "flex", gap: 2 }}>
         <TextField
@@ -209,7 +236,7 @@ export default function MemberForm({
           label="부서"
           variant="outlined"
           fullWidth
-          value={member.departmentId}
+          value={member.departmentId ?? ""}
           slotProps={{
             select: {
               MenuProps: {
@@ -235,7 +262,7 @@ export default function MemberForm({
           label="직급"
           variant="outlined"
           fullWidth
-          value={member.jobPositionId}
+          value={member.jobPositionId ?? ""}
           slotProps={{
             select: {
               MenuProps: {

@@ -43,6 +43,8 @@ export default function CreateMemberModal({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isDuplicate, setIsDuplicate] = useState(false); // 아이디 중복여부
   const [isChecked, setIsChecked] = useState(false); // 중복 검사 버튼 클릭
+  const [profileFile, setProfileFile] = useState<File | null>(null);
+  const [profileUrl, setProfileUrl] = useState<string>(""); // 미리보기용
 
   // 부서 직급 가져오기
   useEffect(() => {
@@ -128,6 +130,19 @@ export default function CreateMemberModal({
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return; // 파일이 선택되지 않았으면 아무 것도 하지 않고 함수 종료
+
+    setProfileFile(file);
+    setProfileUrl(URL.createObjectURL(file)); // 미리보기
+  };
+
+  const handleRemoveProfile = () => {
+    setProfileFile(null); // 업로드된 파일 제거
+    setProfileUrl(""); // 미리보기 제거
+  };
+
   const handleSubmit = async () => {
     if (!isChecked) return alert("아이디 중복 확인을 완료해주세요.");
     if (isDuplicate) return alert("이미 사용 중인 아이디입니다.");
@@ -159,10 +174,24 @@ export default function CreateMemberModal({
       alert("모든 항목을 올바르게 입력해주세요.");
       return;
     }
+
     try {
-      console.log(member);
-      await createMember(member);
+      const formData = new FormData();
+
+      // member객체 → JSON → Blob → "data" 라는 키로 넣기
+      const jsonBlob = new Blob([JSON.stringify(member)], {
+        type: "application/json",
+      });
+      formData.append("data", jsonBlob);
+
+      // 이미지 파일
+      if (profileFile) {
+        formData.append("file", profileFile);
+      }
+
+      await createMember(formData);
       await loadData();
+      alert("회원 등록 성공");
       handleClose();
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 401) {
@@ -187,6 +216,8 @@ export default function CreateMemberModal({
     setErrors({});
     setIsDuplicate(false);
     setIsChecked(false);
+    setProfileFile(null);
+    setProfileUrl("");
     onClose();
   };
 
@@ -213,6 +244,9 @@ export default function CreateMemberModal({
           showPassword={showPassword}
           onTogglePassword={handleTogglePassword}
           handleChange={handleChange}
+          handleImageChange={handleImageChange}
+          handleRemoveProfile={handleRemoveProfile}
+          profileUrl={profileUrl}
           errors={errors}
           validateField={validateField}
           isDuplicate={isDuplicate}

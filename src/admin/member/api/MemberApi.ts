@@ -2,8 +2,12 @@ import type { Member, MemberList } from "../type/MemberType";
 import httpClient from "../../../config/httpClient";
 import type { PageResponse } from "../../../common/List/type";
 
-export const createMember = async (data: Member) => {
-  const response = await httpClient.post(`/signup`, data);
+export const createMember = async (formData: FormData) => {
+  const response = await httpClient.post("/signup", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
   return response.data;
 };
 
@@ -41,10 +45,11 @@ export const generatePwd = async (id: number) => {
 };
 
 // 회원 수정
-export const updateMember = async (
-  id: number,
-  data: Member
-): Promise<Member> => {
-  const response = await httpClient.put(`/admin/member/${id}`, data);
+export const updateMember = async (id: number, formData: FormData) => {
+  const response = await httpClient.put(`/admin/member/${id}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
   return response.data;
 };

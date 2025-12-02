@@ -3,7 +3,7 @@ import { create } from "zustand";
 type AuthStore = {
   isAuthenticated: boolean; // 사용자가 인증되었는지 여부
   token: string | null; // 현재 사용자의 JWT 액세스 토큰
-  memberId: string | null; // 현재 로그인한 사용자의 고유 ID (JWT에서 추출)
+  memberId: number | null; // 현재 로그인한 사용자의 고유 ID (JWT에서 추출)
   role: string | null; // 현재 사용자의 권한 (ROLE_ADMIN, ROLE_USER)
   login: (token: string) => void; // 로그인 처리 함수
   logout: () => void; // 로그아웃 처리 함수

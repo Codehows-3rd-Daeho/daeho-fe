@@ -8,6 +8,7 @@ export interface Member {
   phone: string;
   email: string;
   isEmployed: boolean;
+  profileUrl?: string;
 }
 
 export interface MemberList {

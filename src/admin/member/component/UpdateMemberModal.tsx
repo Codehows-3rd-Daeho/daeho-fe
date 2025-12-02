@@ -19,6 +19,7 @@ import {
   updateMember,
 } from "../api/MemberApi";
 import axios from "axios";
+import { BASE_URL } from "../../../config/httpClient";
 
 type UpdateMemberModalProps = {
   open: boolean; // 모달이 열려있는지, 닫혀있는지
@@ -50,6 +51,8 @@ export default function UpdateMemberModal({
   const [isDuplicate, setIsDuplicate] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
   const [originalLoginId, setOriginalLoginId] = useState(""); // 기존 아이디
+  const [profileFile, setProfileFile] = useState<File | null>(null);
+  const [profileUrl, setProfileUrl] = useState<string>(""); // 미리보기용
 
   // 부서 직급 가져오기
   useEffect(() => {
@@ -64,13 +67,19 @@ export default function UpdateMemberModal({
           setJobPosition(pos);
           setMember(memberData);
           setOriginalLoginId(memberData.loginId); // 기존 아이디 저장.
+          // 사진 URL 설정
+          if (memberData.profileUrl) {
+            setProfileUrl(`${BASE_URL}${memberData.profileUrl}`);
+          } else {
+            setProfileUrl(""); // 기본 이미지 사용
+          }
         } catch (error) {
           console.log("데이터를 불러오는 중 오류 발생", error);
         }
       }
       fetchData();
     }
-  }, [open]); // 모달이 열릴 때만 호출
+  }, [open, memberId]); // 모달이 열릴 때만 호출
 
   const handleChange = <K extends keyof Member>(field: K, value: Member[K]) => {
     setMember((prev) => ({ ...prev, [field]: value })); //기존 member 상태를 유지하면서, 지정한 필드만 업데이트
@@ -152,6 +161,19 @@ export default function UpdateMemberModal({
     }
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return; // 파일이 선택되지 않았으면 아무 것도 하지 않고 함수 종료
+
+    setProfileFile(file);
+    setProfileUrl(URL.createObjectURL(file)); // 미리보기
+  };
+
+  const handleRemoveProfile = () => {
+    setProfileFile(null); // 업로드된 파일 제거
+    setProfileUrl(""); // 미리보기 제거
+  };
+
   const handleSubmit = async () => {
     if (member.loginId !== originalLoginId) {
       if (!isChecked) return alert("아이디 중복 확인을 완료해주세요.");
@@ -184,9 +206,22 @@ export default function UpdateMemberModal({
       return;
     }
     try {
-      console.log(member);
-      await updateMember(memberId, member);
+      const formData = new FormData();
+
+      // member객체 → JSON → Blob → "data" 라는 키로 넣기
+      const jsonBlob = new Blob([JSON.stringify(member)], {
+        type: "application/json",
+      });
+      formData.append("data", jsonBlob);
+
+      // 이미지 파일
+      if (profileFile) {
+        formData.append("file", profileFile);
+      }
+
+      await updateMember(memberId, formData);
       await loadData();
+      alert("회원 수정 완료");
       handleClose();
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 401) {
@@ -233,6 +268,9 @@ export default function UpdateMemberModal({
           department={department}
           jobPosition={jobPosition}
           handleChange={handleChange}
+          handleImageChange={handleImageChange}
+          handleRemoveProfile={handleRemoveProfile}
+          profileUrl={profileUrl}
           errors={errors}
           validateField={validateField}
           isDuplicate={isDuplicate}

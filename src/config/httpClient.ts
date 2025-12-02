@@ -11,12 +11,16 @@ import axios from "axios";
   2. JWT 토큰이 필요 없는 API 요청:
      await axios.get(`${BASE_URL}/public/info`);
 
-  3. try-catch에서 401 처리 안내:
+  3. multipart/form-data 요청 :
+  await httpClient.post("/signup", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 
+  **필수. try-catch에서 401 처리 안내**
      catch (error) {
-       // 전역 인터셉터가 이미 401 인증 오류를 처리하므로, 일반적으로는 아래 코드를 추가하지 않아도 됨
-
-       //  단, catch에서 인증 말고 다른 alert를 사용하게 된다면 아래 코드 추가.
+       //  catch에서 인증오류 말고 다른 alert를 사용하게 된다면 아래 코드 추가.
        if (axios.isAxiosError(error) && error.response?.status === 401) {
          return;
        }
@@ -31,7 +35,7 @@ const httpClient = axios.create({
   },
 });
 
-// 요청 인터셉터: 모든 HTTP 요청에 JWT 토큰을을 Authorization 헤더에 추가.
+// 요청 인터셉터: 모든 HTTP 요청에 JWT 토큰을 Authorization 헤더에 추가.
 httpClient.interceptors.request.use(
   (config) => {
     const token = sessionStorage.getItem("jwt");
