@@ -5,10 +5,18 @@ import type { BaseFormValues } from "../type/type";
 import { Select, MenuItem, FormControl, InputAdornment } from "@mui/material";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { LocalizationProvider } from "@mui/x-date-pickers-pro";
-import { AdapterDayjs } from "@mui/x-date-pickers-pro/AdapterDayjs";
-import { StaticDateRangePicker } from "@mui/x-date-pickers-pro/StaticDateRangePicker";
-import dayjs, { Dayjs } from "dayjs";
+import { DateRange } from "react-date-range";
+import "react-date-range/dist/styles.css";
+import "react-date-range/dist/theme/default.css";
+import dayjs from "dayjs";
+
+interface DateRangeType {
+  selection: {
+    startDate: Date;
+    endDate: Date;
+    key: string; //각 범위를 구분하기 위함
+  };
+}
 
 export default function IssueCreate() {
   const [formData, setFormData] = useState<BaseFormValues>({
@@ -120,17 +128,38 @@ export default function IssueCreate() {
   };
 
   //DatePicker와 TextField연결
-  const [value, setValue] = useState<[Dayjs | null, Dayjs | null]>([
-    dayjs(formData.startDate),
-    dayjs(formData.endDate),
+  // const [value, setValue] = useState<[Dayjs | null, Dayjs | null]>([
+  //   dayjs(formData.startDate),
+  //   dayjs(formData.endDate),
+  // ]);
+
+  // const handleDateChange = (newValue: [Dayjs | null, Dayjs | null]) => {
+  //   setValue(newValue); // 달력 선택 반영
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     startDate: newValue[0] ? newValue[0].format("YYYY-MM-DD") : "",
+  //     endDate: newValue[1] ? newValue[1].format("YYYY-MM-DD") : "",
+  //   })); // TextField에 반영
+  // };
+
+  //DatePicker와 TextField연결
+  const [range, setRange] = useState([
+    {
+      startDate: new Date(),
+      endDate: new Date(),
+      key: "selection",
+    },
   ]);
 
-  const handleDateChange = (newValue: [Dayjs | null, Dayjs | null]) => {
-    setValue(newValue); // 달력 선택 반영
+  const handleSelect = (ranges: DateRangeType) => {
+    const { startDate, endDate } = ranges.selection;
+
+    setRange([ranges.selection]); // 달력 선택 반영
+
     setFormData((prev) => ({
       ...prev,
-      startDate: newValue[0] ? newValue[0].format("YYYY-MM-DD") : "",
-      endDate: newValue[1] ? newValue[1].format("YYYY-MM-DD") : "",
+      startDate: dayjs(startDate).format("YYYY-MM-DD"),
+      endDate: dayjs(endDate).format("YYYY-MM-DD"),
     })); // TextField에 반영
   };
 
@@ -390,72 +419,71 @@ export default function IssueCreate() {
             {/* 시작일/마감일 */}
             <Box sx={{ borderRadius: 2, p: 2 }}>
               {/* 캘린더 영역 */}
-              <LocalizationProvider dateAdapter={AdapterDayjs}>
-                <Box
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: 2,
-                  }}
-                >
-                  <Box>
-                    <Typography
-                      sx={{ fontWeight: 600, fontSize: "0.875rem", mb: 1.5 }}
-                    >
-                      시작일
-                    </Typography>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      type="date"
-                      value={formData.startDate}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          startDate: e.target.value,
-                        }))
-                      }
-                      sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
-                      InputProps={{
-                        endAdornment: <InputAdornment position="end" />,
-                      }}
-                    />
-                  </Box>
-                  <Box>
-                    <Typography
-                      sx={{ fontWeight: 600, fontSize: "0.875rem", mb: 1.5 }}
-                    >
-                      마감일
-                    </Typography>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      type="date"
-                      value={formData.endDate ?? ""}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          endDate: e.target.value,
-                        }))
-                      }
-                      sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
-                      InputProps={{
-                        endAdornment: <InputAdornment position="end" />,
-                      }}
-                    />
-                  </Box>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 2,
+                }}
+              >
+                <Box>
+                  <Typography
+                    sx={{ fontWeight: 600, fontSize: "0.875rem", mb: 1.5 }}
+                  >
+                    시작일
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    type="date"
+                    value={formData.startDate}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        startDate: e.target.value,
+                      }))
+                    }
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
+                    InputProps={{
+                      endAdornment: <InputAdornment position="end" />,
+                    }}
+                  />
                 </Box>
+                <Box>
+                  <Typography
+                    sx={{ fontWeight: 600, fontSize: "0.875rem", mb: 1.5 }}
+                  >
+                    마감일
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    type="date"
+                    value={formData.endDate ?? ""}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        endDate: e.target.value,
+                      }))
+                    }
+                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
+                    InputProps={{
+                      endAdornment: <InputAdornment position="end" />,
+                    }}
+                  />
+                </Box>
+              </Box>
 
-                <StaticDateRangePicker
-                  displayStaticWrapperAs="desktop" //항상 화면에 표시
-                  calendars={1} //한달만 표시
-                  value={value}
-                  onChange={handleDateChange}
-                  slotProps={{
-                    actionBar: { sx: { display: "none" } }, // 확인/취소 버튼 숨김
-                  }}
+              {/* 📌 react-date-range 달력은 여기! */}
+              <Box sx={{ mt: 2 }}>
+                <DateRange
+                  ranges={range}
+                  onChange={handleSelect}
+                  showMonthAndYearPickers={false}
+                  showDateDisplay={false}
+                  direction="horizontal"
                 />
-              </LocalizationProvider>
+              </Box>
             </Box>
             {/* 카테고리 */}
             <Box
