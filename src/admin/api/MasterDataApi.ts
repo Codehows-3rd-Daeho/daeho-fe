@@ -4,6 +4,7 @@ import axios from "axios";
 import { BASE_URL } from "../../config/BaseUrl";
 import { getAxiosAuthHeaders } from "./MemberApi";
 import type { MasterDataType } from "../type/SettingType";
+import type { IssueMemberData } from "../../issue/type/type";
 
 // GET
 //직급 리스트
@@ -25,6 +26,19 @@ export const getCategory = async (): Promise<MasterDataType[]> => {
   const response = await axios.get(`${BASE_URL}/masterData/category`);
   console.log("카테고리 :", response.data);
 
+  return response.data;
+};
+//멤버 정보
+//회원 정보 GET 주관자 조회, 참여자 모달에 사용
+
+//아이디를 보내서, 이름, 직급 조회
+export const getHostData = async (
+  memberId: number
+): Promise<IssueMemberData> => {
+  const response = await axios.get(
+    `${BASE_URL}/masterData/partMember/${memberId}`
+  );
+  console.log("getHostData response:", response.data);
   return response.data;
 };
 

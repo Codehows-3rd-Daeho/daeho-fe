@@ -9,8 +9,13 @@ import { DateRange } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import dayjs from "dayjs";
-import { getCategory, getDepartment } from "../../admin/api/MasterDataApi";
+import {
+  getCategory,
+  getDepartment,
+  getHostData,
+} from "../../admin/api/MasterDataApi";
 import type { MasterDataType } from "../../admin/type/SettingType";
+import { useAuthStore } from "../../store/useAuthStore";
 
 interface DateRangeType {
   selection: {
@@ -38,6 +43,9 @@ export default function IssueCreate() {
   // 카테고리와 부서 상태
   const [categories, setCategories] = useState<MasterDataType[]>([]);
   const [departments, setDepartments] = useState<MasterDataType[]>([]);
+  // 로그인된 사용자 id
+  const { memberId } = useAuthStore();
+
   // 부서 직급 가져오기
   useEffect(() => {
     // 모달이 열릴 때 부서와 직급 데이터를 불러옵니다.
@@ -48,6 +56,20 @@ export default function IssueCreate() {
 
         setDepartments(dep); // 부서 데이터 저장
         setCategories(cat); // 카테고리 데이터 저장
+
+        //주관자 = 작성자 자동 입력
+        if (memberId) {
+          const hostData = await getHostData(memberId);
+
+          const hostString = `${hostData.name} ${hostData.jobPositionName}`;
+
+          setFormData((prev) => ({
+            ...prev,
+            host: hostString, // ★ 자동 입력
+          }));
+        } else {
+          console.log("memberId 없음:", memberId);
+        }
       } catch (error) {
         console.log("데이터를 불러오는 중 오류 발생", error);
       }
@@ -75,7 +97,7 @@ export default function IssueCreate() {
     };
 
     // 2. issueDto를 JSON 문자열로 변환하여 "data" 파트에 추가
-    // 백엔드의 @RequestPart("data")와 매칭됩니다.
+    // 백엔드의 @RequestPart("data")와 매칭
     // formDataObj.append("data", JSON.stringify(issueDto));
     // Spring에서 DTO로 자동 매핑
     formDataObj.append(

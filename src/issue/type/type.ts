@@ -35,6 +35,5 @@ export interface IssueFormValues {
 export interface IssueMemberData {
   id: number;
   name: string;
-  departmentName: string;
   jobPositionName: string;
 }

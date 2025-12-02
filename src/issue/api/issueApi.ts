@@ -1,7 +1,7 @@
 import axios from "axios";
 import { getAxiosAuthHeaders } from "../../admin/api/MemberApi";
 import { BASE_URL } from "../../config/BaseUrl";
-import type { IssueListResponse, IssueMemberData } from "../type/type";
+import type { IssueListResponse } from "../type/type";
 
 // 이슈 목록 조회
 export const getIssueList = async (
@@ -28,13 +28,4 @@ export const issueCreate = async (formData: FormData) => {
       ...getAxiosAuthHeaders().headers,
     },
   });
-};
-
-//회원 정보 GET 주관자 조회, 참여자 모달에 사용
-// GET
-//아이디를 보내서, 이름, 직급, 부서 조회
-export const getHostData = async (): Promise<IssueMemberData> => {
-  const response = await axios.get(`${BASE_URL}/issue/create`);
-  console.log("직급 : ", response.data);
-  return response.data;
 };

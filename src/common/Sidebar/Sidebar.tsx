@@ -17,17 +17,25 @@ import {
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
 import type { SidebarProps } from "./type";
-
+import { useNavigate } from "react-router-dom";
+import { useAuthStore } from "../../store/useAuthStore";
 export default function Sidebar({
   items,
   collapsed = false,
   onSelect,
   width = 300,
 }: SidebarProps & { isAdmin?: boolean }) {
-  // 현재 페이지 기준으로 부모 Collapse 초기 열기 상태 세팅
+  const navigate = useNavigate();
+  const { logout } = useAuthStore();
+  //로그아웃
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+  // 초기 open 상태
   const [open, setOpen] = useState<{ [key: string]: boolean }>(() => {
     const path = window.location.pathname;
-    const initialOpen: { [key: string]: boolean } = {};
+    const initialOpen: Record<string, boolean> = {};
     items.forEach((item) => {
       if (item.children?.some((child) => child.href === path)) {
         initialOpen[item.id] = true;
@@ -35,12 +43,10 @@ export default function Sidebar({
     });
     return initialOpen;
   });
-
   const handleToggle = (id: string) => {
     setOpen((prev) => ({ ...prev, [id]: !prev[id] }));
   };
-
-  // 현재 페이지 기준으로 선택된 메뉴 판단
+  // 현재 선택된 메뉴
   const selectedId = (() => {
     const path = window.location.pathname;
     let selected: string | null = null;
@@ -52,11 +58,8 @@ export default function Sidebar({
     });
     return selected;
   })();
-
-  // 사용자용 메뉴, 관리자용 메뉴 분리
   const userMenu = items.filter((item) => item.id !== "admin");
   const adminMenu = items.find((item) => item.id === "admin");
-
   return (
     <Drawer
       variant="permanent"
@@ -69,14 +72,14 @@ export default function Sidebar({
         },
       }}
     >
-      {/* 로고 영역 */}
+      {/* 로고 */}
       <Toolbar>
         <Box
           display="flex"
           alignItems="center"
           gap={1}
           sx={{ cursor: "pointer", py: 3.7 }}
-          onClick={() => (window.location.href = "/")}
+          onClick={() => navigate("/")}
         >
           <img
             src="/daehologo.gif"
@@ -86,7 +89,6 @@ export default function Sidebar({
         </Box>
       </Toolbar>
       <Divider />
-
       {/* 일반 메뉴 */}
       <List>
         {userMenu.map((item) => {
@@ -94,7 +96,6 @@ export default function Sidebar({
           const hasChildren = children.length > 0;
           const isParentSelected =
             hasChildren && children.some((child) => child.id === selectedId);
-
           return (
             <React.Fragment key={item.id}>
               <ListItemButton
@@ -102,7 +103,7 @@ export default function Sidebar({
                 selected={selectedId === item.id || isParentSelected}
                 onClick={() => {
                   if (hasChildren) handleToggle(item.id);
-                  else if (item.href) window.location.href = item.href;
+                  else if (item.href) navigate(item.href);
                 }}
               >
                 <ListItemIcon>
@@ -119,18 +120,17 @@ export default function Sidebar({
                   hasChildren &&
                   (open[item.id] ? <ExpandLess /> : <ExpandMore />)}
               </ListItemButton>
-
               {hasChildren && (
                 <Collapse in={open[item.id]} timeout="auto" unmountOnExit>
                   <List component="div" disablePadding>
-                    {item.children?.map((child) => (
+                    {children.map((child) => (
                       <ListItemButton
                         key={child.id}
                         sx={{ pl: 4 }}
                         selected={child.id === selectedId}
                         onClick={() => {
                           onSelect?.(child.id);
-                          if (child.href) window.location.href = child.href;
+                          if (child.href) navigate(child.href);
                         }}
                       >
                         <ListItemIcon>{child.icon ?? null}</ListItemIcon>
@@ -144,7 +144,6 @@ export default function Sidebar({
           );
         })}
       </List>
-
       {/* 관리자 메뉴 */}
       {adminMenu && (
         <>
@@ -152,10 +151,9 @@ export default function Sidebar({
           <List>
             {(() => {
               const adminChildren = adminMenu.children || [];
-              const isAdminParentSelected =
-                adminChildren.length > 0 &&
-                adminChildren.some((child) => child.id === selectedId);
-
+              const isAdminParentSelected = adminChildren.some(
+                (child) => child.id === selectedId
+              );
               return (
                 <React.Fragment key={adminMenu.id}>
                   <ListItemButton
@@ -163,13 +161,8 @@ export default function Sidebar({
                       selectedId === adminMenu.id || isAdminParentSelected
                     }
                     onClick={() => {
-                      if (adminMenu.children && adminMenu.children.length > 0) {
-                        handleToggle(adminMenu.id);
-                      } else {
-                        onSelect?.(adminMenu.id);
-                        if (adminMenu.href)
-                          window.location.href = adminMenu.href;
-                      }
+                      if (adminChildren.length > 0) handleToggle(adminMenu.id);
+                      else if (adminMenu.href) navigate(adminMenu.href);
                     }}
                   >
                     <ListItemIcon>
@@ -177,26 +170,24 @@ export default function Sidebar({
                     </ListItemIcon>
                     {!collapsed && <ListItemText primary={adminMenu.label} />}
                     {!collapsed &&
-                      adminMenu.children &&
-                      adminMenu.children.length > 0 &&
+                      adminChildren.length > 0 &&
                       (open[adminMenu.id] ? <ExpandLess /> : <ExpandMore />)}
                   </ListItemButton>
-
-                  {adminMenu.children && adminMenu.children.length > 0 && (
+                  {adminChildren.length > 0 && (
                     <Collapse
                       in={open[adminMenu.id]}
                       timeout="auto"
                       unmountOnExit
                     >
                       <List component="div" disablePadding>
-                        {adminMenu.children.map((child) => (
+                        {adminChildren.map((child) => (
                           <ListItemButton
                             key={child.id}
                             sx={{ pl: 4 }}
                             selected={child.id === selectedId}
                             onClick={() => {
                               onSelect?.(child.id);
-                              if (child.href) window.location.href = child.href;
+                              if (child.href) navigate(child.href);
                             }}
                           >
                             <ListItemIcon>{child.icon ?? null}</ListItemIcon>
@@ -212,13 +203,9 @@ export default function Sidebar({
           </List>
         </>
       )}
-
+      {/* Logout */}
       <Box flexGrow={1} />
       <Divider />
-      <Box flexGrow={1} />
-      <Divider />
-
-      {/* 로그아웃 버튼 */}
       <Box p={2}>
         <Button
           variant="text"
@@ -227,12 +214,9 @@ export default function Sidebar({
           sx={{
             justifyContent: "flex-start",
             color: "#1a1a1adb",
-            "&:focus": {
-              outline: "none",
-              boxShadow: "none",
-            },
+            "&:focus": { outline: "none", boxShadow: "none" },
           }}
-          onClick={() => console.log("로그아웃 클릭")}
+          onClick={handleLogout}
         >
           Logout
         </Button>
