@@ -10,10 +10,9 @@ import {
 } from "@mui/material";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-
 import { useNavigate } from "react-router-dom";
-import { loginAndGetToken } from "../api/MemberApi";
 import { useAuthStore } from "../../store/useAuthStore";
+import { loginAndGetToken } from "../api/LoginApi";
 
 export default function Login() {
   const [loginId, setLoginId] = useState("");
@@ -77,6 +76,7 @@ export default function Login() {
         fullWidth
         sx={{ mb: 2 }}
         value={loginId}
+        onKeyDown={handleKeyDown}
         onChange={(e) => setLoginId(e.target.value)}
       />
       <TextField

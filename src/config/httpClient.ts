@@ -44,13 +44,19 @@ httpClient.interceptors.request.use(
 );
 
 // 응답 인터셉터: 401 Unauthorized 에러 발생 시 로그인 페이지로 이동.
+let alreadyAlerted = false;
+
 httpClient.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    if (error.response?.status === 401) {
-      sessionStorage.removeItem("jwt");
-      alert("인증 오류가 발생했습니다. 다시 로그인해주세요");
-      window.location.href = "/login";
+  (error) => {
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      if (!alreadyAlerted) {
+        alreadyAlerted = true;
+        sessionStorage.removeItem("jwt");
+        alert("인증오류가 발생했습니다. 로그인 페이지로 이동합니다.");
+        window.location.href = "/login";
+      }
+      return Promise.reject(error);
     }
     return Promise.reject(error);
   }

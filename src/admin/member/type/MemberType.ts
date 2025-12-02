@@ -1,9 +1,5 @@
-export interface Login {
-  loginId: string;
-  password: string;
-}
-
 export interface Member {
+  id?: number;
   loginId: string;
   password: string;
   name: string;

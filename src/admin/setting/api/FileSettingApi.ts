@@ -1,4 +1,4 @@
-import httpClient from "../../config/api/httpClient";
+import httpClient from "../../../config/httpClient";
 import type { MasterDataType } from "../type/SettingType";
 
 // GET

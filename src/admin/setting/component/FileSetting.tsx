@@ -1,12 +1,12 @@
 import { Box, Typography, TextField, Divider, Button } from "@mui/material";
 import React, { useEffect, useState, type KeyboardEvent } from "react";
-import type { SetTagList, TagItem } from "../../page/setting/AdminSetting";
-import type { MasterDataType } from "../../type/SettingType";
+import type { SetTagList, TagItem } from "../page/AdminSetting";
+import type { MasterDataType } from "../type/SettingType";
 import {
   getFileSize,
   saveExtension,
   saveFileSize,
-} from "../../api/FileSettingApi";
+} from "../api/FileSettingApi";
 import axios from "axios";
 
 interface FileSettingProps {

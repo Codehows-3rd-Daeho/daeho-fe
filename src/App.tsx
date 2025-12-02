@@ -9,10 +9,10 @@ import { lazy } from "react";
 
 const IssueList = lazy(() => import("./issue/page/IssueList"));
 const IssueRegister = lazy(() => import("./issue/page/IssueRegister"));
-const AdminSetting = lazy(() => import("./admin/page/setting/AdminSetting"));
-const MemberList = lazy(() => import("./admin/page/member/MemberList"));
+const AdminSetting = lazy(() => import("./admin/setting/page/AdminSetting"));
+const MemberList = lazy(() => import("./admin/member/page/MemberList"));
 const MeetingList = lazy(() => import("./meeting/page/MeetingList"));
-const Login = lazy(() => import("./admin/page/Login"));
+const Login = lazy(() => import("./login/page/Login"));
 /*===============================
   PrivateRoute 사용 안내
   ===============================

@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import type {
   MasterDataType,
   NotificationSettingType,
-} from "../../type/SettingType";
+} from "../type/SettingType";
 import {
   getDepartment,
   getJobPosition,
@@ -12,12 +12,12 @@ import {
   deleteDepartment,
   deleteJobPosition,
   deleteCategory,
-} from "../../api/MasterDataApi";
+} from "../api/MasterDataApi";
 import axios from "axios";
-import MasterData from "../../component/setting/MasterData";
-import FileSetting from "../../component/setting/FileSetting";
-import NotificationSetting from "../../component/setting/NotificationSetting";
-import { deleteExtension, getExtensions } from "../../api/FileSettingApi";
+import MasterData from "../component/MasterData";
+import FileSetting from "../component/FileSetting";
+import NotificationSetting from "../component/NotificationSetting";
+import { deleteExtension, getExtensions } from "../api/FileSettingApi";
 
 export interface TagItem {
   id: number;

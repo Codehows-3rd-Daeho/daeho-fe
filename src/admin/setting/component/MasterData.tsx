@@ -1,12 +1,12 @@
 import { Box, Typography, TextField, Divider } from "@mui/material";
 import React, { useState } from "react";
-import type { SetTagList, TagItem } from "../../page/setting/AdminSetting";
+import type { SetTagList, TagItem } from "../page/AdminSetting";
 import {
   createCategory,
   createDepartment,
   createJobPosition,
-} from "../../api/MasterDataApi";
-import type { MasterDataType } from "../../type/SettingType";
+} from "../api/MasterDataApi";
+import type { MasterDataType } from "../type/SettingType";
 import axios from "axios";
 
 interface MasterDataProps {
