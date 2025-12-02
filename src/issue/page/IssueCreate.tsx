@@ -30,7 +30,7 @@ export default function IssueCreate() {
     title: "",
     content: "",
     file: [],
-    status: "PLANNED",
+    status: "IN_PROGRESS",
     host: "",
     startDate: "",
     endDate: "",
@@ -427,13 +427,13 @@ export default function IssueCreate() {
                 주관자
               </Typography>
               <TextField
+                disabled
                 fullWidth
                 size="small"
                 value={formData.host}
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, host: e.target.value }))
                 }
-                placeholder="홍길동 과장"
                 sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
               />
             </Box>
