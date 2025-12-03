@@ -37,3 +37,11 @@ export interface IssueMemberData {
   name: string;
   jobPositionName: string;
 }
+
+// 회원 리스트(참여자, 참석자)
+export interface PartMemberList {
+  id: number;
+  name: string;
+  department: string;
+  position: string;
+}

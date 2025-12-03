@@ -1,6 +1,7 @@
 import axios, { type AxiosRequestConfig } from "axios";
 import type { Login, Member } from "../type/MemberType";
 import { BASE_URL } from "../../config/BaseUrl";
+import type { IssueMemberData, PartMemberList } from "../../issue/type/type";
 
 export const checkId = async (loginId: string) => {
   const response = await axios.get(`${BASE_URL}/signup/check_loginId`, {
@@ -30,4 +31,28 @@ export const getAxiosAuthHeaders = (): AxiosRequestConfig => {
       Authorization: token || "",
     },
   };
+};
+
+//멤버 리스트(참여자, 참석자)
+export const getPartMemberList = async (): Promise<PartMemberList[]> => {
+  const response = await axios.get(
+    `${BASE_URL}/partMember/list`,
+    getAxiosAuthHeaders()
+  );
+  console.log("getPartMemberList response:", response.data);
+  return response.data;
+};
+
+//멤버 정보
+//회원 정보 GET 주관자 조회에 사용
+//아이디를 보내서, 이름, 직급 조회
+export const getHostData = async (
+  memberId: number
+): Promise<IssueMemberData> => {
+  const response = await axios.get(
+    `${BASE_URL}/partMember/${memberId}`,
+    getAxiosAuthHeaders()
+  );
+  console.log("getHostData response:", response.data);
+  return response.data;
 };

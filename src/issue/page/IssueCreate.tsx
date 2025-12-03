@@ -9,13 +9,11 @@ import { DateRange } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import dayjs from "dayjs";
-import {
-  getCategory,
-  getDepartment,
-  getHostData,
-} from "../../admin/api/MasterDataApi";
+import { getCategory, getDepartment } from "../../admin/api/MasterDataApi";
 import type { MasterDataType } from "../../admin/type/SettingType";
 import { useAuthStore } from "../../store/useAuthStore";
+import PartMember from "./PartMember";
+import { getHostData } from "../../admin/api/MemberApi";
 
 interface DateRangeType {
   selection: {
@@ -164,12 +162,12 @@ export default function IssueCreate() {
   };
 
   // 참여자 추가
-  const handleAddMember = (member: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      member: [...(prev.member ?? []), member],
-    }));
-  };
+  // const handleAddMember = (member: string) => {
+  //   setFormData((prev) => ({
+  //     ...prev,
+  //     member: [...(prev.member ?? []), member],
+  //   }));
+  // };
 
   // range : 현재 달력에서 선택된 날짜 범위를 담는 상태
   const [range, setRange] = useState([
@@ -607,20 +605,7 @@ export default function IssueCreate() {
               >
                 참여자
               </Typography>
-              <Button
-                fullWidth
-                variant="outlined"
-                size="small"
-                onClick={() => handleAddMember("1")}
-                sx={{
-                  justifyContent: "flex-start",
-                  color: "text.secondary",
-                  borderRadius: 1.5,
-                  textTransform: "none",
-                }}
-              >
-                참여자 추가
-              </Button>
+              <PartMember />
             </Box>
           </Box>
           {/* 등록 버튼 */}
