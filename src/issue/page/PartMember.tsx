@@ -38,11 +38,11 @@ export default function PartMember({ onChangeMembers }: PartMemberProps) {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const [categories, setCategories] = useState<CategoryType[]>(["전체"]);
-
   const [participants, setParticipants] = useState<ParticipantList>({});
-
   const currentCategory = categories[activeTab];
   const currentParticipants = participants[currentCategory] || [];
+  // 로그인된 사용자 id
+  const { memberId } = useAuthStore();
 
   useEffect(() => {
     const loadData = async () => {
@@ -66,8 +66,10 @@ export default function PartMember({ onChangeMembers }: PartMemberProps) {
         // 3) 기본값 추가한 Participant 형태로 변환
         const mapped: Participant[] = memberList.map((m) => ({
           ...m,
-          selected: false,
-          hasEditPermission: false,
+          department: m.department, //department(name)을 department 매핑
+          position: m.jobPositionName, //JobPositionName을 position으로 매핑
+          selected: m.id === Number(memberId), // 작성자는 자동 선택
+          hasEditPermission: m.id === Number(memberId), // 작성자는 권한도 자동 체크
         }));
 
         // 4) 카테고리별 분류
@@ -77,7 +79,7 @@ export default function PartMember({ onChangeMembers }: PartMemberProps) {
 
         // 직급별 분류
         positionNames.forEach((pos) => {
-          categorized[pos] = mapped.filter((m) => m.position === pos);
+          categorized[pos] = mapped.filter((m) => m.jobPositionName === pos);
         });
 
         // 부서별 분류
@@ -142,8 +144,6 @@ export default function PartMember({ onChangeMembers }: PartMemberProps) {
       })),
     }));
   };
-  // 로그인된 사용자 id
-  const { memberId } = useAuthStore();
 
   console.log("memberId type:", typeof memberId);
 
@@ -155,7 +155,7 @@ export default function PartMember({ onChangeMembers }: PartMemberProps) {
     const result: IssueMemberDto[] = selectedParticipants.map((p) => ({
       memberId: p.id,
       memberName: p.name,
-      isHost: p.id == memberId, // 로그인된 멤버면 true
+      isHost: p.id === Number(memberId), // 로그인된 멤버면 true
       isPermitted: p.hasEditPermission,
       isRead: false,
     }));
@@ -290,7 +290,7 @@ export default function PartMember({ onChangeMembers }: PartMemberProps) {
                         size="small"
                       />
                     }
-                    label={`${participant.name} ${participant.position}`}
+                    label={`${participant.name} ${participant.jobPositionName}`}
                     sx={{ minWidth: 160 }}
                   />
                   <FormControlLabel

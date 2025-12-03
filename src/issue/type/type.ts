@@ -43,7 +43,7 @@ export interface PartMemberList {
   id: number;
   name: string;
   department: string;
-  position: string;
+  jobPositionName: string;
 }
 
 //이슈 멤버 등록

@@ -14,6 +14,7 @@ import type { MasterDataType } from "../../admin/type/SettingType";
 import { useAuthStore } from "../../store/useAuthStore";
 import PartMember from "./PartMember";
 import { getHostData } from "../../admin/api/MemberApi";
+import { useNavigate } from "react-router-dom";
 
 interface DateRangeType {
   selection: {
@@ -24,6 +25,7 @@ interface DateRangeType {
 }
 
 export default function IssueCreate() {
+  const navigator = useNavigate();
   const [formData, setFormData] = useState<IssueFormValues>({
     title: "",
     content: "",
@@ -80,6 +82,32 @@ export default function IssueCreate() {
   }, []);
 
   const handleSubmit = async () => {
+    // 필수 입력값 체크
+    if (!formData.title.trim()) {
+      alert("제목을 입력해주세요.");
+      return;
+    }
+    if (!formData.content.trim()) {
+      alert("본문을 입력해주세요.");
+      return;
+    }
+    if (!formData.startDate) {
+      alert("시작일을 선택해주세요.");
+      return;
+    }
+    if (!formData.endDate) {
+      alert("마감일을 선택해주세요.");
+      return;
+    }
+    if (!formData.category) {
+      alert("카테고리를 선택해주세요.");
+      return;
+    }
+    if (!formData.department || formData.department.length === 0) {
+      alert("관련 부서를 선택해주세요.");
+      return;
+    }
+
     const formDataObj = new FormData();
 
     // 1. DTO에 해당하는 데이터 객체 생성
@@ -111,19 +139,10 @@ export default function IssueCreate() {
     // 백엔드의 @RequestPart(value = "file")과 매칭
     formData.file?.forEach((file) => formDataObj.append("file", file));
 
-    // FormData 객체 내부 확인 (중요!!)
-    for (const [key, value] of formDataObj.entries()) {
-      if (value instanceof Blob) {
-        console.log(
-          `key: ${key}, value: Blob(size=${value.size}, type=${value.type})`
-        );
-      } else {
-        console.log(`key: ${key}, value:`, value);
-      }
-    }
     console.log("보내는 데이터", issueDto);
     await issueCreate(formDataObj);
     alert("이슈가 등록되었습니다!");
+    navigator("/issue/list");
   };
 
   // 파일 입력창 열기
