@@ -14,13 +14,17 @@ import {
   Tab,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import type { PartMemberList } from "../type/type";
+import type { IssueMemberDto, PartMemberList } from "../type/type";
 import { getPartMemberList } from "../../admin/api/MemberApi";
 import { getDepartment, getJobPosition } from "../../admin/api/MasterDataApi";
+import { useAuthStore } from "../../store/useAuthStore";
 
 interface Participant extends PartMemberList {
   selected: boolean;
   hasEditPermission: boolean;
+}
+interface PartMemberProps {
+  onChangeMembers: (members: IssueMemberDto[]) => void;
 }
 
 //부서랑 직급을 백에서 받아와야됨
@@ -30,7 +34,7 @@ type ParticipantList = {
   [key: string]: Participant[];
 };
 
-export default function PartMember() {
+export default function PartMember({ onChangeMembers }: PartMemberProps) {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const [categories, setCategories] = useState<CategoryType[]>(["전체"]);
@@ -138,12 +142,28 @@ export default function PartMember() {
       })),
     }));
   };
+  // 로그인된 사용자 id
+  const { memberId } = useAuthStore();
+
+  console.log("memberId type:", typeof memberId);
 
   const handleSave = () => {
     const selectedParticipants = Object.values(participants)
       .flat()
-      .filter((p) => p.selected);
-    console.log("선택된 참여자:", selectedParticipants);
+      .filter((p) => p.selected || p.id === memberId); // 선택되었거나 host이면 포함
+
+    const result: IssueMemberDto[] = selectedParticipants.map((p) => ({
+      memberId: p.id,
+      memberName: p.name,
+      isHost: p.id == memberId, // 로그인된 멤버면 true
+      isPermitted: p.hasEditPermission,
+      isRead: false,
+    }));
+
+    console.log("=======================host 확인=================");
+    console.log("memberId: ", memberId);
+    console.log("result", result);
+    onChangeMembers(result); // 부모에게 전달
     handleClose();
   };
 

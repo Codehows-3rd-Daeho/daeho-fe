@@ -1,7 +1,7 @@
 import { issueCreate } from "../api/issueApi";
 import { Box, Button, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
-import type { IssueFormValues } from "../type/type";
+import { type IssueFormValues, type IssueMemberDto } from "../type/type";
 import { Select, MenuItem, FormControl, InputAdornment } from "@mui/material";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -34,8 +34,8 @@ export default function IssueCreate() {
     endDate: "",
     category: "",
     department: [],
-    member: [],
-    isDel: "false",
+    members: [],
+    isDel: false,
   });
 
   // 카테고리와 부서 상태
@@ -59,12 +59,16 @@ export default function IssueCreate() {
         if (memberId) {
           const hostData = await getHostData(memberId);
 
+          console.log("주관자 확인");
+          console.log("getHostData: ", hostData);
           const hostString = `${hostData.name} ${hostData.jobPositionName}`;
 
+          console.log("hostString: ", hostString);
           setFormData((prev) => ({
             ...prev,
             host: hostString, // ★ 자동 입력
           }));
+          console.log("hostString: ", formData.host);
         } else {
           console.log("memberId 없음:", memberId);
         }
@@ -90,8 +94,8 @@ export default function IssueCreate() {
       //서버로 전송 시 string -> Number 변환
       categoryId: Number(formData.category),
       departmentIds: formData.department.map(Number),
-      memberIds: formData.member.map(Number),
-      isDel: "false",
+      members: issueMembers, //PartMember에서 전달받은 객체
+      isDel: false,
     };
 
     // 2. issueDto를 JSON 문자열로 변환하여 "data" 파트에 추가
@@ -107,20 +111,6 @@ export default function IssueCreate() {
     // 백엔드의 @RequestPart(value = "file")과 매칭
     formData.file?.forEach((file) => formDataObj.append("file", file));
 
-    console.log("====== React State(formData) ======");
-    console.log(JSON.stringify(formData, null, 2));
-    console.log("전체", formDataObj);
-    console.log("제목: ", formData.title);
-
-    console.log("====== DTO 내용(issueDto) ======");
-    console.log(JSON.stringify(issueDto, null, 2));
-    console.log("카테고리: ", issueDto.categoryId);
-    console.log("부서: ", issueDto.departmentIds);
-    console.log("참여자: ", issueDto.memberIds);
-    console.log("진행상태: ", issueDto.status);
-    console.log("삭제상태: ", issueDto.isDel);
-
-    console.log("====== FormData 실제 값 ======");
     // FormData 객체 내부 확인 (중요!!)
     for (const [key, value] of formDataObj.entries()) {
       if (value instanceof Blob) {
@@ -161,14 +151,6 @@ export default function IssueCreate() {
     }));
   };
 
-  // 참여자 추가
-  // const handleAddMember = (member: string) => {
-  //   setFormData((prev) => ({
-  //     ...prev,
-  //     member: [...(prev.member ?? []), member],
-  //   }));
-  // };
-
   // range : 현재 달력에서 선택된 날짜 범위를 담는 상태
   const [range, setRange] = useState([
     {
@@ -190,6 +172,8 @@ export default function IssueCreate() {
       endDate: dayjs(endDate).format("YYYY-MM-DD"),
     })); // TextField에 반영
   };
+  //partmember객체 받기
+  const [issueMembers, setIssueMembers] = useState<IssueMemberDto[]>([]);
 
   return (
     <Box>
@@ -605,7 +589,7 @@ export default function IssueCreate() {
               >
                 참여자
               </Typography>
-              <PartMember />
+              <PartMember onChangeMembers={setIssueMembers} />
             </Box>
           </Box>
           {/* 등록 버튼 */}

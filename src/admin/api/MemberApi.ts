@@ -43,8 +43,7 @@ export const getPartMemberList = async (): Promise<PartMemberList[]> => {
   return response.data;
 };
 
-//멤버 정보
-//회원 정보 GET 주관자 조회에 사용
+//주관자 정보
 //아이디를 보내서, 이름, 직급 조회
 export const getHostData = async (
   memberId: number

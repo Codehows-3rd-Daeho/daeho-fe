@@ -27,21 +27,30 @@ export interface IssueFormValues {
   endDate?: string; // 종료일 (선택)
   category: string; // 카테고리
   department: string[] | number[]; // 관련 부서 (다중)
-  member: string[]; // 관련 멤버 (다중)
-  isDel: string;
+  members: IssueMemberDto[]; // 관련 멤버 (다중)
+  isDel: boolean;
 }
 
-//이슈 등록시 사용, 주관자,
+//이슈 등록시 사용, 주관자
 export interface IssueMemberData {
   id: number;
   name: string;
   jobPositionName: string;
 }
 
-// 회원 리스트(참여자, 참석자)
+// 회원 리스트(참여자, 참석자 추가)
 export interface PartMemberList {
   id: number;
   name: string;
   department: string;
   position: string;
+}
+
+//이슈 멤버 등록
+export interface IssueMemberDto {
+  memberId: number;
+  memberName: string;
+  isHost: boolean;
+  isPermitted: boolean;
+  isRead: boolean;
 }
