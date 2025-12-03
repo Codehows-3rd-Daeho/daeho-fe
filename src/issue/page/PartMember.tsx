@@ -21,7 +21,7 @@ import { useAuthStore } from "../../store/useAuthStore";
 
 interface Participant extends PartMemberList {
   selected: boolean;
-  hasEditPermission: boolean;
+  isPermitted: boolean;
 }
 interface PartMemberProps {
   onChangeMembers: (members: IssueMemberDto[]) => void;
@@ -36,40 +36,43 @@ type ParticipantList = {
 
 export default function PartMember({ onChangeMembers }: PartMemberProps) {
   const [open, setOpen] = useState(false);
+  //모달 열기
+  const handleOpen = () => setOpen(true);
+  //모달 닫기
+  const handleClose = () => setOpen(false);
+
+  //분류탭
   const [activeTab, setActiveTab] = useState(0);
   const [categories, setCategories] = useState<CategoryType[]>(["전체"]);
   const [participants, setParticipants] = useState<ParticipantList>({});
-  const currentCategory = categories[activeTab];
-  const currentParticipants = participants[currentCategory] || [];
+  const currentCategory = categories[activeTab]; //선택된 tap(activeTab)에 헤당하는 카테고리 이름을 가져옴
+  const currentParticipants = participants[currentCategory] || []; //participants 객체에서 현재 선택된 카테고리(currentCategory)에 속한 참여자 리스트를 가져옴
+
   // 로그인된 사용자 id
   const { memberId } = useAuthStore();
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        console.log("PartMember useEffect 실행");
         const positions = await getJobPosition(); // 직급 [{id, name}]
-        console.log("PartMember positions", positions);
         const departments = await getDepartment(); // 부서 [{id, name}]
-        console.log("PartMember departments", departments);
 
-        const positionNames = positions.map((p) => p.name);
-        const departmentNames = departments.map((d) => d.name);
+        const positionNames = positions.map((p) => p.name); //직급 배열 -> 분류탭으로 사용
+        const departmentNames = departments.map((d) => d.name); //부서 배열 -> 분류탭으로 사용
 
         // 전체 + 직급 + 부서
         setCategories(["전체", ...positionNames, ...departmentNames]);
 
-        // 2) 회원 전체 불러오기
+        // 회원 전체 불러오기
         const memberList = await getPartMemberList();
-        console.log("PartMember memberList", memberList);
 
-        // 3) 기본값 추가한 Participant 형태로 변환
+        // 받아온 회원 전체를 기본값 추가한 Participant 형태로 변환
         const mapped: Participant[] = memberList.map((m) => ({
           ...m,
           department: m.department, //department(name)을 department 매핑
           position: m.jobPositionName, //JobPositionName을 position으로 매핑
           selected: m.id === Number(memberId), // 작성자는 자동 선택
-          hasEditPermission: m.id === Number(memberId), // 작성자는 권한도 자동 체크
+          isPermitted: m.id === Number(memberId), // 작성자는 권한도 자동 체크
         }));
 
         // 4) 카테고리별 분류
@@ -96,37 +99,48 @@ export default function PartMember({ onChangeMembers }: PartMemberProps) {
     loadData();
   }, []);
 
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
+  // ===============================================================================================
+  //                       분류탭
+  // ===============================================================================================
 
+  //탭 선택 시 activeTab 값을 바꿔서 카테고리 변경.
+  //_event:탭 클릭 시 발생하는 이벤트 객체를 사용하지 않음
+  //newValue: 새로 선택된 탭 인덱스
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
   };
 
+  //특정 참여자의 selected 상태를 토글
+  //id: 클릭한 참여자의 고유 ID
   const handleSelectParticipant = (id: number) => {
     setParticipants((prev) => {
+      //얕은 복사: React에서 state를 변경할 때 수정이 아닌 새 객체를 반환해야 UI가 갱신됨.
       const updated = { ...prev };
+      /*
+      하나의 참여자가 여러 카테고리에 속할 수 있음 => updated 객체의 모든 카테고리(전체, 직급명, 부서명)를 순회 
+      Object.keys(updated): 각 카테고리 배열을 하나씩 확인
+      ex) updated["전체"] = [ { id: 1, name: "A", selected: true }] 라는 새 배열 생성
+      => 분류 탭을 바꿔도 클릭 상태 유지
+       */
       Object.keys(updated).forEach((key) => {
-        updated[key] = updated[key].map((p) =>
-          p.id === id ? { ...p, selected: !p.selected } : p
+        updated[key] = updated[key].map(
+          (p) => (p.id === id ? { ...p, selected: !p.selected } : p) //클릭한 참여자(id)라면: selected 값을 현재 상태의 반대로 토글 (true → false, false → true)
         );
       });
       return updated;
     });
   };
 
-  const handleTogglePermission = (id: number) => {
-    setParticipants((prev) => {
-      const updated = { ...prev };
-      Object.keys(updated).forEach((key) => {
-        updated[key] = updated[key].map((p) =>
-          p.id === id ? { ...p, hasEditPermission: !p.hasEditPermission } : p
-        );
-      });
-      return updated;
-    });
-  };
+  // ===============================================================================================
+  //                        참여 선택
+  // ===============================================================================================
 
+  //선택된 tab 내의 전체 회원 선택(체크박스용)
+  const allSelected =
+    currentParticipants.length > 0 &&
+    currentParticipants.every((p) => p.selected);
+
+  //참여자 전체 선택 핸들러
   const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
     const checked = event.target.checked;
     setParticipants((prev) => ({
@@ -138,6 +152,29 @@ export default function PartMember({ onChangeMembers }: PartMemberProps) {
     }));
   };
 
+  //특정 참여자의 특정 참여자의 isPermitted 상태 토글.
+  const handleTogglePermission = (id: number) => {
+    setParticipants((prev) => {
+      const updated = { ...prev };
+      Object.keys(updated).forEach((key) => {
+        updated[key] = updated[key].map((p) =>
+          p.id === id ? { ...p, isPermitted: !p.isPermitted } : p
+        );
+      });
+      return updated;
+    });
+  };
+
+  // ===============================================================================================
+  //                        수정 권한 선택
+  // ===============================================================================================
+
+  //선택된 tab 내의 전체 회원 수정 권한 부여(체크박스용)
+  const allHavePermission =
+    currentParticipants.length > 0 &&
+    currentParticipants.every((p) => p.isPermitted);
+
+  //권한 전체 선택 핸들러
   const handleSelectAllPermissions = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -146,39 +183,33 @@ export default function PartMember({ onChangeMembers }: PartMemberProps) {
       ...prev,
       [currentCategory]: prev[currentCategory].map((p) => ({
         ...p,
-        hasEditPermission: checked,
+        isPermitted: checked,
       })),
     }));
   };
 
-  console.log("memberId type:", typeof memberId);
+  // ===============================================================================================
+  //                      저장
+  // ===============================================================================================
 
   const handleSave = () => {
+    //최종 부모 컴포넌트로 전달할 배열 생성
     const selectedParticipants = Object.values(participants)
-      .flat()
+      .flat() //평탄화: 중첩된 객체를 1차원으로 풀어내거나 단순하게 만드는 것
       .filter((p) => p.selected || p.id === memberId); // 선택되었거나 host이면 포함
 
+    //selectedParticipants를 IssueMemberDto 타입으로 변환
     const result: IssueMemberDto[] = selectedParticipants.map((p) => ({
       memberId: p.id,
       memberName: p.name,
       isHost: p.id === Number(memberId), // 로그인된 멤버면 true
-      isPermitted: p.hasEditPermission,
+      isPermitted: p.isPermitted,
       isRead: false,
     }));
 
-    console.log("=======================host 확인=================");
-    console.log("memberId: ", memberId);
-    console.log("result", result);
     onChangeMembers(result); // 부모에게 전달
     handleClose();
   };
-
-  const allSelected =
-    currentParticipants.length > 0 &&
-    currentParticipants.every((p) => p.selected);
-  const allHavePermission =
-    currentParticipants.length > 0 &&
-    currentParticipants.every((p) => p.hasEditPermission);
 
   return (
     <>
@@ -277,7 +308,7 @@ export default function PartMember({ onChangeMembers }: PartMemberProps) {
                     size="small"
                   />
                 }
-                label="관한 전체선택"
+                label="권한 전체선택"
               />
             </Box>
 
@@ -302,7 +333,7 @@ export default function PartMember({ onChangeMembers }: PartMemberProps) {
                   <FormControlLabel
                     control={
                       <Checkbox
-                        checked={participant.hasEditPermission}
+                        checked={participant.isPermitted}
                         onChange={() => handleTogglePermission(participant.id)}
                         size="small"
                       />
