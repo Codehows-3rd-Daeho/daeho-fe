@@ -5,9 +5,8 @@ import { sidebarItems } from "./common/Sidebar/SidebarItems";
 import { useAuthStore } from "./store/useAuthStore";
 import type { JSX } from "@emotion/react/jsx-runtime";
 import { lazy } from "react";
-import KanbanBoard from "./common/Kanban/Kanban";
-import MeetingScheduler from "./meeting/page/MeetingScheduler";
 import "./index.css";
+import MeetingScheduler from "./meeting/page/MeetingScheduler";
 
 const IssueList = lazy(() => import("./issue/page/IssueList"));
 const IssueRegister = lazy(() => import("./issue/page/IssueRegister"));
@@ -55,7 +54,7 @@ export default function App() {
         {/* 메인 영역 래퍼 (Header + Main Content) */}
         <div className="flex flex-col flex-1 overflow-hidden">
           {/* 헤더 */}
-          <header className="h-[62px] border-b flex-shrink-0">
+          <header className="h-[62px] border-b flex-shrink-0 bg-white">
             <Header name="홍길동" jobPosition="팀장" notifications={[]} />
           </header>
 
@@ -79,14 +78,14 @@ export default function App() {
                     </PrivateRoute>
                   }
                 />
-                <Route
+                {/* <Route
                   path="/issue/kanban"
                   element={
                     <PrivateRoute>
                       <KanbanBoard />
                     </PrivateRoute>
                   }
-                />
+                /> */}
                 <Route
                   path="/meeting/list"
                   element={
