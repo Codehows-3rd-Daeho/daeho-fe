@@ -22,7 +22,14 @@ interface IssueFormProps {
   departments: MasterDataType[];
   range: { startDate: Date; endDate: Date; key: string }[];
   //핸들러로 관리됐던 애들
-  onChangeFormData: (key: keyof IssueFormValues, value: any) => void;
+  //   <K>: 제네릭 타입 변수
+  // keyof: IssueFormValues 타입의 키들이 문자열 리터럴 유니온 타입으로 변환 "title" | "department"
+  // extends keyof IssueFormValues → K는 반드시 IssueFormValues 속성 중 하나여야 함
+  onChangeFormData: <K extends keyof IssueFormValues>(
+    key: K,
+    value: IssueFormValues[K]
+  ) => void;
+
   onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onFileRemove: (idx: number) => void;
   onOpenFileInput: () => void;

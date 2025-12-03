@@ -18,7 +18,6 @@ interface DateRangeType {
 }
 
 export default function IssueCreate() {
-  const navigator = useNavigate();
   const [formData, setFormData] = useState<IssueFormValues>({
     title: "",
     content: "",
@@ -38,32 +37,27 @@ export default function IssueCreate() {
   const [departments, setDepartments] = useState<MasterDataType[]>([]);
   // 로그인된 사용자 id
   const { memberId } = useAuthStore();
+  const navigator = useNavigate();
 
-  // 부서 직급 가져오기
   useEffect(() => {
-    // 모달이 열릴 때 부서와 직급 데이터를 불러옵니다.
     async function fetchData() {
       try {
+        //===============부서, 주관자 조회===================
         const dep = await getDepartment();
         const cat = await getCategory();
 
         setDepartments(dep); // 부서 데이터 저장
         setCategories(cat); // 카테고리 데이터 저장
 
-        //주관자 = 작성자 자동 입력
+        //==================주관자 자동 입력==================
         if (memberId) {
           const hostData = await getHostData(memberId);
-
-          console.log("주관자 확인");
-          console.log("getHostData: ", hostData);
           const hostString = `${hostData.name} ${hostData.jobPositionName}`;
 
-          console.log("hostString: ", hostString);
           setFormData((prev) => ({
             ...prev,
-            host: hostString, // ★ 자동 입력
+            host: hostString,
           }));
-          console.log("hostString: ", formData.host);
         } else {
           console.log("memberId 없음:", memberId);
         }
@@ -74,8 +68,9 @@ export default function IssueCreate() {
     fetchData();
   }, []);
 
+  //======================저장===================================
   const handleSubmit = async () => {
-    // 필수 입력값 체크
+    //=================필수 입력값 체크=====================
     if (!formData.title.trim()) {
       alert("제목을 입력해주세요.");
       return;
@@ -101,6 +96,7 @@ export default function IssueCreate() {
       return;
     }
 
+    //=======================FormData===================
     const formDataObj = new FormData();
 
     // 1. DTO에 해당하는 데이터 객체 생성
@@ -121,8 +117,6 @@ export default function IssueCreate() {
 
     // 2. issueDto를 JSON 문자열로 변환하여 "data" 파트에 추가
     // 백엔드의 @RequestPart("data")와 매칭
-    // formDataObj.append("data", JSON.stringify(issueDto));
-    // Spring에서 DTO로 자동 매핑
     formDataObj.append(
       "data",
       new Blob([JSON.stringify(issueDto)], { type: "application/json" })
@@ -132,11 +126,22 @@ export default function IssueCreate() {
     // 백엔드의 @RequestPart(value = "file")과 매칭
     formData.file?.forEach((file) => formDataObj.append("file", file));
 
-    console.log("보내는 데이터", issueDto);
-    await issueCreate(formDataObj);
-    alert("이슈가 등록되었습니다!");
-    navigator("/issue/list");
+    //===================전송=========================
+    try {
+      console.log("보내는 데이터", issueDto);
+      await issueCreate(formDataObj);
+
+      alert("이슈가 등록되었습니다!");
+      navigator("/issue/list");
+    } catch (error) {
+      console.error("이슈 등록 실패:", error);
+      alert("이슈 등록 중 오류가 발생했습니다.");
+    }
   };
+
+  // ===============================================================================================
+  //                            파일
+  // ===============================================================================================
 
   // 파일 입력창 열기
   const openFileInput = () => {
@@ -155,6 +160,10 @@ export default function IssueCreate() {
     }));
   };
 
+  // ===============================================================================================
+  //                        부서
+  // ===============================================================================================
+
   // 관련 부서 다중 선택
   const handleDepartmentChange = (selected: string[]) => {
     setFormData((prev) => ({
@@ -162,6 +171,10 @@ export default function IssueCreate() {
       department: selected.map(Number), // 문자열 → 숫자
     }));
   };
+
+  // ===============================================================================================
+  //                        시작일, 마감일
+  // ===============================================================================================
 
   // range : 현재 달력에서 선택된 날짜 범위를 담는 상태
   const [range, setRange] = useState([
@@ -182,6 +195,11 @@ export default function IssueCreate() {
       endDate: dayjs(selection.endDate).format("YYYY-MM-DD"),
     })); // TextField에 반영
   };
+
+  // ===============================================================================================
+  //                          참여자
+  // ===============================================================================================
+
   //partmember객체 받기
   const [issueMembers, setIssueMembers] = useState<IssueMemberDto[]>([]);
 
