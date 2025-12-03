@@ -9,6 +9,7 @@ export interface Member {
   email: string;
   isEmployed: boolean;
   profileUrl?: string;
+  profileFileId?: number;
 }
 
 export interface MemberList {

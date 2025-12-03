@@ -51,7 +51,9 @@ export default function UpdateMemberModal({
   const [isDuplicate, setIsDuplicate] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
   const [originalLoginId, setOriginalLoginId] = useState(""); // 기존 아이디
-  const [profileFile, setProfileFile] = useState<File | null>(null);
+  const [profileFile, setProfileFile] = useState<File | null>(null); // 새로 업로드할 파일
+  const [profileFileId, setProfileFileId] = useState<number | null>(null); // 기존 서버 파일 id
+  const [removeFileIds, setRemoveFileIds] = useState<number[]>([]); // 삭제한 파일 id
   const [profileUrl, setProfileUrl] = useState<string>(""); // 미리보기용
 
   // 부서 직급 가져오기
@@ -67,12 +69,12 @@ export default function UpdateMemberModal({
           setJobPosition(pos);
           setMember(memberData);
           setOriginalLoginId(memberData.loginId); // 기존 아이디 저장.
+          setProfileFileId(memberData.profileFileId ?? null);
+          console.log(memberData.profileFileId);
           // 사진 URL 설정
-          if (memberData.profileUrl) {
-            setProfileUrl(`${BASE_URL}${memberData.profileUrl}`);
-          } else {
-            setProfileUrl(""); // 기본 이미지 사용
-          }
+          setProfileUrl(
+            memberData.profileUrl ? `${BASE_URL}${memberData.profileUrl}` : ""
+          );
         } catch (error) {
           console.log("데이터를 불러오는 중 오류 발생", error);
         }
@@ -165,12 +167,22 @@ export default function UpdateMemberModal({
     const file = e.target.files?.[0];
     if (!file) return; // 파일이 선택되지 않았으면 아무 것도 하지 않고 함수 종료
 
+    // 기존 파일이 있고, 아직 removeFileIds에 없으면 추가
+    if (profileFileId !== null && !removeFileIds.includes(profileFileId)) {
+      setRemoveFileIds((prev) => [...prev, profileFileId]);
+    }
+
+    setProfileFileId(null); // 기존 파일 삭제 표시
     setProfileFile(file);
     setProfileUrl(URL.createObjectURL(file)); // 미리보기
   };
 
   const handleRemoveProfile = () => {
+    if (profileFileId !== null) {
+      setRemoveFileIds((prev) => [...prev, profileFileId]); // 삭제할 ID 저장
+    }
     setProfileFile(null); // 업로드된 파일 제거
+    setProfileFileId(null); // 기존 파일 삭제 표시
     setProfileUrl(""); // 미리보기 제거
   };
 
@@ -219,6 +231,14 @@ export default function UpdateMemberModal({
         formData.append("file", profileFile);
       }
 
+      // 기존 파일 삭제
+      if (removeFileIds.length > 0) {
+        formData.append("removeFileIds", JSON.stringify(removeFileIds));
+      }
+
+      for (const [key, value] of formData.entries()) {
+        console.log(key, value);
+      }
       await updateMember(memberId, formData);
       await loadData();
       alert("회원 수정 완료");

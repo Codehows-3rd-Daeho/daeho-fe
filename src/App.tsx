@@ -1,11 +1,8 @@
 import { Routes, Route, Navigate, BrowserRouter } from "react-router-dom";
-import Header from "./common/Header/Header";
-import Sidebar from "./common/Sidebar/Sidebar";
-import { sidebarItems } from "./common/Sidebar/SidebarItems";
-import { Box } from "@mui/material";
 import { useAuthStore } from "./store/useAuthStore";
 import type { JSX } from "@emotion/react/jsx-runtime";
 import { lazy } from "react";
+import AppLayout from "./AppLayout";
 
 const IssueList = lazy(() => import("./issue/page/IssueList"));
 const IssueRegister = lazy(() => import("./issue/page/IssueRegister"));
@@ -46,92 +43,23 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* 로그인 페이지 — 사이드바/헤더 없음 */}
         <Route
           path="/login"
-          // 로그인한 상태에서 로그인 페이지 접근 불가.
           element={isAuthenticated ? <Navigate to="/" replace /> : <Login />}
-          // element={<Login />}
-        ></Route>
+        />
+
+        {/* 인증된 페이지는 모두 AppLayout 사용 */}
         <Route
-          path="*"
+          path="/*"
           element={
-            <Box
-              sx={{
-                display: "flex",
-                height: "100vh",
-                flexDirection: "row",
-              }}
-            >
-              {/* 사이드바 */}
-              <Box
-                sx={{
-                  width: 300,
-                  flexShrink: 0,
-                }}
-              >
-                <Sidebar items={sidebarItems} selectedId="dashboard" />
-              </Box>
-
-              {/* 헤더 */}
-              <Box
-                sx={{
-                  flex: 1,
-                  display: "flex",
-                  flexDirection: "column",
-                  overflow: "hidden",
-                }}
-              >
-                <Header name="홍길동" jobPosition="팀장" notifications={[]} />
-              </Box>
-
-              {/* 페이지 콘텐츠 */}
-
-              <Box
-                sx={{
-                  flex: 1,
-                  width: "100%",
-                  mt: "62px",
-                  maxWidth: "1600px", // ★ 화면설계처럼 넓게 퍼지도록
-                  margin: 0,
-                  p: { xs: 2, md: 4 }, // ★ 반응형 padding
-                }}
-              >
+            <PrivateRoute>
+              <AppLayout>
                 <Routes>
-                  <Route
-                    path="/"
-                    element={
-                      <PrivateRoute>
-                        <IssueRegister />
-                      </PrivateRoute>
-                    }
-                  />
-
-                  <Route
-                    path="/issue/register"
-                    element={
-                      <PrivateRoute>
-                        <IssueRegister />
-                      </PrivateRoute>
-                    }
-                  />
-
-                  <Route
-                    path="/issue/list"
-                    element={
-                      <PrivateRoute>
-                        <IssueList />
-                      </PrivateRoute>
-                    }
-                  />
-
-                  <Route
-                    path="/meeting/list"
-                    element={
-                      <PrivateRoute>
-                        <MeetingList />
-                      </PrivateRoute>
-                    }
-                  />
+                  <Route path="/" element={<IssueRegister />} />
+                  <Route path="/issue/register" element={<IssueRegister />} />
+                  <Route path="/issue/list" element={<IssueList />} />
+                  <Route path="/meeting/list" element={<MeetingList />} />
 
                   {/* 관리자 */}
                   <Route
@@ -141,7 +69,7 @@ export default function App() {
                         <MemberList />
                       </PrivateRoute>
                     }
-                  ></Route>
+                  />
                   <Route
                     path="/admin/setting"
                     element={
@@ -149,10 +77,10 @@ export default function App() {
                         <AdminSetting />
                       </PrivateRoute>
                     }
-                  ></Route>
+                  />
                 </Routes>
-              </Box>
-            </Box>
+              </AppLayout>
+            </PrivateRoute>
           }
         />
       </Routes>

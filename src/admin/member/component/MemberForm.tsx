@@ -171,7 +171,7 @@ export default function MemberForm({
           type={mode === "update" ? "text" : showPassword ? "text" : "password"}
           variant="outlined"
           fullWidth
-          value={member.password}
+          value={member.password ?? ""}
           disabled={mode === "update"}
           onChange={(e) => {
             const value = e.target.value;
