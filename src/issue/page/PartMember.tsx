@@ -104,21 +104,27 @@ export default function PartMember({ onChangeMembers }: PartMemberProps) {
   };
 
   const handleSelectParticipant = (id: number) => {
-    setParticipants((prev) => ({
-      ...prev,
-      [currentCategory]: prev[currentCategory].map((p) =>
-        p.id === id ? { ...p, selected: !p.selected } : p
-      ),
-    }));
+    setParticipants((prev) => {
+      const updated = { ...prev };
+      Object.keys(updated).forEach((key) => {
+        updated[key] = updated[key].map((p) =>
+          p.id === id ? { ...p, selected: !p.selected } : p
+        );
+      });
+      return updated;
+    });
   };
 
   const handleTogglePermission = (id: number) => {
-    setParticipants((prev) => ({
-      ...prev,
-      [currentCategory]: prev[currentCategory].map((p) =>
-        p.id === id ? { ...p, hasEditPermission: !p.hasEditPermission } : p
-      ),
-    }));
+    setParticipants((prev) => {
+      const updated = { ...prev };
+      Object.keys(updated).forEach((key) => {
+        updated[key] = updated[key].map((p) =>
+          p.id === id ? { ...p, hasEditPermission: !p.hasEditPermission } : p
+        );
+      });
+      return updated;
+    });
   };
 
   const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
