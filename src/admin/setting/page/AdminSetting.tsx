@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import type {
   MasterDataType,
   NotificationSettingType,
-} from "../../type/SettingType";
+} from "../type/SettingType";
 import {
   getDepartment,
   getJobPosition,
@@ -12,11 +12,12 @@ import {
   deleteDepartment,
   deleteJobPosition,
   deleteCategory,
-} from "../../api/MasterDataApi";
+} from "../api/MasterDataApi";
 import axios from "axios";
-import MasterData from "../../component/setting/MasterData";
-import FileSetting from "../../component/setting/FileSetting";
-import NotificationSetting from "../../component/setting/NotificationSetting";
+import MasterData from "../component/MasterData";
+import FileSetting from "../component/FileSetting";
+import NotificationSetting from "../component/NotificationSetting";
+import { deleteExtension, getExtensions } from "../api/FileSettingApi";
 
 export interface TagItem {
   id: number;
@@ -32,20 +33,11 @@ const mapApiDataToTagItem = (data: MasterDataType[]): TagItem[] => {
   }));
 };
 
-// 더미 데이터
-const initialFileExtensions: TagItem[] = [
-  { id: 11, label: "png" },
-  { id: 12, label: "jpg" },
-  { id: 13, label: "mp3" },
-];
-
 export default function AdminSetting() {
   const [departments, setDepartments] = useState<TagItem[]>([]);
   const [jobPositions, setJobPositions] = useState<TagItem[]>([]);
   const [categories, setCategories] = useState<TagItem[]>([]);
-  const [fileExtensions, setFileExtensions] = useState<TagItem[]>(
-    initialFileExtensions
-  );
+  const [fileExtensions, setFileExtensions] = useState<TagItem[]>([]);
 
   useEffect(() => {
     const fetchMasterData = async () => {
@@ -61,7 +53,14 @@ export default function AdminSetting() {
         // 카테고리 목록
         const catResponse = await getCategory();
         setCategories(mapApiDataToTagItem(catResponse));
+
+        // 파일 확장자 목록
+        const extResponse = await getExtensions();
+        setFileExtensions(mapApiDataToTagItem(extResponse));
       } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          return;
+        }
         console.error("기준 정보 로드 실패:", error);
         alert("기준 정보 로드에 실패했습니다.");
       }
@@ -138,9 +137,10 @@ export default function AdminSetting() {
         const status = error.response.status;
         const errorMessage = error.response.data;
 
-        if (status === 409) {
-          alert(`${errorMessage}`);
-        } else if (status === 404) {
+        if (status === 401) {
+          // 401 에러는 전역 인터셉터에서 이미 처리하므로 여기선 그냥 return
+          return;
+        } else if (status === 409 || status === 404) {
           alert(`${errorMessage}`);
         } else {
           alert(`오류 발생 (상태 코드: ${status})`);
@@ -221,9 +221,7 @@ export default function AdminSetting() {
           RenderChips={(props) => (
             <RenderChips
               {...props} // FileManager는 삭제 API가 아직 없음.
-              deleteApiFunction={async () => {
-                console.log("파일 확장자 삭제");
-              }}
+              deleteApiFunction={deleteExtension}
             />
           )}
         />

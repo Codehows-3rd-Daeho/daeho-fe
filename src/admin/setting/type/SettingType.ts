@@ -1,4 +1,4 @@
-// 기준정보 (카테고리, 부서, 직급)
+// 기준정보
 export interface MasterDataType {
   id?: number;
   name: string;

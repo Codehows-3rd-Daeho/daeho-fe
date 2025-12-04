@@ -9,7 +9,6 @@ import { PageHeader } from "../../common/PageHeader/PageHeader";
 import { Toggle } from "../../common/PageHeader/Toggle/Toggle";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { Box, Typography } from "@mui/material";
-import { getIssueList } from "../api/issueApi";
 // import { getIssueList } from "../api/api"; // 백엔드 연결
 
 export default function IssueList() {
@@ -18,15 +17,15 @@ export default function IssueList() {
   // 페이징
   const [page, setPage] = useState(1);
   // const pageSize = 10;
-  const [data, setData] = useState<IssueListItem[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
+  const [data] = useState<IssueListItem[]>([]);
+  const [totalCount] = useState(0);
 
   // 데이터 가져오기
   useEffect(() => {
-    getIssueList(page, 10).then((data) => {
-      setData(data.content); // 데이터
-      setTotalCount(data.totalElements); // 전체 개수
-    });
+    // getIssueList(page, 10).then((data) => {
+    //   setData(data.content); // 데이터
+    //   setTotalCount(data.totalElements); // 전체 개수
+    // });
   }, [page]);
 
   // 리스트 컬럼

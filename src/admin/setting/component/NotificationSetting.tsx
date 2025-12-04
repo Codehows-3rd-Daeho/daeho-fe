@@ -1,6 +1,6 @@
 import { Box, Typography, Switch, Divider, Button } from "@mui/material";
 import React from "react";
-import type { NotificationSettingType } from "../../type/SettingType";
+import type { NotificationSettingType } from "../type/SettingType";
 
 interface NotificationSettingsProps {
   notificationSetting: NotificationSettingType;

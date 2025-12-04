@@ -15,9 +15,12 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import type { IssueMemberDto, PartMemberList } from "../type/type";
-import { getPartMemberList } from "../../admin/api/MemberApi";
-import { getDepartment, getJobPosition } from "../../admin/api/MasterDataApi";
 import { useAuthStore } from "../../store/useAuthStore";
+import {
+  getDepartment,
+  getJobPosition,
+} from "../../admin/setting/api/MasterDataApi";
+import { getPartMemberList } from "../../admin/member/api/MemberApi";
 
 interface Participant extends PartMemberList {
   selected: boolean;
