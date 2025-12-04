@@ -8,7 +8,7 @@ import type { JSX } from "@emotion/react/jsx-runtime";
 import { lazy } from "react";
 
 const IssueList = lazy(() => import("./issue/page/IssueList"));
-const IssueRegister = lazy(() => import("./issue/page/IssueRegister"));
+const IssueCreate = lazy(() => import("./issue/page/IssueCreate"));
 const AdminSetting = lazy(() => import("./admin/page/setting/AdminSetting"));
 const MemberList = lazy(() => import("./admin/page/member/MemberList"));
 const MeetingList = lazy(() => import("./meeting/page/MeetingList"));
@@ -92,10 +92,10 @@ export default function App() {
               >
                 <Routes>
                   <Route
-                    path="/issue/register"
+                    path="/issue/create"
                     element={
                       <PrivateRoute>
-                        <IssueRegister />
+                        <IssueCreate />
                       </PrivateRoute>
                     }
                   />

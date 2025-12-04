@@ -1,14 +1,12 @@
 import { create } from "zustand";
-
 type AuthStore = {
   isAuthenticated: boolean; // 사용자가 인증되었는지 여부
   token: string | null; // 현재 사용자의 JWT 액세스 토큰
-  loginId: string | null; // 현재 로그인한 사용자의 고유 ID (JWT에서 추출)
+  memberId: number | null; // 현재 로그인한 사용자의 고유 ID (JWT에서 추출)
   role: string | null; // 현재 사용자의 권한 (ROLE_ADMIN, ROLE_USER)
   login: (token: string) => void; // 로그인 처리 함수
   logout: () => void; // 로그아웃 처리 함수
 };
-
 /**
  * @function decodeJwt
  * @description JWT(JSON Web Token)를 디코딩하여 페이로드(payload)를 파싱하는 헬퍼 함수입니다.
@@ -36,34 +34,30 @@ const decodeJwt = (token: string) => {
     return null;
   }
 };
-
 export const useAuthStore = create<AuthStore>((set) => {
   // 세션스토리지에 JWT가 있으면 decode해서 초기값 세팅
   const savedToken = sessionStorage.getItem("jwt");
   const decodedToken = savedToken ? decodeJwt(savedToken) : null;
-
   return {
     isAuthenticated: !!savedToken,
     token: savedToken,
-    loginId: decodedToken ? decodedToken.sub : null,
+    memberId: decodedToken ? decodedToken.sub : null,
     role: decodedToken ? decodedToken.role.replace(/^ROLE_/, "") : null, // "ROLE_" 접두어 제거
-
     login: (token: string) => {
       sessionStorage.setItem("jwt", token);
       const decodedToken = decodeJwt(token);
-      const loginId = decodedToken ? decodedToken.sub : null;
+      const memberId = decodedToken ? decodedToken.sub : null;
       const role = decodedToken
         ? decodedToken.role.replace(/^ROLE_/, "")
         : null;
-      set({ token, isAuthenticated: true, loginId, role });
+      set({ token, isAuthenticated: true, memberId, role });
     },
-
     logout: () => {
       sessionStorage.removeItem("jwt");
       set({
         isAuthenticated: false,
         token: null,
-        loginId: null,
+        memberId: null,
         role: null,
       });
     },
