@@ -8,7 +8,7 @@ import { PageHeader } from "../../common/PageHeader/PageHeader";
 import { Toggle } from "../../common/PageHeader/Toggle/Toggle";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { useNavigate } from "react-router-dom";
-import { getMeetingList } from "../api/api";
+import { getMeetingList } from "../api/MeetingApi";
 
 export default function MeetingList() {
   const navigate = useNavigate();
@@ -116,7 +116,7 @@ export default function MeetingList() {
             { label: "칸반", value: "kanban", path: "/issue/kanban" },
           ]}
         />
-        <AddButton onClick={() => navigate("/meeing/create")} />
+        <AddButton onClick={() => navigate("/meeting/create")} />
       </PageHeader>
       {/* 리스트 */}
       <ListDataGrid<MeetingListItem>

@@ -33,7 +33,7 @@ export const getAxiosAuthHeaders = (): AxiosRequestConfig => {
   };
 };
 
-//멤버 리스트(참여자, 참석자)
+//멤버 리스트(참여자, 참석자)(이슈, 회의에서 사용)
 export const getPartMemberList = async (): Promise<PartMemberList[]> => {
   const response = await axios.get(
     `${BASE_URL}/partMember/list`,
@@ -43,7 +43,7 @@ export const getPartMemberList = async (): Promise<PartMemberList[]> => {
   return response.data;
 };
 
-//주관자 정보
+//주관자 정보(이슈, 회의 헤서 사용)
 //아이디를 보내서, 이름, 직급 조회
 export const getHostData = async (
   memberId: number

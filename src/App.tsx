@@ -6,6 +6,7 @@ import { Box } from "@mui/material";
 import { useAuthStore } from "./store/useAuthStore";
 import type { JSX } from "@emotion/react/jsx-runtime";
 import { lazy } from "react";
+import MeetingCreate from "./meeting/page/MeetingCreate";
 
 const IssueList = lazy(() => import("./issue/page/IssueList"));
 const IssueCreate = lazy(() => import("./issue/page/IssueCreate"));
@@ -90,6 +91,7 @@ export default function App() {
                   p: { xs: 2, md: 4 }, // ★ 반응형 padding
                 }}
               >
+                {/* 이슈 */}
                 <Routes>
                   <Route
                     path="/issue/create"
@@ -109,6 +111,15 @@ export default function App() {
                     }
                   />
 
+                  {/* 회의 */}
+                  <Route
+                    path="/meeting/create"
+                    element={
+                      <PrivateRoute>
+                        <MeetingCreate />
+                      </PrivateRoute>
+                    }
+                  />
                   <Route
                     path="/meeting/list"
                     element={

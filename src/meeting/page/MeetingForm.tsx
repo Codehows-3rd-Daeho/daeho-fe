@@ -11,9 +11,9 @@ import {
 import { DateRange } from "react-date-range";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import DeleteIcon from "@mui/icons-material/Delete";
-import PartMember from "./PartMember";
-import type { IssueFormValues, IssueMemberDto } from "../type/type";
 import type { MasterDataType } from "../../admin/type/SettingType";
+import PartMember from "../../issue/page/PartMember";
+import type { IssueFormValues, IssueMemberDto } from "../../issue/type/type";
 
 interface IssueFormProps {
   //useState로 관리 됐던 애들
@@ -43,7 +43,7 @@ interface IssueFormProps {
   onSubmit: () => void;
 }
 
-export default function IssueForm({
+export default function MeetingForm({
   //부모에게 전달 받을 내용
   formData,
   categories,

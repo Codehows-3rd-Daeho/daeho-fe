@@ -1,6 +1,4 @@
-import { issueCreate } from "../api/issueApi";
 import { useEffect, useState } from "react";
-import { type IssueFormValues, type IssueMemberDto } from "../type/type";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import dayjs from "dayjs";
@@ -9,20 +7,22 @@ import type { MasterDataType } from "../../admin/type/SettingType";
 import { useAuthStore } from "../../store/useAuthStore";
 import { getHostData } from "../../admin/api/MemberApi";
 import { useNavigate } from "react-router-dom";
-import IssueForm from "./IssueForm";
+import MeetingForm from "./MeetingForm";
+import type { MeetingFormValues, MeetingMemberDto } from "../type/type";
+import { meetingCreate } from "../api/MeetingApi";
 
-export interface DateRangeType {
+interface DateRangeType {
   startDate: Date;
   endDate: Date;
   key: string; //각 범위를 구분하기 위함
 }
 
-export default function IssueCreate() {
-  const [formData, setFormData] = useState<IssueFormValues>({
+export default function MeetingCreate() {
+  const [formData, setFormData] = useState<MeetingFormValues>({
     title: "",
     content: "",
     file: [],
-    status: "IN_PROGRESS",
+    status: "PLANNED",
     host: "",
     startDate: "",
     endDate: "",
@@ -100,8 +100,8 @@ export default function IssueCreate() {
     const formDataObj = new FormData();
 
     // 1. DTO에 해당하는 데이터 객체 생성
-    // 백엔드의 IssueDto에 매핑되어야 할 모든 필드(파일 제외)
-    const issueDto = {
+    // 백엔드의 meetingDto에 매핑되어야 할 모든 필드(파일 제외)
+    const meetingDto = {
       title: formData.title, //속성(키): 넣을 값 | 백엔드 Dto 필드명: 프론트 필드명
       content: formData.content,
       status: formData.status,
@@ -111,15 +111,15 @@ export default function IssueCreate() {
       //서버로 전송 시 string -> Number 변환
       categoryId: Number(formData.category),
       departmentIds: formData.department.map(Number),
-      members: issueMembers, //PartMember에서 전달받은 객체
+      members: meetingMembers, //PartMember에서 전달받은 객체
       isDel: false,
     };
 
-    // 2. issueDto를 JSON 문자열로 변환하여 "data" 파트에 추가
+    // 2. meetingDto를 JSON 문자열로 변환하여 "data" 파트에 추가
     // 백엔드의 @RequestPart("data")와 매칭
     formDataObj.append(
       "data",
-      new Blob([JSON.stringify(issueDto)], { type: "application/json" })
+      new Blob([JSON.stringify(meetingDto)], { type: "application/json" })
     );
 
     // 3. 파일 배열을 forEach로 순회하며 "file" 파트에 추가
@@ -128,14 +128,14 @@ export default function IssueCreate() {
 
     //===================전송=========================
     try {
-      console.log("보내는 데이터", issueDto);
-      await issueCreate(formDataObj);
+      console.log("보내는 데이터", meetingDto);
+      await meetingCreate(formDataObj);
 
-      alert("이슈가 등록되었습니다!");
-      navigator("/issue/list");
+      alert("회의가 등록되었습니다!");
+      navigator("/meeting/list");
     } catch (error) {
-      console.error("이슈 등록 실패:", error);
-      alert("이슈 등록 중 오류가 발생했습니다.");
+      console.error("회의 등록 실패:", error);
+      alert("회의 등록 중 오류가 발생했습니다.");
     }
   };
 
@@ -197,15 +197,15 @@ export default function IssueCreate() {
   };
 
   // ===============================================================================================
-  //                          참여자
+  //                          참석자
   // ===============================================================================================
 
   //partmember객체 받기
-  const [issueMembers, setIssueMembers] = useState<IssueMemberDto[]>([]);
+  const [meetingMembers, setMeetingMembers] = useState<MeetingMemberDto[]>([]);
 
   return (
     <>
-      <IssueForm
+      <MeetingForm
         formData={formData}
         categories={categories}
         departments={departments}
@@ -222,7 +222,7 @@ export default function IssueCreate() {
         }
         onOpenFileInput={openFileInput}
         onDepartmentChange={handleDepartmentChange}
-        onChangeMembers={setIssueMembers}
+        onChangeMembers={setMeetingMembers}
         onSelectRange={handleSelect}
         onSubmit={handleSubmit}
       />
