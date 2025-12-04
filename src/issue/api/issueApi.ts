@@ -30,13 +30,3 @@ export const issueCreate = async (formData: FormData) => {
   });
 };
 
-// 이슈 목록 조회
-export const getIssueList = async (
-  page: number,
-  size: number = 10
-): Promise<IssueListResponse> => {
-  const response = await axios.get(`${BASE_URL}/issue`, {
-    params: { page, size },
-  });
-  return response.data; // { content, totalElements }
-};

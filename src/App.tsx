@@ -62,14 +62,14 @@ export default function App() {
           <main className="flex-1 overflow-auto bg-gray-50">
             <div className="max-w-[1200px] w-full mx-auto px-6 **py-12**">
               <Routes>
-                <Route
+                {/* <Route
                   path="/issue/register"
                   element={
                     <PrivateRoute>
                       <IssueRegister />
                     </PrivateRoute>
                   }
-                />
+                /> */}
                 <Route
                   path="/issue/list"
                   element={
