@@ -1,6 +1,5 @@
 import axios from "axios";
 import { getAxiosAuthHeaders } from "../../admin/api/MemberApi";
-import { BASE_URL } from "../../config/BaseUrl";
 import type { IssueListResponse } from "../type/type";
 
 // 이슈 목록 조회
@@ -23,20 +22,9 @@ export const issueCreate = async (formData: FormData) => {
     },
   });
 
-  await axios.post(`${BASE_URL}/issue/create`, formData, {
+  await axios.post(`/issue/create`, formData, {
     headers: {
       ...getAxiosAuthHeaders().headers,
     },
   });
-};
-
-// 이슈 목록 조회
-export const getIssueList = async (
-  page: number,
-  size: number = 10
-): Promise<IssueListResponse> => {
-  const response = await axios.get(`${BASE_URL}/issue`, {
-    params: { page, size },
-  });
-  return response.data; // { content, totalElements }
 };

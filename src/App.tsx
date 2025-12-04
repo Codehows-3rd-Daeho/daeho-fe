@@ -7,13 +7,13 @@ import type { JSX } from "@emotion/react/jsx-runtime";
 import { lazy } from "react";
 import "./index.css";
 import MeetingScheduler from "./meeting/page/MeetingScheduler";
+import AdminSetting from "./admin/setting/page/AdminSetting";
 
 const IssueList = lazy(() => import("./issue/page/IssueList"));
 const IssueCreate = lazy(() => import("./issue/page/IssueCreate"));
-const AdminSetting = lazy(() => import("./admin/page/setting/AdminSetting"));
 const MemberList = lazy(() => import("./admin/page/member/MemberList"));
 const MeetingList = lazy(() => import("./meeting/page/MeetingList"));
-const Login = lazy(() => import("./admin/page/Login"));
+const Login = lazy(() => import("./login/page/Login"));
 /*===============================
   PrivateRoute 사용 안내
   ===============================
@@ -43,6 +43,7 @@ function PrivateRoute({ children, isAdmin = false }: PrivateRouteProps) {
 }
 
 export default function App() {
+  const { isAuthenticated } = useAuthStore();
   return (
     <BrowserRouter>
       <div className="flex h-screen bg-gray-50">
@@ -66,7 +67,7 @@ export default function App() {
                   path="/issue/register"
                   element={
                     <PrivateRoute>
-                      <IssueRegister />
+                      <IssueCreate />
                     </PrivateRoute>
                   }
                 />
