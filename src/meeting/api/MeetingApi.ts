@@ -1,8 +1,6 @@
 import axios from "axios";
 import type { MeetingListResponse } from "../type/type";
-import { getAxiosAuthHeaders } from "../../admin/api/MemberApi";
-
-import { BASE_URL } from "../../config/BaseUrl";
+import httpClient from "../../config/httpClient";
 
 // 회의 목록 조회
 export const getMeetingList = async (
@@ -17,9 +15,9 @@ export const getMeetingList = async (
 
 //등록
 export const meetingCreate = async (formData: FormData) => {
-  await axios.post(`${BASE_URL}/issue/create`, formData, {
+  await httpClient.post(`/issue/create`, formData, {
     headers: {
-      ...getAxiosAuthHeaders().headers,
+      "Content-Type": "multipart/form-data",
     },
   });
 };

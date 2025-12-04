@@ -14,5 +14,9 @@ export const getIssueList = async (
 
 //등록
 export const issueCreate = async (formData: FormData) => {
-  await httpClient.post(`/issue/create`, formData);
+  await httpClient.post(`/issue/create`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 };

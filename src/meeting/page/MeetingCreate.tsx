@@ -2,14 +2,17 @@ import { useEffect, useState } from "react";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import dayjs from "dayjs";
-import { getCategory, getDepartment } from "../../admin/api/MasterDataApi";
-import type { MasterDataType } from "../../admin/type/SettingType";
 import { useAuthStore } from "../../store/useAuthStore";
-import { getHostData } from "../../admin/api/MemberApi";
 import { useNavigate } from "react-router-dom";
 import MeetingForm from "./MeetingForm";
 import type { MeetingFormValues, MeetingMemberDto } from "../type/type";
 import { meetingCreate } from "../api/MeetingApi";
+import type { MasterDataType } from "../../admin/setting/type/SettingType";
+import {
+  getCategory,
+  getDepartment,
+} from "../../admin/setting/api/MasterDataApi";
+import { getHostData } from "../../admin/member/api/MemberApi";
 
 interface DateRangeType {
   startDate: Date;

@@ -59,6 +59,7 @@ export default function App() {
                 <Routes>
                   <Route path="/issue/create" element={<IssueCreate />} />
                   <Route path="/issue/list" element={<IssueList />} />
+                  <Route path="/meeting/create" element={<MeetingCreate />} />
                   <Route path="/meeting/list" element={<MeetingList />} />
 
                   {/* 관리자 */}

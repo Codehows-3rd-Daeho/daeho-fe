@@ -11,9 +11,9 @@ import {
 import { DateRange } from "react-date-range";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import DeleteIcon from "@mui/icons-material/Delete";
-import type { MasterDataType } from "../../admin/type/SettingType";
 import PartMember from "../../issue/page/PartMember";
 import type { IssueFormValues, IssueMemberDto } from "../../issue/type/type";
+import type { MasterDataType } from "../../admin/setting/type/SettingType";
 
 interface IssueFormProps {
   //useState로 관리 됐던 애들
