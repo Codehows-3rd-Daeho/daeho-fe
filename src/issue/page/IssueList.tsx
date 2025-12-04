@@ -10,6 +10,7 @@ import { Toggle } from "../../common/PageHeader/Toggle/Toggle";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { Box, Typography } from "@mui/material";
 import { getIssueList } from "../api/issueApi";
+// import { getIssueList } from "../api/api"; // 백엔드 연결
 
 export default function IssueList() {
   const navigate = useNavigate();

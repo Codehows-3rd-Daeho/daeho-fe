@@ -9,7 +9,7 @@ import "./index.css";
 import MeetingScheduler from "./meeting/page/MeetingScheduler";
 
 const IssueList = lazy(() => import("./issue/page/IssueList"));
-const IssueRegister = lazy(() => import("./issue/page/IssueRegister"));
+const IssueCreate = lazy(() => import("./issue/page/IssueCreate"));
 const AdminSetting = lazy(() => import("./admin/page/setting/AdminSetting"));
 const MemberList = lazy(() => import("./admin/page/member/MemberList"));
 const MeetingList = lazy(() => import("./meeting/page/MeetingList"));
