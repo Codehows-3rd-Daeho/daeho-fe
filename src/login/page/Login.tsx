@@ -46,7 +46,12 @@ export default function Login() {
         return;
       }
       login(token);
-      navigate("/admin/member");
+      //로그인 성공시 토큰 저장_예주
+      // const rawToken = token.replace("Bearer ", "");
+      // localStorage.setItem("accessToken", rawToken);
+      // console.log("로그인 후 토큰:", rawToken);
+
+      navigate("/issue/create");
     } catch {
       setError("아이디 또는 비밀번호가 올바르지 않습니다.");
     }

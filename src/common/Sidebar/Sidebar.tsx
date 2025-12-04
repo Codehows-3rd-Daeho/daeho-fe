@@ -19,7 +19,6 @@ import ExpandMore from "@mui/icons-material/ExpandMore";
 import type { SidebarProps } from "./type";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/useAuthStore";
-
 export default function Sidebar({
   items,
   collapsed = false,
@@ -28,13 +27,11 @@ export default function Sidebar({
 }: SidebarProps & { isAdmin?: boolean }) {
   const navigate = useNavigate();
   const { logout } = useAuthStore();
-
   //로그아웃
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
-
   // 초기 open 상태
   const [open, setOpen] = useState<{ [key: string]: boolean }>(() => {
     const path = window.location.pathname;
@@ -46,11 +43,9 @@ export default function Sidebar({
     });
     return initialOpen;
   });
-
   const handleToggle = (id: string) => {
     setOpen((prev) => ({ ...prev, [id]: !prev[id] }));
   };
-
   // 현재 선택된 메뉴
   const selectedId = (() => {
     const path = window.location.pathname;
@@ -63,10 +58,8 @@ export default function Sidebar({
     });
     return selected;
   })();
-
   const userMenu = items.filter((item) => item.id !== "admin");
   const adminMenu = items.find((item) => item.id === "admin");
-
   return (
     <Drawer
       variant="permanent"
@@ -96,7 +89,6 @@ export default function Sidebar({
         </Box>
       </Toolbar>
       <Divider />
-
       {/* 일반 메뉴 */}
       <List>
         {userMenu.map((item) => {
@@ -104,7 +96,6 @@ export default function Sidebar({
           const hasChildren = children.length > 0;
           const isParentSelected =
             hasChildren && children.some((child) => child.id === selectedId);
-
           return (
             <React.Fragment key={item.id}>
               <ListItemButton
@@ -129,7 +120,6 @@ export default function Sidebar({
                   hasChildren &&
                   (open[item.id] ? <ExpandLess /> : <ExpandMore />)}
               </ListItemButton>
-
               {hasChildren && (
                 <Collapse in={open[item.id]} timeout="auto" unmountOnExit>
                   <List component="div" disablePadding>
@@ -154,7 +144,6 @@ export default function Sidebar({
           );
         })}
       </List>
-
       {/* 관리자 메뉴 */}
       {adminMenu && (
         <>
@@ -165,7 +154,6 @@ export default function Sidebar({
               const isAdminParentSelected = adminChildren.some(
                 (child) => child.id === selectedId
               );
-
               return (
                 <React.Fragment key={adminMenu.id}>
                   <ListItemButton
@@ -185,7 +173,6 @@ export default function Sidebar({
                       adminChildren.length > 0 &&
                       (open[adminMenu.id] ? <ExpandLess /> : <ExpandMore />)}
                   </ListItemButton>
-
                   {adminChildren.length > 0 && (
                     <Collapse
                       in={open[adminMenu.id]}
@@ -216,7 +203,6 @@ export default function Sidebar({
           </List>
         </>
       )}
-
       {/* Logout */}
       <Box flexGrow={1} />
       <Divider />
