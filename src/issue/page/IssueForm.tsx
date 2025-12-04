@@ -13,7 +13,7 @@ import UploadFileIcon from "@mui/icons-material/UploadFile";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PartMember from "./PartMember";
 import type { IssueFormValues, IssueMemberDto } from "../type/type";
-import type { MasterDataType } from "../../admin/type/SettingType";
+import type { MasterDataType } from "../../admin/setting/type/SettingType";
 
 interface IssueFormProps {
   //useState로 관리 됐던 애들

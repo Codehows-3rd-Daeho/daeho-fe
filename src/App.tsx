@@ -1,19 +1,16 @@
 import { Routes, Route, Navigate, BrowserRouter } from "react-router-dom";
-import Header from "./common/Header/Header";
-import Sidebar from "./common/Sidebar/Sidebar";
-import { sidebarItems } from "./common/Sidebar/SidebarItems";
-import { Box } from "@mui/material";
 import { useAuthStore } from "./store/useAuthStore";
 import type { JSX } from "@emotion/react/jsx-runtime";
 import { lazy } from "react";
 import MeetingCreate from "./meeting/page/MeetingCreate";
+import AppLayout from "./AppLayout";
 
 const IssueList = lazy(() => import("./issue/page/IssueList"));
 const IssueCreate = lazy(() => import("./issue/page/IssueCreate"));
-const AdminSetting = lazy(() => import("./admin/page/setting/AdminSetting"));
-const MemberList = lazy(() => import("./admin/page/member/MemberList"));
+const AdminSetting = lazy(() => import("./admin/setting/page/AdminSetting"));
+const MemberList = lazy(() => import("./admin/member/page/MemberList"));
 const MeetingList = lazy(() => import("./meeting/page/MeetingList"));
-const Login = lazy(() => import("./admin/page/Login"));
+const Login = lazy(() => import("./login/page/Login"));
 /*===============================
   PrivateRoute 사용 안내
   ===============================
@@ -43,91 +40,26 @@ function PrivateRoute({ children, isAdmin = false }: PrivateRouteProps) {
 }
 
 export default function App() {
+  const { isAuthenticated } = useAuthStore();
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<Login />}></Route>
+        {/* 로그인 페이지 — 사이드바/헤더 없음 */}
         <Route
-          path="*"
+          path="/login"
+          element={isAuthenticated ? <Navigate to="/" replace /> : <Login />}
+        />
+
+        {/* 인증된 페이지는 모두 AppLayout 사용 */}
+        <Route
+          path="/*"
           element={
-            <Box
-              sx={{
-                display: "flex",
-                height: "100vh",
-                flexDirection: "row",
-              }}
-            >
-              {/* 사이드바 */}
-              <Box
-                sx={{
-                  width: 300,
-                  flexShrink: 0,
-                }}
-              >
-                <Sidebar items={sidebarItems} selectedId="dashboard" />
-              </Box>
-
-              {/* 헤더 */}
-              <Box
-                sx={{
-                  flex: 1,
-                  display: "flex",
-                  flexDirection: "column",
-                  overflow: "hidden",
-                }}
-              >
-                <Header name="홍길동" jobPosition="팀장" notifications={[]} />
-              </Box>
-
-              {/* 페이지 콘텐츠 */}
-
-              <Box
-                sx={{
-                  flex: 1,
-                  width: "100%",
-                  mt: "62px",
-                  maxWidth: "1600px", // ★ 화면설계처럼 넓게 퍼지도록
-                  margin: 0,
-                  p: { xs: 2, md: 4 }, // ★ 반응형 padding
-                }}
-              >
-                {/* 이슈 */}
+            <PrivateRoute>
+              <AppLayout>
                 <Routes>
-                  <Route
-                    path="/issue/create"
-                    element={
-                      <PrivateRoute>
-                        <IssueCreate />
-                      </PrivateRoute>
-                    }
-                  />
-
-                  <Route
-                    path="/issue/list"
-                    element={
-                      <PrivateRoute>
-                        <IssueList />
-                      </PrivateRoute>
-                    }
-                  />
-
-                  {/* 회의 */}
-                  <Route
-                    path="/meeting/create"
-                    element={
-                      <PrivateRoute>
-                        <MeetingCreate />
-                      </PrivateRoute>
-                    }
-                  />
-                  <Route
-                    path="/meeting/list"
-                    element={
-                      <PrivateRoute>
-                        <MeetingList />
-                      </PrivateRoute>
-                    }
-                  />
+                  <Route path="/issue/create" element={<IssueCreate />} />
+                  <Route path="/issue/list" element={<IssueList />} />
+                  <Route path="/meeting/list" element={<MeetingList />} />
 
                   {/* 관리자 */}
                   <Route
@@ -137,7 +69,7 @@ export default function App() {
                         <MemberList />
                       </PrivateRoute>
                     }
-                  ></Route>
+                  />
                   <Route
                     path="/admin/setting"
                     element={
@@ -145,10 +77,10 @@ export default function App() {
                         <AdminSetting />
                       </PrivateRoute>
                     }
-                  ></Route>
+                  />
                 </Routes>
-              </Box>
-            </Box>
+              </AppLayout>
+            </PrivateRoute>
           }
         />
       </Routes>
