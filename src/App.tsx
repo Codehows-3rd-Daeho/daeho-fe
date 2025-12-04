@@ -2,17 +2,18 @@ import { Routes, Route, Navigate, BrowserRouter } from "react-router-dom";
 import Header from "./common/Header/Header";
 import Sidebar from "./common/Sidebar/Sidebar";
 import { sidebarItems } from "./common/Sidebar/SidebarItems";
-import { Box } from "@mui/material";
 import { useAuthStore } from "./store/useAuthStore";
 import type { JSX } from "@emotion/react/jsx-runtime";
 import { lazy } from "react";
+import "./index.css";
+import MeetingScheduler from "./meeting/page/MeetingScheduler";
+import AdminSetting from "./admin/setting/page/AdminSetting";
 
 const IssueList = lazy(() => import("./issue/page/IssueList"));
-const IssueRegister = lazy(() => import("./issue/page/IssueRegister"));
-const AdminSetting = lazy(() => import("./admin/page/setting/AdminSetting"));
+const IssueCreate = lazy(() => import("./issue/page/IssueCreate"));
 const MemberList = lazy(() => import("./admin/page/member/MemberList"));
 const MeetingList = lazy(() => import("./meeting/page/MeetingList"));
-const Login = lazy(() => import("./admin/page/Login"));
+const Login = lazy(() => import("./login/page/Login"));
 /*===============================
   PrivateRoute 사용 안내
   ===============================
@@ -42,105 +43,88 @@ function PrivateRoute({ children, isAdmin = false }: PrivateRouteProps) {
 }
 
 export default function App() {
+  const { isAuthenticated } = useAuthStore();
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<Login />}></Route>
-        <Route
-          path="*"
-          element={
-            <Box
-              sx={{
-                display: "flex",
-                height: "100vh",
-                flexDirection: "row",
-              }}
-            >
-              {/* 사이드바 */}
-              <Box
-                sx={{
-                  width: 300,
-                  flexShrink: 0,
-                }}
-              >
-                <Sidebar items={sidebarItems} selectedId="dashboard" />
-              </Box>
+      <div className="flex h-screen bg-gray-50">
+        {/* 사이드바 */}
+        <aside className="w-[300px] flex-shrink-0 border-r bg-white">
+          <Sidebar items={sidebarItems} selectedId="dashboard" />
+        </aside>
 
-              {/* 헤더 */}
-              <Box
-                sx={{
-                  flex: 1,
-                  display: "flex",
-                  flexDirection: "column",
-                  overflow: "hidden",
-                }}
-              >
-                <Header name="홍길동" jobPosition="팀장" notifications={[]} />
-              </Box>
+        {/* 메인 영역 래퍼 (Header + Main Content) */}
+        <div className="flex flex-col flex-1 overflow-hidden">
+          {/* 헤더 */}
+          <header className="h-[62px] border-b flex-shrink-0 bg-white">
+            <Header name="홍길동" jobPosition="팀장" notifications={[]} />
+          </header>
 
-              {/* 페이지 콘텐츠 */}
-
-              <Box
-                sx={{
-                  flex: 1,
-                  width: "100%",
-                  mt: "62px",
-                  maxWidth: "1600px", // ★ 화면설계처럼 넓게 퍼지도록
-                  margin: 0,
-                  p: { xs: 2, md: 4 }, // ★ 반응형 padding
-                }}
-              >
-                <Routes>
-                  <Route
-                    path="/issue/register"
-                    element={
-                      <PrivateRoute>
-                        <IssueRegister />
-                      </PrivateRoute>
-                    }
-                  />
-
-                  <Route
-                    path="/issue/list"
-                    element={
-                      <PrivateRoute>
-                        <IssueList />
-                      </PrivateRoute>
-                    }
-                  />
-
-                  <Route
-                    path="/meeting/list"
-                    element={
-                      <PrivateRoute>
-                        <MeetingList />
-                      </PrivateRoute>
-                    }
-                  />
-
-                  {/* 관리자 */}
-                  <Route
-                    path="/admin/member"
-                    element={
-                      <PrivateRoute isAdmin>
-                        <MemberList />
-                      </PrivateRoute>
-                    }
-                  ></Route>
-                  <Route
-                    path="/admin/setting"
-                    element={
-                      <PrivateRoute isAdmin>
-                        <AdminSetting />
-                      </PrivateRoute>
-                    }
-                  ></Route>
-                </Routes>
-              </Box>
-            </Box>
-          }
-        />
-      </Routes>
+          {/* 페이지 영역 */}
+          <main className="flex-1 overflow-auto bg-gray-50">
+            <div className="max-w-[1200px] w-full mx-auto px-6 **py-12**">
+              <Routes>
+                <Route
+                  path="/issue/register"
+                  element={
+                    <PrivateRoute>
+                      <IssueCreate />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/issue/list"
+                  element={
+                    <PrivateRoute>
+                      <IssueList />
+                    </PrivateRoute>
+                  }
+                />
+                {/* <Route
+                  path="/issue/kanban"
+                  element={
+                    <PrivateRoute>
+                      <KanbanBoard />
+                    </PrivateRoute>
+                  }
+                /> */}
+                <Route
+                  path="/meeting/list"
+                  element={
+                    <PrivateRoute>
+                      <MeetingList />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/meeting/schedule"
+                  element={
+                    <PrivateRoute>
+                      <MeetingScheduler />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin/member"
+                  element={
+                    <PrivateRoute isAdmin>
+                      <MemberList />
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/admin/setting"
+                  element={
+                    <PrivateRoute isAdmin>
+                      <AdminSetting />
+                    </PrivateRoute>
+                  }
+                />
+                <Route path="/login" element={<Login />} />
+              </Routes>
+            </div>
+          </main>
+        </div>
+      </div>
     </BrowserRouter>
   );
 }

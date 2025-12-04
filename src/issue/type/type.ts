@@ -17,7 +17,7 @@ export interface IssueListResponse {
   totalElements: number;
 }
 
-export interface BaseFormValues {
+export interface IssueFormValues {
   title: string; // 제목
   content: string; // 내용
   file?: File[]; // 첨부 파일 (다중)
@@ -27,5 +27,30 @@ export interface BaseFormValues {
   endDate?: string; // 종료일 (선택)
   category: string; // 카테고리
   department: string[] | number[]; // 관련 부서 (다중)
-  member: string[]; // 관련 멤버 (다중)
+  members: IssueMemberDto[]; // 관련 멤버 (다중)
+  isDel: boolean;
+}
+
+//이슈 등록시 사용, 주관자
+export interface IssueMemberData {
+  id: number;
+  name: string;
+  jobPositionName: string;
+}
+
+// 회원 리스트(참여자, 참석자 추가)
+export interface PartMemberList {
+  id: number;
+  name: string;
+  department: string;
+  jobPositionName: string;
+}
+
+//이슈 멤버 등록
+export interface IssueMemberDto {
+  memberId: number;
+  memberName: string;
+  isHost: boolean;
+  isPermitted: boolean;
+  isRead: boolean;
 }
