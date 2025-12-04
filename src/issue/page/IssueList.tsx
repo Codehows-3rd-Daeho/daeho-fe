@@ -21,17 +21,7 @@ export default function IssueList() {
   const [data, setData] = useState<IssueListItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
 
-  // // 더미
-  // useEffect(() => {
-  //   const filtered = mockIssueList.filter((item) => item.isDel !== "Y"); // 삭제 항목 제외
-  //   const start = (page - 1) * pageSize;
-  //   const end = start + pageSize;
-  //   const sliced = filtered.slice(start, end);
-
-  //   setData(sliced);
-  //   setTotalCount(filtered.length);
-  // }, [page]);
-
+  // 데이터 가져오기
   useEffect(() => {
     getIssueList(page, 10).then((data) => {
       setData(data.content); // 데이터
