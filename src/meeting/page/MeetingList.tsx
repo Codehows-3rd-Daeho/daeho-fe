@@ -8,8 +8,7 @@ import { PageHeader } from "../../common/PageHeader/PageHeader";
 import { Toggle } from "../../common/PageHeader/Toggle/Toggle";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { useNavigate } from "react-router-dom";
-import { getMeetingList } from "../api/api";
-import { useAuthStore } from "../../store/useAuthStore";
+import { getMeetingList } from "../api/MeetingApi";
 
 export default function MeetingList() {
   const navigate = useNavigate();

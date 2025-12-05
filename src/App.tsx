@@ -2,6 +2,7 @@ import { Routes, Route, Navigate, BrowserRouter } from "react-router-dom";
 import { useAuthStore } from "./store/useAuthStore";
 import type { JSX } from "@emotion/react/jsx-runtime";
 import { lazy } from "react";
+import MeetingCreate from "./meeting/page/MeetingCreate";
 import AppLayout from "./AppLayout";
 import MeetingScheduler from "./meeting/page/MeetingScheduler";
 import IssueDtl from "./issue/page/IssueDtl";
@@ -70,6 +71,7 @@ export default function App() {
                 <Routes>
                   <Route path="/issue/create" element={<IssueCreate />} />
                   <Route path="/issue/list" element={<IssueList />} />
+                  <Route path="/meeting/create" element={<MeetingCreate />} />
                   <Route path="/issue/dtl" element={<IssueDtl />} />
                   <Route path="/meeting/list" element={<MeetingList />} />
                   <Route
