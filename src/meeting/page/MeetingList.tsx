@@ -9,6 +9,7 @@ import { Toggle } from "../../common/PageHeader/Toggle/Toggle";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { useNavigate } from "react-router-dom";
 import { getMeetingList } from "../api/MeetingApi";
+import { useAuthStore } from "../../store/useAuthStore";
 
 export default function MeetingList() {
   const navigate = useNavigate();
@@ -109,7 +110,7 @@ export default function MeetingList() {
           ]}
         />
         {role === "USER" && (
-          <AddButton onClick={() => navigate("/meeing/create")} />
+          <AddButton onClick={() => navigate("/meeting/create")} />
         )}
       </PageHeader>
       {/* 리스트 */}
