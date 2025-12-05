@@ -9,7 +9,7 @@ export const getIssueList = async (
   const response = await httpClient.get(`/issue`, {
     params: { page, size },
   });
-  return response.data; // { content, totalElements }
+  return response.data;
 };
 
 //등록

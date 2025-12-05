@@ -172,7 +172,6 @@ export default function MemberForm({
           variant="outlined"
           fullWidth
           value={member.password ?? ""}
-          disabled={mode === "update"}
           onChange={(e) => {
             const value = e.target.value;
             handleChange("password", value);
@@ -182,6 +181,7 @@ export default function MemberForm({
           helperText={errors.password}
           slotProps={{
             input: {
+              readOnly: mode === "update",
               endAdornment: (
                 <InputAdornment position="end">
                   {mode === "create" && (
