@@ -66,7 +66,6 @@ export default function IssueForm({
           gap: 3,
           p: 3,
           bgcolor: "#f5f5f5",
-          minHeight: "100vh",
           minWidth: "1000px",
         }}
       >
@@ -331,7 +330,15 @@ export default function IssueForm({
               <Box sx={{ mt: 2 }}>
                 <DateRange
                   ranges={range}
-                  onChange={(ranges: any) => onSelectRange(ranges.selection)}
+                  onChange={(ranges) => {
+                    const sel = ranges.selection;
+                    if (!sel.startDate || !sel.endDate) return;
+                    onSelectRange({
+                      startDate: sel.startDate,
+                      endDate: sel.endDate,
+                      key: sel.key ?? "selection",
+                    });
+                  }}
                   showMonthAndYearPickers={false}
                   showDateDisplay={false}
                   direction="horizontal"

@@ -52,7 +52,8 @@ export default function PartMember({ onChangeMembers }: PartMemberProps) {
   const currentParticipants = participants[currentCategory] || []; //participants 객체에서 현재 선택된 카테고리(currentCategory)에 속한 참여자 리스트를 가져옴
 
   // 로그인된 사용자 id
-  const { memberId } = useAuthStore();
+  const { member } = useAuthStore();
+  const memberId = member?.memberId;
 
   useEffect(() => {
     const loadData = async () => {

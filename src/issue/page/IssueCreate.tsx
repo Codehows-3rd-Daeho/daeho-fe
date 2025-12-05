@@ -39,7 +39,8 @@ export default function IssueCreate() {
   const [categories, setCategories] = useState<MasterDataType[]>([]);
   const [departments, setDepartments] = useState<MasterDataType[]>([]);
   // 로그인된 사용자 id
-  const { memberId } = useAuthStore();
+  const { member } = useAuthStore();
+  const memberId = member?.memberId;
   const navigator = useNavigate();
 
   useEffect(() => {

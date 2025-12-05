@@ -40,16 +40,18 @@ export default function Login() {
     }
 
     try {
-      const token = await loginAndGetToken({ loginId, password });
-      if (!token) {
+      const res = await loginAndGetToken({ loginId, password });
+      if (!res) {
         setError("아이디 또는 비밀번호가 올바르지 않습니다.");
         return;
       }
-      login(token);
-      //로그인 성공시 토큰 저장_예주
-      // const rawToken = token.replace("Bearer ", "");
-      // localStorage.setItem("accessToken", rawToken);
-      // console.log("로그인 후 토큰:", rawToken);
+      // 토큰 + 유저정보 store 저장
+      login(res.token, {
+        memberId: res.memberId,
+        name: res.name,
+        jobPosition: res.jobPosition,
+        role: res.role,
+      });
 
       navigate("/issue/create");
     } catch {

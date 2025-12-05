@@ -6,20 +6,15 @@ export function ListDataGrid<T extends object>({
   columns,
   rows,
   rowIdField,
+  maxWidth = "100%", // 기본값 100%
 }: CommonDataGridProps<T>) {
   return (
     <>
-      <Box sx={{ p: 2 }}>
-        <Box
-          sx={
-            {
-              // width: "100%",
-            }
-          }
-        >
+      <Box sx={{ p: 2, display: "flex", justifyContent: "center" }}>
+        <Box sx={{ width: "100%", maxWidth }}>
           <DataGrid<T>
             columnHeaderHeight={48}
-            rows={rows} //
+            rows={rows}
             columns={columns}
             getRowId={(row) => row[rowIdField] as string | number}
             disableRowSelectionOnClick

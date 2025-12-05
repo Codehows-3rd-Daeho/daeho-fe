@@ -62,7 +62,7 @@ export default function MemberList() {
       headerName: "이름",
       headerAlign: "center",
       align: "center",
-      width: 150,
+      width: 120,
       renderCell: (params) => (
         <Button
           variant="text"
@@ -137,7 +137,12 @@ export default function MemberList() {
           memberId={selectedMemberId}
         />
       )}
-      <ListDataGrid columns={columns} rows={rows} rowIdField="id" />
+      <ListDataGrid
+        columns={columns}
+        rows={rows}
+        rowIdField="id"
+        // maxWidth={"900px"}
+      />
 
       <CommonPagination
         page={page}
