@@ -6,7 +6,6 @@ import {
   Select,
   MenuItem,
   FormControl,
-  InputAdornment,
 } from "@mui/material";
 import { DateRange } from "react-date-range";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
