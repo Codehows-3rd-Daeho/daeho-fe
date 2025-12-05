@@ -3,12 +3,12 @@ import type { MasterDataType } from "../type/SettingType";
 
 // GET
 export const getFileSize = async (): Promise<MasterDataType> => {
-  const response = await httpClient.get("/admin/file/size");
+  const response = await httpClient.get("/file/size");
   return response.data;
 };
 
 export const getExtensions = async (): Promise<MasterDataType[]> => {
-  const response = await httpClient.get("/admin/file/extension");
+  const response = await httpClient.get("/file/extension");
   return response.data;
 };
 

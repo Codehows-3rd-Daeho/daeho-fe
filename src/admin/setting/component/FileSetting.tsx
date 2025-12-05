@@ -44,9 +44,13 @@ export default function FileSetting({
     if (value === "" || /^\d+$/.test(value)) {
       setFileSizeInput(value);
     }
+    // 숫자 또는 소수점 포함 숫자만 허용
+    if (/^\d*\.?\d*$/.test(value)) {
+      setFileSizeInput(value);
+    }
   };
   const handleFileSizeSave = async () => {
-    const size = parseInt(fileSizeInput);
+    const size = parseFloat(fileSizeInput);
     if (isNaN(size) || size < 0) {
       alert("유효한 값을 입력해주세요.");
       return;
@@ -54,7 +58,7 @@ export default function FileSetting({
     setIsSaving(true);
 
     const data: MasterDataType = {
-      name: fileSizeInput,
+      name: size.toString(),
     };
 
     try {

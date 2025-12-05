@@ -9,10 +9,13 @@ import { PageHeader } from "../../common/PageHeader/PageHeader";
 import { Toggle } from "../../common/PageHeader/Toggle/Toggle";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { Box, Typography } from "@mui/material";
+import { useAuthStore } from "../../store/useAuthStore";
 // import { getIssueList } from "../api/api"; // 백엔드 연결
 
 export default function IssueList() {
   const navigate = useNavigate();
+  const { member } = useAuthStore();
+  const role = member?.role;
 
   // 페이징
   const [page, setPage] = useState(1);
@@ -121,7 +124,9 @@ export default function IssueList() {
           ]}
         />
 
-        <AddButton onClick={() => navigate("/issue/create")} />
+        {role === "USER" && (
+          <AddButton onClick={() => navigate("/issue/create")} />
+        )}
       </PageHeader>
 
       <ListDataGrid<IssueListItem>
