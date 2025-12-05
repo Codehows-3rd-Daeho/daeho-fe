@@ -295,15 +295,12 @@ export default function MeetingForm({
                   <TextField
                     fullWidth
                     size="small"
-                    type="date"
+                    placeholder="0000-00-00"
                     value={formData.startDate}
                     onChange={(e) =>
                       onChangeFormData("startDate", e.target.value)
                     }
                     sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
-                    InputProps={{
-                      endAdornment: <InputAdornment position="end" />,
-                    }}
                   />
                 </Box>
                 <Box>
@@ -315,15 +312,12 @@ export default function MeetingForm({
                   <TextField
                     fullWidth
                     size="small"
-                    type="date"
+                    placeholder="0000-00-00"
                     value={formData.endDate ?? ""}
                     onChange={(e) =>
                       onChangeFormData("endDate", e.target.value)
                     }
                     sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
-                    InputProps={{
-                      endAdornment: <InputAdornment position="end" />,
-                    }}
                   />
                 </Box>
               </Box>
