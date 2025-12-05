@@ -6,7 +6,6 @@ import {
   Select,
   MenuItem,
   FormControl,
-  InputAdornment,
 } from "@mui/material";
 import { DateRange } from "react-date-range";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
@@ -144,7 +143,7 @@ export default function IssueForm({
               <Typography
                 sx={{ fontSize: "0.875rem", fontWeight: 500, mb: 0.5 }}
               >
-                Choose a file or drag & drop it here.
+                Choose a file
               </Typography>
             </Box>
 
@@ -295,15 +294,12 @@ export default function IssueForm({
                   <TextField
                     fullWidth
                     size="small"
-                    type="date"
+                    placeholder="0000-00-00"
                     value={formData.startDate}
                     onChange={(e) =>
                       onChangeFormData("startDate", e.target.value)
                     }
                     sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
-                    InputProps={{
-                      endAdornment: <InputAdornment position="end" />,
-                    }}
                   />
                 </Box>
                 <Box>
@@ -315,15 +311,12 @@ export default function IssueForm({
                   <TextField
                     fullWidth
                     size="small"
-                    type="date"
+                    placeholder="0000-00-00"
                     value={formData.endDate ?? ""}
                     onChange={(e) =>
                       onChangeFormData("endDate", e.target.value)
                     }
                     sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
-                    InputProps={{
-                      endAdornment: <InputAdornment position="end" />,
-                    }}
                   />
                 </Box>
               </Box>

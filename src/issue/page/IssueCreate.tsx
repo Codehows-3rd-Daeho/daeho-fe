@@ -13,6 +13,11 @@ import {
   getDepartment,
 } from "../../admin/setting/api/MasterDataApi";
 import { getHostData } from "../../admin/member/api/MemberApi";
+import axios from "axios";
+import {
+  getExtensions,
+  getFileSize,
+} from "../../admin/setting/api/FileSettingApi";
 
 export interface DateRangeType {
   startDate: Date;
@@ -55,7 +60,9 @@ export default function IssueCreate() {
         //==================주관자 자동 입력==================
         if (memberId) {
           const hostData = await getHostData(memberId);
-          const hostString = `${hostData.name} ${hostData.jobPositionName}`;
+          const hostString = `${hostData.name} ${
+            hostData.jobPositionName ?? ""
+          }`;
 
           setFormData((prev) => ({
             ...prev,
@@ -137,6 +144,9 @@ export default function IssueCreate() {
       alert("이슈가 등록되었습니다!");
       navigator("/issue/list");
     } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        return;
+      }
       console.error("이슈 등록 실패:", error);
       alert("이슈 등록 중 오류가 발생했습니다.");
     }
@@ -152,15 +162,74 @@ export default function IssueCreate() {
   };
 
   // 파일 업로드 핸들러
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     //HTML input[type="file"]의 파일 목록 속성 이름은 files
-    const newFiles = Array.from(e.target.files || []);
+    const uploadedFiles = Array.from(e.target.files || []);
 
-    setFormData((prev) => ({
-      ...prev,
-      // file?: File[] === file: File[] | undefined이기 때문에 undefined으로 인한 오류 방지
-      file: [...(prev.file ?? []), ...newFiles],
-    }));
+    // ======= 설정값 ==================
+
+    // const maxFileSize: number = await getFileSize(); // MB 단위
+    // const allowedExtensions: { id: number; extension: string }[] =
+    //   await getExtensions(); // 허용 확장자
+
+    // 설정값 로딩
+    const sizeConfig = await getFileSize();
+    const extensionConfig = await getExtensions();
+
+    const maxFileSizeByte = Number(sizeConfig.name); // number만 추출
+    const maxFileSize = maxFileSizeByte / 1024 / 1024; //바이트 단위 → MB로 변환
+    const allowedExtensions = extensionConfig.map((e) => e.name.toLowerCase());
+
+    console.log("maxFileSize", maxFileSize);
+    console.log("allowedExtensions", allowedExtensions);
+
+    // ===========================
+
+    //업로드 가능한 확장자, 용량의 파일을 담을 배열
+    const validFiles: File[] = [];
+
+    //업로드된 파일 배열을 돌면서 체크
+    uploadedFiles.forEach((file) => {
+      //확장자 추출
+      const ext = file.name.split(".").pop()?.toLowerCase();
+
+      // 1) 확장자 체크
+      const isAllowed = ext != null && allowedExtensions.includes(ext);
+
+      if (!isAllowed) {
+        alert(
+          `허용되지 않은 파일입니다: ${
+            file.name
+          }\n허용 확장자: ${allowedExtensions.join(", ")}`
+        );
+        return;
+      }
+
+      // 2) 용량 체크
+      const sizeMB = file.size / 1024 / 1024; //바이트 단위 → MB로 변환
+      console.log("sizeMB: ", sizeMB);
+      console.log("maxFileSize: ", maxFileSize);
+
+      if (sizeMB > maxFileSize) {
+        alert(
+          `${file.name} 파일의 크기가 ${maxFileSize}MB를 초과했습니다.
+           (현재: ${sizeMB.toFixed(2)}MB)`
+        );
+        return; // 이 파일만 제외
+      }
+
+      //확장자, 용량 체크 성공한 file만 배열에 추가
+      validFiles.push(file);
+    });
+
+    // 검증된 파일만 반영
+    if (validFiles.length > 0) {
+      setFormData((prev) => ({
+        ...prev,
+        // file?: File[] === file: File[] | undefined이기 때문에 undefined으로 인한 오류 방지
+        file: [...(prev.file ?? []), ...validFiles],
+      }));
+    }
   };
 
   // ===============================================================================================
