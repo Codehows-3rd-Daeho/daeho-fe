@@ -146,13 +146,19 @@ export default function PartMember({ onChangeMembers }: PartMemberProps) {
   //참여자 전체 선택 핸들러
   const handleSelectAll = (event: React.ChangeEvent<HTMLInputElement>) => {
     const checked = event.target.checked;
-    setParticipants((prev) => ({
-      ...prev,
-      [currentCategory]: prev[currentCategory].map((p) => ({
-        ...p,
-        selected: checked,
-      })),
-    }));
+
+    setParticipants((prev) => {
+      const updated = { ...prev };
+
+      Object.keys(updated).forEach((key) => {
+        updated[key] = updated[key].map((p) => ({
+          ...p,
+          selected: checked,
+        }));
+      });
+
+      return updated;
+    });
   };
 
   //특정 참여자의 특정 참여자의 isPermitted 상태 토글.
@@ -168,6 +174,17 @@ export default function PartMember({ onChangeMembers }: PartMemberProps) {
     });
   };
 
+  // 선택된 사람 수 계산
+  //ID 기준으로 중복 제거 후 갯수 세기
+  const selectedCount = [
+    ...new Map(
+      Object.values(participants)
+        .flat()
+        .filter((p) => p.selected)
+        .map((p) => [p.id, p]) // key: id / value: participant
+    ).values(),
+  ].length;
+
   // ===============================================================================================
   //                        수정 권한 선택
   // ===============================================================================================
@@ -182,13 +199,19 @@ export default function PartMember({ onChangeMembers }: PartMemberProps) {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const checked = event.target.checked;
-    setParticipants((prev) => ({
-      ...prev,
-      [currentCategory]: prev[currentCategory].map((p) => ({
-        ...p,
-        isPermitted: checked,
-      })),
-    }));
+
+    setParticipants((prev) => {
+      const updated = { ...prev };
+
+      Object.keys(updated).forEach((key) => {
+        updated[key] = updated[key].map((p) => ({
+          ...p,
+          isPermitted: checked,
+        }));
+      });
+
+      return updated;
+    });
   };
 
   // ===============================================================================================
@@ -228,7 +251,7 @@ export default function PartMember({ onChangeMembers }: PartMemberProps) {
           textTransform: "none",
         }}
       >
-        참여자 추가
+        참여자 추가 ({selectedCount} 명)
       </Button>
 
       <Dialog
