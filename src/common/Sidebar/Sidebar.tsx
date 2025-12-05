@@ -26,7 +26,9 @@ export default function Sidebar({
   width = 300,
 }: SidebarProps & { isAdmin?: boolean }) {
   const navigate = useNavigate();
-  const { logout } = useAuthStore();
+  const { member, logout } = useAuthStore();
+  const role = member?.role;
+
   //로그아웃
   const handleLogout = () => {
     logout();
@@ -145,7 +147,8 @@ export default function Sidebar({
         })}
       </List>
       {/* 관리자 메뉴 */}
-      {adminMenu && (
+      {/* 관리자일경우만 보이게 */}
+      {adminMenu && role === "ADMIN" && (
         <>
           <Divider />
           <List>

@@ -3,6 +3,8 @@ import { useAuthStore } from "./store/useAuthStore";
 import type { JSX } from "@emotion/react/jsx-runtime";
 import { lazy } from "react";
 import AppLayout from "./AppLayout";
+import MeetingScheduler from "./meeting/page/MeetingScheduler";
+import IssueDtl from "./issue/page/IssueDtl";
 
 const IssueList = lazy(() => import("./issue/page/IssueList"));
 const IssueCreate = lazy(() => import("./issue/page/IssueCreate"));
@@ -24,7 +26,9 @@ type PrivateRouteProps = {
 };
 
 function PrivateRoute({ children, isAdmin = false }: PrivateRouteProps) {
-  const { isAuthenticated, role } = useAuthStore();
+  const { isAuthenticated, member } = useAuthStore();
+  const role = member?.role;
+
   console.log(`isAuthentication : ${isAuthenticated}`);
   console.log(`role : ${role}`);
 
@@ -46,7 +50,15 @@ export default function App() {
         {/* 로그인 페이지 — 사이드바/헤더 없음 */}
         <Route
           path="/login"
-          element={isAuthenticated ? <Navigate to="/" replace /> : <Login />}
+          element={
+            isAuthenticated ? (
+              <Navigate to="/" replace />
+            ) : (
+              <div className="flex justify-center items-center min-h-screen">
+                <Login />
+              </div>
+            )
+          }
         />
 
         {/* 인증된 페이지는 모두 AppLayout 사용 */}
@@ -58,7 +70,12 @@ export default function App() {
                 <Routes>
                   <Route path="/issue/create" element={<IssueCreate />} />
                   <Route path="/issue/list" element={<IssueList />} />
+                  <Route path="/issue/dtl" element={<IssueDtl />} />
                   <Route path="/meeting/list" element={<MeetingList />} />
+                  <Route
+                    path="/meeting/schedule"
+                    element={<MeetingScheduler />}
+                  />
 
                   {/* 관리자 */}
                   <Route

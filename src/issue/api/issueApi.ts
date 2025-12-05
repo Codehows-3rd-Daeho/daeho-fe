@@ -9,10 +9,14 @@ export const getIssueList = async (
   const response = await httpClient.get(`/issue`, {
     params: { page, size },
   });
-  return response.data; // { content, totalElements }
+  return response.data;
 };
 
 //등록
 export const issueCreate = async (formData: FormData) => {
-  await httpClient.post(`/issue/create`, formData);
+  await httpClient.post(`/issue/create`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 };

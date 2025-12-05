@@ -9,9 +9,13 @@ import { Toggle } from "../../common/PageHeader/Toggle/Toggle";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { useNavigate } from "react-router-dom";
 import { getMeetingList } from "../api/api";
+import { useAuthStore } from "../../store/useAuthStore";
 
 export default function MeetingList() {
   const navigate = useNavigate();
+  const { member } = useAuthStore();
+  const role = member?.role;
+
   const [page, setPage] = useState(1);
   const [data, setData] = useState<MeetingListItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -105,7 +109,9 @@ export default function MeetingList() {
             { label: "칸반", value: "kanban", path: "/issue/kanban" },
           ]}
         />
-        <AddButton onClick={() => navigate("/meeing/create")} />
+        {role === "USER" && (
+          <AddButton onClick={() => navigate("/meeing/create")} />
+        )}
       </PageHeader>
       {/* 리스트 */}
       <ListDataGrid<MeetingListItem>
