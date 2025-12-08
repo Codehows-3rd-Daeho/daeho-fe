@@ -22,6 +22,7 @@ export interface MeetingFormValues {
   file?: File[]; // 첨부 파일 (다중)
   status: string; // 상태 (예: 완료 여부)
   host: string; // 작성자
+  issue: string; // 관련 이슈
   startDate: string; // 시작일
   endDate?: string; // 종료일 (선택)
   category: string; // 카테고리

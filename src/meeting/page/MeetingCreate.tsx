@@ -18,6 +18,8 @@ import {
   getFileSize,
 } from "../../admin/setting/api/FileSettingApi";
 import axios from "axios";
+import { getIssue } from "../../issue/api/issueApi";
+import type { IssueFormValues } from "../../issue/type/type";
 
 // interface DateRangeType {
 //   startDate: Date;
@@ -32,6 +34,7 @@ export default function MeetingCreate() {
     file: [],
     status: "PLANNED",
     host: "",
+    issue: "",
     startDate: dayjs().format("YYYY-MM-DD HH:mm"), //날짜 + 시간 형식
     endDate: "",
     category: "",
@@ -40,7 +43,8 @@ export default function MeetingCreate() {
     isDel: false,
   });
 
-  // 카테고리와 부서 상태
+  // issue, 카테고리, 부서 상태
+  const [issues, setIssues] = useState<IssueFormValues[]>([]);
   const [categories, setCategories] = useState<MasterDataType[]>([]);
   const [departments, setDepartments] = useState<MasterDataType[]>([]);
   // 로그인된 사용자 id
@@ -57,11 +61,13 @@ export default function MeetingCreate() {
     async function fetchData() {
       try {
         //===============부서, 주관자 조회===================
-        const dep = await getDepartment();
+        const iss = await getIssue();
         const cat = await getCategory();
+        const dep = await getDepartment();
 
-        setDepartments(dep); // 부서 데이터 저장
+        setIssues(iss);
         setCategories(cat); // 카테고리 데이터 저장
+        setDepartments(dep); // 부서 데이터 저장
 
         //===============파일 설정값 조회===================
         const sizeConfig = await getFileSize();
@@ -138,6 +144,7 @@ export default function MeetingCreate() {
       content: formData.content,
       status: formData.status,
       host: formData.host,
+      issueId: formData.issue,
       startDate: formData.startDate,
       // endDate: formData.endDate ?? "",
       //서버로 전송 시 string -> Number 변환
@@ -259,24 +266,6 @@ export default function MeetingCreate() {
   //                        시작일, 마감일
   // ===============================================================================================
 
-  // range : 현재 달력에서 선택된 날짜 범위를 담는 상태
-  // const [range, setRange] = useState([
-  //   {
-  //     startDate: new Date(), //오늘 날짜
-  //     endDate: new Date(),
-  //     key: "selection", //react-date-range에서 범위를 구분
-  //   },
-  // ]);
-
-  //DatePicker와 TextField연결
-  // const handleSelect = (selection: DateRangeType) => {
-  // setRange([selection]); // 달력 선택 반영
-  // setFormData((prev) => ({
-  //   ...prev,
-  //   startDate: dayjs(selection.startDate).format("YYYY-MM-DD"),
-  // })); // TextField에 반영
-  // };
-
   //날짜선택(시간)
   const handleSelectDate = (value: Dayjs | null) => {
     if (!value) return;
@@ -322,6 +311,7 @@ export default function MeetingCreate() {
     <>
       <MeetingForm
         formData={formData}
+        issues={issues}
         categories={categories}
         departments={departments}
         // range={range}

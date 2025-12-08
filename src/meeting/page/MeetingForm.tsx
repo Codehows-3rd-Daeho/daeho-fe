@@ -14,10 +14,12 @@ import type { IssueFormValues, IssueMemberDto } from "../../issue/type/type";
 import type { MasterDataType } from "../../admin/setting/type/SettingType";
 import { StaticDatePicker, StaticTimePicker } from "@mui/x-date-pickers";
 import dayjs, { Dayjs } from "dayjs";
+import type { MeetingFormValues } from "../type/type";
 
 interface IssueFormProps {
   //useState로 관리 됐던 애들
   formData: IssueFormValues;
+  issues: IssueFormValues[];
   categories: MasterDataType[];
   departments: MasterDataType[];
   // range: { startDate: Date; endDate: Date; key: string }[];
@@ -29,9 +31,9 @@ interface IssueFormProps {
   //   <K>: 제네릭 타입 변수
   // keyof: IssueFormValues 타입의 키들이 문자열 리터럴 유니온 타입으로 변환 "title" | "department"
   // extends keyof IssueFormValues → K는 반드시 IssueFormValues 속성 중 하나여야 함
-  onChangeFormData: <K extends keyof IssueFormValues>(
+  onChangeFormData: <K extends keyof MeetingFormValues>(
     key: K,
-    value: IssueFormValues[K]
+    value: MeetingFormValues[K]
   ) => void;
 
   onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -47,6 +49,7 @@ interface IssueFormProps {
 export default function MeetingForm({
   //부모에게 전달 받을 내용
   formData,
+  issues,
   categories,
   departments,
   isSaving,
@@ -289,6 +292,38 @@ export default function MeetingForm({
                 onChange={(e) => onChangeFormData("host", e.target.value)}
                 sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
               />
+            </Box>
+
+            {/* 관련 이슈 */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 2,
+                borderRadius: 2,
+                px: 2,
+              }}
+            >
+              <Typography
+                sx={{ fontWeight: 600, fontSize: "0.875rem", width: "80px" }}
+              >
+                관련 이슈
+              </Typography>
+              <FormControl fullWidth size="small">
+                <Select
+                  value={formData.category}
+                  onChange={(e) => onChangeFormData("issue", e.target.value)}
+                  displayEmpty
+                  sx={{ borderRadius: 1.5 }}
+                >
+                  {issues.map((i) => (
+                    <MenuItem key={i.id} value={i.id}>
+                      {i.title}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
             </Box>
 
             {/* 시작일/마감일 + 달력 */}

@@ -1,4 +1,4 @@
-import type { IssueListResponse } from "../type/type";
+import type { IssueFormValues, IssueListResponse } from "../type/type";
 import httpClient from "../../config/httpClient";
 
 // 이슈 목록 조회
@@ -19,4 +19,10 @@ export const issueCreate = async (formData: FormData) => {
       "Content-Type": "multipart/form-data",
     },
   });
+};
+//이슈 리스트
+export const getIssue = async (): Promise<IssueFormValues[]> => {
+  const response = await httpClient.get(`/issue/list`);
+  console.log("이슈들 :", response.data);
+  return response.data;
 };
