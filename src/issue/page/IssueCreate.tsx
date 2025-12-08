@@ -48,6 +48,12 @@ export default function IssueCreate() {
   const memberId = member?.memberId;
   const navigator = useNavigate();
 
+  //파일 설정 값을 자식 컴포넌트로 넘겨주기 위함
+  const [maxFileSize, setMaxFileSize] = useState<number | null>(null);
+  const [allowedExtensions, setAllowedExtensions] = useState<string[] | null>(
+    null
+  );
+
   useEffect(() => {
     async function fetchData() {
       try {
@@ -57,6 +63,22 @@ export default function IssueCreate() {
 
         setDepartments(dep); // 부서 데이터 저장
         setCategories(cat); // 카테고리 데이터 저장
+
+        //===============파일 설정값 조회===================
+        const sizeConfig = await getFileSize();
+        const extensionConfig = await getExtensions();
+
+        const maxFileSizeByte = Number(sizeConfig.name); // number만 추출
+        const maxFileSize = maxFileSizeByte / 1024 / 1024; //바이트 단위 → MB로 변환
+        const allowedExtensions = extensionConfig.map((e) =>
+          e.name.toLowerCase()
+        );
+
+        console.log("maxFileSize", maxFileSize);
+        console.log("allowedExtensions", allowedExtensions);
+
+        setMaxFileSize(maxFileSize);
+        setAllowedExtensions(allowedExtensions);
 
         //==================주관자 자동 입력==================
         if (memberId) {
@@ -79,7 +101,13 @@ export default function IssueCreate() {
     fetchData();
   }, []);
 
-  //======================저장===================================
+  // ===============================================================================================
+  //                            저장
+  // ===============================================================================================
+
+  //저장 상태
+  const [isSaving, setIsSaving] = useState(false);
+
   const handleSubmit = async () => {
     //=================필수 입력값 체크=====================
     if (!formData.title.trim()) {
@@ -139,6 +167,8 @@ export default function IssueCreate() {
 
     //===================전송=========================
     try {
+      setIsSaving(true); // 저장 시작 (중복 클릭 방지)
+
       console.log("보내는 데이터", issueDto);
       await issueCreate(formDataObj);
 
@@ -150,6 +180,8 @@ export default function IssueCreate() {
       }
       console.error("이슈 등록 실패:", error);
       alert("이슈 등록 중 오류가 발생했습니다.");
+    } finally {
+      setIsSaving(false); // 버튼 원상복귀
     }
   };
 
@@ -167,24 +199,10 @@ export default function IssueCreate() {
     //HTML input[type="file"]의 파일 목록 속성 이름은 files
     const uploadedFiles = Array.from(e.target.files || []);
 
-    // ======= 설정값 ==================
-
-    // const maxFileSize: number = await getFileSize(); // MB 단위
-    // const allowedExtensions: { id: number; extension: string }[] =
-    //   await getExtensions(); // 허용 확장자
-
-    // 설정값 로딩
-    const sizeConfig = await getFileSize();
-    const extensionConfig = await getExtensions();
-
-    const maxFileSizeByte = Number(sizeConfig.name); // number만 추출
-    const maxFileSize = maxFileSizeByte / 1024 / 1024; //바이트 단위 → MB로 변환
-    const allowedExtensions = extensionConfig.map((e) => e.name.toLowerCase());
-
-    console.log("maxFileSize", maxFileSize);
-    console.log("allowedExtensions", allowedExtensions);
-
-    // ===========================
+    if (!maxFileSize || !allowedExtensions) {
+      alert("파일 설정값을 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+      return;
+    }
 
     //업로드 가능한 확장자, 용량의 파일을 담을 배열
     const validFiles: File[] = [];
@@ -283,6 +301,9 @@ export default function IssueCreate() {
         categories={categories}
         departments={departments}
         range={range}
+        isSaving={isSaving} //저장 상태(중복 방지)
+        maxFileSize={maxFileSize} //허용 파일 사이즈 표시
+        allowedExtensions={allowedExtensions} //허용 확장자 표시
         onChangeFormData={(key, value) =>
           setFormData((prev) => ({ ...prev, [key]: value }))
         }

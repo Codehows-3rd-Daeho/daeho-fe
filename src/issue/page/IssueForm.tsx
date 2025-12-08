@@ -20,6 +20,10 @@ interface IssueFormProps {
   categories: MasterDataType[];
   departments: MasterDataType[];
   range: { startDate: Date; endDate: Date; key: string }[];
+  isSaving: boolean;
+  maxFileSize: number | null;
+  allowedExtensions: string[] | null;
+
   //핸들러로 관리됐던 애들
   //   <K>: 제네릭 타입 변수
   // keyof: IssueFormValues 타입의 키들이 문자열 리터럴 유니온 타입으로 변환 "title" | "department"
@@ -48,6 +52,9 @@ export default function IssueForm({
   categories,
   departments,
   range,
+  isSaving,
+  maxFileSize,
+  allowedExtensions,
   onChangeFormData,
   onFileUpload,
   onFileRemove,
@@ -142,7 +149,13 @@ export default function IssueForm({
               <Typography
                 sx={{ fontSize: "0.875rem", fontWeight: 500, mb: 0.5 }}
               >
-                Choose a file
+                Choose files
+              </Typography>
+              <Typography
+                sx={{ fontSize: "0.875rem", fontWeight: 500, mb: 0.5 }}
+              >
+                최대 파일 크기: {maxFileSize}MB, 허용 확장자:{" "}
+                {allowedExtensions?.join(", ")}
               </Typography>
             </Box>
 
@@ -433,6 +446,7 @@ export default function IssueForm({
             <Button
               variant="contained"
               onClick={onSubmit}
+              disabled={isSaving} // ✔ 저장 중이면 버튼 비활성화
               sx={{
                 width: 100,
                 p: 2,
@@ -442,7 +456,7 @@ export default function IssueForm({
                 "&:hover": { boxShadow: 3 },
               }}
             >
-              등록
+              {isSaving ? "등록 중..." : "등록"}
             </Button>
           </Box>
         </Box>
