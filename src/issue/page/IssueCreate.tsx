@@ -306,7 +306,7 @@ export default function IssueCreate() {
         allowedExtensions={allowedExtensions} //허용 확장자 표시
         onChangeFormData={(key, value) =>
           setFormData((prev) => ({ ...prev, [key]: value }))
-        }
+        } //자식 컴포넌트에서 onChangeFormData("key", "value");로 자동 set가능
         onFileUpload={handleFileUpload}
         onFileRemove={(idx) =>
           setFormData((prev) => ({

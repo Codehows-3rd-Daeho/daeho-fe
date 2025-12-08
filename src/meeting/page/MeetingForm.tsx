@@ -7,19 +7,20 @@ import {
   MenuItem,
   FormControl,
 } from "@mui/material";
-import { DateRange } from "react-date-range";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PartMember from "../../issue/page/PartMember";
 import type { IssueFormValues, IssueMemberDto } from "../../issue/type/type";
 import type { MasterDataType } from "../../admin/setting/type/SettingType";
+import { StaticDatePicker, StaticTimePicker } from "@mui/x-date-pickers";
+import dayjs, { Dayjs } from "dayjs";
 
 interface IssueFormProps {
   //useState로 관리 됐던 애들
   formData: IssueFormValues;
   categories: MasterDataType[];
   departments: MasterDataType[];
-  range: { startDate: Date; endDate: Date; key: string }[];
+  // range: { startDate: Date; endDate: Date; key: string }[];
   isSaving: boolean;
   maxFileSize: number | null;
   allowedExtensions: string[] | null;
@@ -38,11 +39,8 @@ interface IssueFormProps {
   onOpenFileInput: () => void;
   onDepartmentChange: (selected: string[]) => void;
   onChangeMembers: (members: IssueMemberDto[]) => void;
-  onSelectRange: (ranges: {
-    startDate: Date;
-    endDate: Date;
-    key: string;
-  }) => void;
+  onSelectTime: (value: Dayjs | null) => void;
+  onSelectDate: (value: Dayjs | null) => void;
   onSubmit: () => void;
 }
 
@@ -51,7 +49,6 @@ export default function MeetingForm({
   formData,
   categories,
   departments,
-  range,
   isSaving,
   maxFileSize,
   allowedExtensions,
@@ -61,7 +58,8 @@ export default function MeetingForm({
   onOpenFileInput,
   onDepartmentChange,
   onChangeMembers,
-  onSelectRange,
+  onSelectDate,
+  onSelectTime,
   onSubmit,
 }: IssueFormProps) {
   return (
@@ -335,22 +333,19 @@ export default function MeetingForm({
               </Box>
 
               <Box sx={{ mt: 2 }}>
-                <DateRange
-                  ranges={range}
-                  onChange={(ranges) => {
-                    const sel = ranges.selection;
+                {/* 달력 (항상 표시) */}
+                <StaticDatePicker
+                  displayStaticWrapperAs="desktop"
+                  value={dayjs(formData.startDate)}
+                  onChange={(value) => onSelectDate(value)}
+                />
 
-                    if (!sel.startDate || !sel.endDate) return;
-
-                    onSelectRange({
-                      startDate: sel.startDate,
-                      endDate: sel.endDate,
-                      key: sel.key ?? "selection",
-                    });
-                  }}
-                  showMonthAndYearPickers={false}
-                  showDateDisplay={false}
-                  direction="horizontal"
+                {/* 아날로그 시계 (항상 표시) */}
+                <StaticTimePicker
+                  ampm
+                  displayStaticWrapperAs="desktop"
+                  value={dayjs(formData.startDate)}
+                  onChange={(value) => onSelectTime(value)}
                 />
               </Box>
             </Box>

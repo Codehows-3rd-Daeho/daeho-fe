@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
-import dayjs from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 import { useAuthStore } from "../../store/useAuthStore";
 import { useNavigate } from "react-router-dom";
 import MeetingForm from "./MeetingForm";
@@ -18,11 +18,11 @@ import {
   getFileSize,
 } from "../../admin/setting/api/FileSettingApi";
 
-interface DateRangeType {
-  startDate: Date;
-  endDate: Date;
-  key: string; //각 범위를 구분하기 위함
-}
+// interface DateRangeType {
+//   startDate: Date;
+//   endDate: Date;
+//   key: string; //각 범위를 구분하기 위함
+// }
 
 export default function MeetingCreate() {
   const [formData, setFormData] = useState<MeetingFormValues>({
@@ -31,7 +31,7 @@ export default function MeetingCreate() {
     file: [],
     status: "PLANNED",
     host: "",
-    startDate: "",
+    startDate: dayjs().format("YYYY-MM-DD HH:mm"), //날짜 + 시간 형식
     endDate: "",
     category: "",
     department: [],
@@ -142,7 +142,7 @@ export default function MeetingCreate() {
       status: formData.status,
       host: formData.host,
       startDate: formData.startDate,
-      endDate: formData.endDate ?? "",
+      // endDate: formData.endDate ?? "",
       //서버로 전송 시 string -> Number 변환
       categoryId: Number(formData.category),
       departmentIds: formData.department.map(Number),
@@ -261,23 +261,55 @@ export default function MeetingCreate() {
   // ===============================================================================================
 
   // range : 현재 달력에서 선택된 날짜 범위를 담는 상태
-  const [range, setRange] = useState([
-    {
-      startDate: new Date(), //오늘 날짜
-      endDate: new Date(),
-      key: "selection", //react-date-range에서 범위를 구분
-    },
-  ]);
+  // const [range, setRange] = useState([
+  //   {
+  //     startDate: new Date(), //오늘 날짜
+  //     endDate: new Date(),
+  //     key: "selection", //react-date-range에서 범위를 구분
+  //   },
+  // ]);
 
   //DatePicker와 TextField연결
-  //DateRangeType 전체 객체에서 selection 객체로 변경
-  const handleSelect = (selection: DateRangeType) => {
-    setRange([selection]); // 달력 선택 반영
-    setFormData((prev) => ({
-      ...prev,
-      startDate: dayjs(selection.startDate).format("YYYY-MM-DD"),
-      endDate: dayjs(selection.endDate).format("YYYY-MM-DD"),
-    })); // TextField에 반영
+  // const handleSelect = (selection: DateRangeType) => {
+  // setRange([selection]); // 달력 선택 반영
+  // setFormData((prev) => ({
+  //   ...prev,
+  //   startDate: dayjs(selection.startDate).format("YYYY-MM-DD"),
+  // })); // TextField에 반영
+  // };
+
+  //날짜선택(시간)
+  const handleSelectDate = (value: Dayjs | null) => {
+    if (!value) return;
+
+    setFormData((prev) => {
+      const prevDate = dayjs(prev.startDate);
+
+      const combined = value.hour(prevDate.hour()).minute(prevDate.minute());
+
+      return {
+        ...prev,
+        startDate: combined.format("YYYY-MM-DD HH:mm"),
+      };
+    });
+  };
+
+  //시간 선택
+  const handleSelectTime = (value: Dayjs | null) => {
+    if (!value) return;
+
+    setFormData((prev) => {
+      const prevDate = dayjs(prev.startDate);
+
+      const combined = prevDate
+        .hour(dayjs(value).hour())
+        .minute(dayjs(value).minute());
+
+      return {
+        ...prev,
+        startDate: combined.format("YYYY-MM-DD HH:mm"),
+      };
+    });
   };
 
   // ===============================================================================================
@@ -293,13 +325,13 @@ export default function MeetingCreate() {
         formData={formData}
         categories={categories}
         departments={departments}
-        range={range}
+        // range={range}
         isSaving={isSaving} //저장 상태(중복 방지)
         maxFileSize={maxFileSize} //허용 파일 사이즈 표시
         allowedExtensions={allowedExtensions} //허용 확장자 표시
         onChangeFormData={(key, value) =>
           setFormData((prev) => ({ ...prev, [key]: value }))
-        }
+        } //자식 컴포넌트에서 onChangeFormData("key", "value");로 자동 set가능
         onFileUpload={handleFileUpload}
         onFileRemove={(idx) =>
           setFormData((prev) => ({
@@ -310,7 +342,8 @@ export default function MeetingCreate() {
         onOpenFileInput={openFileInput}
         onDepartmentChange={handleDepartmentChange}
         onChangeMembers={setMeetingMembers}
-        onSelectRange={handleSelect}
+        onSelectTime={handleSelectTime}
+        onSelectDate={handleSelectDate}
         onSubmit={handleSubmit}
       />
     </>
