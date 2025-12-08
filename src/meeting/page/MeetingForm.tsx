@@ -10,8 +10,8 @@ import {
 import { DateRange } from "react-date-range";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import DeleteIcon from "@mui/icons-material/Delete";
-import PartMember from "./PartMember";
-import type { IssueFormValues, IssueMemberDto } from "../type/type";
+import PartMember from "../../issue/page/PartMember";
+import type { IssueFormValues, IssueMemberDto } from "../../issue/type/type";
 import type { MasterDataType } from "../../admin/setting/type/SettingType";
 
 interface IssueFormProps {
@@ -42,7 +42,7 @@ interface IssueFormProps {
   onSubmit: () => void;
 }
 
-export default function IssueForm({
+export default function MeetingForm({
   //부모에게 전달 받을 내용
   formData,
   categories,
@@ -65,6 +65,7 @@ export default function IssueForm({
           gap: 3,
           p: 3,
           bgcolor: "#f5f5f5",
+          minHeight: "100vh",
           minWidth: "1000px",
         }}
       >
@@ -142,7 +143,7 @@ export default function IssueForm({
               <Typography
                 sx={{ fontSize: "0.875rem", fontWeight: 500, mb: 0.5 }}
               >
-                Choose a file
+                Choose a file or drag & drop it here.
               </Typography>
             </Box>
 
