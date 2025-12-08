@@ -17,6 +17,7 @@ import {
   getExtensions,
   getFileSize,
 } from "../../admin/setting/api/FileSettingApi";
+import axios from "axios";
 
 // interface DateRangeType {
 //   startDate: Date;
@@ -118,10 +119,6 @@ export default function MeetingCreate() {
       alert("시작일을 선택해주세요.");
       return;
     }
-    if (!formData.endDate) {
-      alert("마감일을 선택해주세요.");
-      return;
-    }
     if (!formData.category) {
       alert("카테고리를 선택해주세요.");
       return;
@@ -164,13 +161,15 @@ export default function MeetingCreate() {
     //===================전송=========================
     try {
       setIsSaving(true); // 저장 시작 (중복 클릭 방지)
-
       console.log("보내는 데이터", meetingDto);
       await meetingCreate(formDataObj);
 
       alert("회의가 등록되었습니다!");
       navigator("/meeting/list");
     } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        return;
+      }
       console.error("회의 등록 실패:", error);
       alert("회의 등록 중 오류가 발생했습니다.");
     } finally {

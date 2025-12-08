@@ -305,7 +305,7 @@ export default function MeetingForm({
                   <TextField
                     fullWidth
                     size="small"
-                    placeholder="0000-00-00"
+                    placeholder="0000-00-00 00:00"
                     value={formData.startDate}
                     onChange={(e) =>
                       onChangeFormData("startDate", e.target.value)
@@ -322,7 +322,7 @@ export default function MeetingForm({
                   <TextField
                     fullWidth
                     size="small"
-                    placeholder="0000-00-00"
+                    placeholder="진행 완료 시 작성"
                     value={formData.endDate ?? ""}
                     onChange={(e) =>
                       onChangeFormData("endDate", e.target.value)
@@ -338,6 +338,9 @@ export default function MeetingForm({
                   displayStaticWrapperAs="desktop"
                   value={dayjs(formData.startDate)}
                   onChange={(value) => onSelectDate(value)}
+                  slotProps={{
+                    actionBar: { actions: [] }, // 하단 버튼 제거
+                  }}
                 />
 
                 {/* 아날로그 시계 (항상 표시) */}
@@ -346,6 +349,9 @@ export default function MeetingForm({
                   displayStaticWrapperAs="desktop"
                   value={dayjs(formData.startDate)}
                   onChange={(value) => onSelectTime(value)}
+                  slotProps={{
+                    actionBar: { actions: [] }, // 하단 버튼 제거
+                  }}
                 />
               </Box>
             </Box>
