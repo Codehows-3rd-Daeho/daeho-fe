@@ -28,6 +28,7 @@ interface Participant extends PartMemberList {
 }
 interface PartMemberProps {
   onChangeMembers: (members: IssueMemberDto[]) => void;
+  initialMembers: IssueMemberDto[]; // 이슈 선택시 넘어올 참여자들
 }
 
 //부서랑 직급을 백에서 받아와야됨
@@ -37,7 +38,10 @@ type ParticipantList = {
   [key: string]: Participant[];
 };
 
-export default function PartMember({ onChangeMembers }: PartMemberProps) {
+export default function PartMember({
+  onChangeMembers,
+  initialMembers,
+}: PartMemberProps) {
   const [open, setOpen] = useState(false);
   //모달 열기
   const handleOpen = () => setOpen(true);
@@ -81,6 +85,22 @@ export default function PartMember({ onChangeMembers }: PartMemberProps) {
           isPermitted: m.id === Number(memberId), // 작성자는 권한도 자동 체크
         }));
 
+        //이슈 선택시 해당 이슈의 참여자 자동 선택
+        // 5) initialMembers 기반으로 selected / isPermitted 설정
+        if (initialMembers && initialMembers.length > 0) {
+          const initialMemberMap = new Map(
+            initialMembers.map((m) => [m.memberId, m])
+          );
+
+          mapped.forEach((p) => {
+            if (initialMemberMap.has(p.id)) {
+              p.selected = true;
+              //권한 추가시 부모 컴포넌트의 수정 권한이 우선적으로 적용되어 전체 권한 선택박스로직에서 빠짐
+              // p.isPermitted = initialMemberMap.get(p.id)!.isPermitted;
+            }
+          });
+        }
+
         // 4) 카테고리별 분류
         const categorized: ParticipantList = {
           전체: mapped,
@@ -103,7 +123,7 @@ export default function PartMember({ onChangeMembers }: PartMemberProps) {
     };
 
     loadData();
-  }, []);
+  }, [initialMembers]);
 
   // ===============================================================================================
   //                       분류탭

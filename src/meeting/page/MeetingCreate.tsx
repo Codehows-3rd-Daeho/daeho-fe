@@ -316,14 +316,6 @@ export default function MeetingCreate() {
       const issue: IssueInMeeting = await getSelectedINM(idNumber);
       console.log("issue(getSelectedINM) :", issue);
       // 2️⃣ formData 동기화
-      // setFormData((prev) => ({
-      //   ...prev,
-      //   issue: issue.title,
-      //   category: issue.category,
-      //   //Select multiple의 value로 직접 들어가기 때문에 MUI가 내부적으로 배열 안에 값만 있어야 한다(member와 다름)
-      //   department: Array.isArray(issue.department) ? issue.department : [],
-      //   members: issue.members, // IssueMemberDto[]
-      // }));
       setFormData((prev) => {
         const updatedFormData = {
           ...prev,

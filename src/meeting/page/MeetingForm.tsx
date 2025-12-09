@@ -485,7 +485,10 @@ export default function MeetingForm({
               >
                 참여자
               </Typography>
-              <PartMember onChangeMembers={onChangeMembers} />
+              <PartMember
+                onChangeMembers={onChangeMembers}
+                initialMembers={formData.members}
+              />
             </Box>
           </Box>
 
