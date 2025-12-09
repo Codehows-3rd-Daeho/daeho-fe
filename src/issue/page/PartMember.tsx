@@ -242,10 +242,15 @@ export default function PartMember({
   // ===============================================================================================
 
   const handleSave = () => {
-    //최종 부모 컴포넌트로 전달할 배열 생성
-    const selectedParticipants = Object.values(participants)
-      .flat() //평탄화: 중첩된 객체를 1차원으로 풀어내거나 단순하게 만드는 것
-      .filter((p) => p.selected || p.id === memberId); // 선택되었거나 host이면 포함
+    //최종 부모 컴포넌트로 전달할 배열 생성(중복 제거)
+    const selectedParticipants = [
+      ...new Map(
+        Object.values(participants)
+          .flat() //평탄화: 중첩된 객체를 1차원으로 풀어내거나 단순하게 만드는 것
+          .filter((p) => p.selected || p.id === Number(memberId)) // 선택되었거나 host이면 포함
+          .map((p) => [p.id, p]) // key: id / value: participant
+      ).values(),
+    ];
 
     //selectedParticipants를 IssueMemberDto 타입으로 변환
     const result: IssueMemberDto[] = selectedParticipants.map((p) => ({

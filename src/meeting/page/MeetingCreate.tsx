@@ -269,10 +269,12 @@ export default function MeetingCreate() {
     if (!value) return;
 
     setFormData((prev) => {
-      // 기존 startDate가 유효하지 않으면 기본값(시간 00:00)
+      // 현재 formData에 저장되어 있는 기존 startDate를 Dayjs 객체로 변환(현재 시간)
       const prevDate = dayjs(prev.startDate);
+      //기존 startDate가 유효한 날짜인지 검사
       const isPrevValid = prevDate.isValid();
 
+      //사용자가 달력에서 새로 선택한 날짜에 시간, 분 0으로 초기값 설정
       const combined = value
         .hour(isPrevValid ? prevDate.hour() : 0)
         .minute(isPrevValid ? prevDate.minute() : 0);
@@ -283,6 +285,7 @@ export default function MeetingCreate() {
       };
     });
   };
+
   //시간 선택
   const handleSelectTime = (value: Dayjs | null) => {
     if (!value) return;
