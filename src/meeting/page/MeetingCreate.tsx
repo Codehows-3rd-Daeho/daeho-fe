@@ -44,23 +44,28 @@ export default function MeetingCreate() {
   const [issues, setIssues] = useState<IssueIdTitle[]>([]);
   const [categories, setCategories] = useState<MasterDataType[]>([]);
   const [departments, setDepartments] = useState<MasterDataType[]>([]);
-  // 로그인된 사용자 id
+
+  // 로그인된 회원 정보
   const { member } = useAuthStore();
   const memberId = member?.memberId;
   const name = member?.name;
   const jobPosition = member?.jobPosition;
 
-  const navigator = useNavigate();
   //파일 설정 값을 자식 컴포넌트로 넘겨주기 위함
   const [maxFileSize, setMaxFileSize] = useState<number | null>(null);
   const [allowedExtensions, setAllowedExtensions] = useState<string[] | null>(
     null
   );
 
+  //partmember객체 받기(PartMember에서 전달받은 객체)
+  const [meetingMembers, setMeetingMembers] = useState<MeetingMemberDto[]>([]);
+
+  const navigator = useNavigate();
+
   useEffect(() => {
     async function fetchData() {
       try {
-        //===============부서, 주관자 조회===================
+        //=================이슈, 카테고리, 부서 목록 조회=================
         const iss = await getIssueInMeeting();
         const cat = await getCategory();
         const dep = await getDepartment();
@@ -69,7 +74,7 @@ export default function MeetingCreate() {
         setCategories(cat); // 카테고리 데이터 저장
         setDepartments(dep); // 부서 데이터 저장
 
-        //===============파일 설정값 조회===================
+        //=======================파일 설정값 조회===================
         const sizeConfig = await getFileSize();
         const extensionConfig = await getExtensions();
 
@@ -82,7 +87,7 @@ export default function MeetingCreate() {
         setMaxFileSize(maxFileSize);
         setAllowedExtensions(allowedExtensions);
 
-        //==================주관자 자동 입력==================
+        //======================주관자 자동 입력==================
         if (memberId) {
           const hostString = `${name}  ${jobPosition}`;
 
@@ -130,7 +135,7 @@ export default function MeetingCreate() {
       return;
     }
 
-    //=======================FormData===================
+    //==========================FormData===========================
     const formDataObj = new FormData();
 
     // 1. DTO에 해당하는 데이터 객체 생성
@@ -140,10 +145,9 @@ export default function MeetingCreate() {
       content: formData.content,
       status: formData.status,
       host: formData.host,
-      issueId: Number(formData.issue), // issue ID 배열 추출
+      issueId: Number(formData.issue), //서버로 전송 시 string -> Number 변환
       startDate: formData.startDate,
       // endDate: formData.endDate ?? "",
-      //서버로 전송 시 string -> Number 변환
       categoryId: Number(formData.categoryId),
       departmentIds: formData.departmentIds.map(Number),
       members: meetingMembers, //PartMember에서 전달받은 객체
@@ -161,7 +165,7 @@ export default function MeetingCreate() {
     // 백엔드의 @RequestPart(value = "file")과 매칭
     formData.file?.forEach((file) => formDataObj.append("file", file));
 
-    //===================전송=========================
+    //============================전송============================
     try {
       setIsSaving(true); // 저장 시작 (중복 클릭 방지)
       console.log("보내는 데이터", meetingDto);
@@ -295,13 +299,6 @@ export default function MeetingCreate() {
   };
 
   // ===============================================================================================
-  //                          참석자
-  // ===============================================================================================
-
-  //partmember객체 받기
-  const [meetingMembers, setMeetingMembers] = useState<MeetingMemberDto[]>([]);
-
-  // ===============================================================================================
   //                          이슈 선택시 카테고리,부서,멤버 자동선택
   // ===============================================================================================
 
@@ -313,10 +310,10 @@ export default function MeetingCreate() {
       //string => number
       const idNumber = Number(selectedId);
       console.log("number로 변환된 ID:", idNumber);
-      // 1️⃣ 선택된 이슈 상세 데이터 가져오기
+      // 1. 선택된 이슈 상세 데이터 가져오기
       const issue: IssueInMeeting = await getSelectedINM(idNumber);
       console.log("issue(getSelectedINM) :", issue);
-      // 2️⃣ formData 동기화
+      // 2.  formData 동기화
       setFormData((prev) => {
         const updatedFormData = {
           ...prev,

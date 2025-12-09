@@ -373,6 +373,7 @@ export default function PartMember({
                       <Checkbox
                         checked={participant.selected}
                         onChange={() => handleSelectParticipant(participant.id)}
+                        disabled={participant.id === Number(memberId)} // 🔥 주관자 선택 해제 불가
                         size="small"
                       />
                     }
@@ -384,6 +385,7 @@ export default function PartMember({
                       <Checkbox
                         checked={participant.isPermitted}
                         onChange={() => handleTogglePermission(participant.id)}
+                        disabled={participant.id === Number(memberId)} // 🔥 주관자 선택 해제 불가
                         size="small"
                       />
                     }
