@@ -3,11 +3,11 @@ export type IssueListItem = {
   id: number;
   title: string;
   status: string; // 상태
-  startDate: Date;
-  endDate: Date;
+  startDate: string;
+  endDate: string;
   category: string; // 주제
   department: string[]; // 부서
-  isHost: string; // 주관자
+  host: string; // 주관자
   isDel?: boolean; // 삭제상태
 };
 

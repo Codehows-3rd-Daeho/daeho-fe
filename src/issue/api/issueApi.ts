@@ -6,7 +6,7 @@ export const getIssueList = async (
   page: number,
   size: number = 10
 ): Promise<IssueListResponse> => {
-  const response = await httpClient.get(`/issue`, {
+  const response = await httpClient.get(`/issue/list`, {
     params: { page, size },
   });
   return response.data;
@@ -19,4 +19,9 @@ export const issueCreate = async (formData: FormData) => {
       "Content-Type": "multipart/form-data",
     },
   });
+};
+
+export const getKanbanIssues = async () => {
+  const response = await httpClient.get("/issue/kanban");
+  return response.data;
 };

@@ -6,6 +6,7 @@ import MeetingCreate from "./meeting/page/MeetingCreate";
 import AppLayout from "./AppLayout";
 import MeetingScheduler from "./meeting/page/MeetingScheduler";
 import IssueDtl from "./issue/page/IssueDtl";
+import IssueKanban from "./issue/page/IssueKanban";
 
 const IssueList = lazy(() => import("./issue/page/IssueList"));
 const IssueCreate = lazy(() => import("./issue/page/IssueCreate"));
@@ -71,6 +72,7 @@ export default function App() {
                 <Routes>
                   <Route path="/issue/create" element={<IssueCreate />} />
                   <Route path="/issue/list" element={<IssueList />} />
+                  <Route path="/issue/kanban" element={<IssueKanban />} />
                   <Route path="/meeting/create" element={<MeetingCreate />} />
                   <Route path="/issue/dtl" element={<IssueDtl />} />
                   <Route path="/meeting/list" element={<MeetingList />} />
