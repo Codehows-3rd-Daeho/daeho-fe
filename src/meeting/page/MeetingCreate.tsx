@@ -16,7 +16,6 @@ import {
   getCategory,
   getDepartment,
 } from "../../admin/setting/api/MasterDataApi";
-import { getHostData } from "../../admin/member/api/MemberApi";
 import {
   getExtensions,
   getFileSize,
@@ -48,6 +47,9 @@ export default function MeetingCreate() {
   // 로그인된 사용자 id
   const { member } = useAuthStore();
   const memberId = member?.memberId;
+  const name = member?.name;
+  const jobPosition = member?.jobPosition;
+
   const navigator = useNavigate();
   //파일 설정 값을 자식 컴포넌트로 넘겨주기 위함
   const [maxFileSize, setMaxFileSize] = useState<number | null>(null);
@@ -82,8 +84,7 @@ export default function MeetingCreate() {
 
         //==================주관자 자동 입력==================
         if (memberId) {
-          const hostData = await getHostData(memberId);
-          const hostString = `${hostData.name} ${hostData.jobPositionName}`;
+          const hostString = `${name}  ${jobPosition}`;
 
           setFormData((prev) => ({
             ...prev,

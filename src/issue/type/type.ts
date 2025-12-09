@@ -31,13 +31,6 @@ export interface IssueFormValues {
   isDel: boolean;
 }
 
-//이슈 등록시 사용, 주관자
-export interface IssueMemberData {
-  id: number;
-  name: string;
-  jobPositionName: string;
-}
-
 // 회원 리스트(참여자, 참석자 추가)
 export interface PartMemberList {
   id: number;
