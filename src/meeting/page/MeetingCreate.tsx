@@ -269,9 +269,13 @@ export default function MeetingCreate() {
     if (!value) return;
 
     setFormData((prev) => {
+      // 기존 startDate가 유효하지 않으면 기본값(시간 00:00)
       const prevDate = dayjs(prev.startDate);
+      const isPrevValid = prevDate.isValid();
 
-      const combined = value.hour(prevDate.hour()).minute(prevDate.minute());
+      const combined = value
+        .hour(isPrevValid ? prevDate.hour() : 0)
+        .minute(isPrevValid ? prevDate.minute() : 0);
 
       return {
         ...prev,
@@ -279,7 +283,6 @@ export default function MeetingCreate() {
       };
     });
   };
-
   //시간 선택
   const handleSelectTime = (value: Dayjs | null) => {
     if (!value) return;
