@@ -246,6 +246,7 @@ export default function IssueForm({
                 gap: 2,
                 borderRadius: 2,
                 px: 2,
+                mt: 2,
               }}
             >
               <Typography

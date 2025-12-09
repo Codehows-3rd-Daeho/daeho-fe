@@ -10,16 +10,16 @@ import {
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PartMember from "../../issue/page/PartMember";
-import type { IssueFormValues, IssueMemberDto } from "../../issue/type/type";
 import type { MasterDataType } from "../../admin/setting/type/SettingType";
 import { StaticDatePicker, StaticTimePicker } from "@mui/x-date-pickers";
 import dayjs, { Dayjs } from "dayjs";
-import type { MeetingFormValues } from "../type/type";
+import type { MeetingFormValues, MeetingMemberDto } from "../type/type";
+import type { IssueIdTitle } from "../../issue/type/type";
 
-interface IssueFormProps {
+interface MeetingFormProps {
   //useState로 관리 됐던 애들
-  formData: IssueFormValues;
-  issues: IssueFormValues[];
+  formData: MeetingFormValues;
+  issues: IssueIdTitle[];
   categories: MasterDataType[];
   departments: MasterDataType[];
   // range: { startDate: Date; endDate: Date; key: string }[];
@@ -35,12 +35,12 @@ interface IssueFormProps {
     key: K,
     value: MeetingFormValues[K]
   ) => void;
-
+  onIssueSelect: (selectedId: string) => void;
   onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onFileRemove: (idx: number) => void;
   onOpenFileInput: () => void;
   onDepartmentChange: (selected: string[]) => void;
-  onChangeMembers: (members: IssueMemberDto[]) => void;
+  onChangeMembers: (members: MeetingMemberDto[]) => void;
   onSelectTime: (value: Dayjs | null) => void;
   onSelectDate: (value: Dayjs | null) => void;
   onSubmit: () => void;
@@ -55,6 +55,7 @@ export default function MeetingForm({
   isSaving,
   maxFileSize,
   allowedExtensions,
+  onIssueSelect,
   onChangeFormData,
   onFileUpload,
   onFileRemove,
@@ -64,7 +65,7 @@ export default function MeetingForm({
   onSelectDate,
   onSelectTime,
   onSubmit,
-}: IssueFormProps) {
+}: MeetingFormProps) {
   return (
     <Box>
       <Box
@@ -231,7 +232,7 @@ export default function MeetingForm({
         >
           <Box
             sx={{
-              height: 1000,
+              height: 1100,
               width: 380,
               display: "flex",
               flexDirection: "column",
@@ -248,6 +249,7 @@ export default function MeetingForm({
                 gap: 2,
                 borderRadius: 2,
                 px: 2,
+                mt: 2,
               }}
             >
               <Typography
@@ -312,10 +314,18 @@ export default function MeetingForm({
               </Typography>
               <FormControl fullWidth size="small">
                 <Select
-                  value={formData.category}
-                  onChange={(e) => onChangeFormData("issue", e.target.value)}
+                  value={formData.issue ?? ""}
                   displayEmpty
-                  sx={{ borderRadius: 1.5 }}
+                  onChange={(e) => {
+                    console.log(
+                      "Select onChange fired, value:",
+                      e.target.value
+                    );
+                    console.log("Current formData:", formData);
+                    console.log("Available issues:", issues);
+
+                    onIssueSelect(e.target.value); // 상위 컴포넌트에 숫자로 전달
+                  }}
                 >
                   {issues.map((i) => (
                     <MenuItem key={i.id} value={i.id}>
@@ -409,8 +419,10 @@ export default function MeetingForm({
               </Typography>
               <FormControl fullWidth size="small">
                 <Select
-                  value={formData.category}
-                  onChange={(e) => onChangeFormData("category", e.target.value)}
+                  value={formData.categoryId}
+                  onChange={(e) =>
+                    onChangeFormData("categoryId", e.target.value)
+                  }
                   displayEmpty
                   sx={{ borderRadius: 1.5 }}
                 >
@@ -440,16 +452,16 @@ export default function MeetingForm({
                 관련 부서
               </Typography>
               <FormControl fullWidth size="small">
-                <Select<string[]>
+                <Select
                   multiple
-                  value={formData.department.map(String)}
+                  value={formData.departmentIds ?? ""}
                   onChange={(e) =>
                     onDepartmentChange(e.target.value as string[])
                   }
                   sx={{ borderRadius: 1.5 }}
                 >
                   {departments.map((dep) => (
-                    <MenuItem key={dep.id} value={dep.id}>
+                    <MenuItem key={dep.id} value={String(dep.id)}>
                       {dep.name}
                     </MenuItem>
                   ))}

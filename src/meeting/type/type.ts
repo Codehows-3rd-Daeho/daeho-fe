@@ -25,8 +25,8 @@ export interface MeetingFormValues {
   issue: string; // 관련 이슈
   startDate: string; // 시작일
   endDate?: string; // 종료일 (선택)
-  category: string; // 카테고리
-  department: string[] | number[]; // 관련 부서 (다중)
+  categoryId: string; // 카테고리
+  departmentIds: string[] | number[]; // 관련 부서 (다중)
   members: MeetingMemberDto[]; // 관련 멤버 (다중)
   isDel: boolean;
 }
@@ -38,4 +38,13 @@ export interface MeetingMemberDto {
   isHost: boolean;
   isPermitted: boolean;
   isRead: boolean;
+}
+
+//회의 등록시 조회하는 이슈 속성들
+export interface IssueInMeeting {
+  id?: string;
+  title: string; // 제목
+  categoryId: string; // 카테고리
+  departmentIds: string[] | number[]; // 관련 부서 (다중)
+  members: MeetingMemberDto[]; // 관련 멤버 (다중)
 }

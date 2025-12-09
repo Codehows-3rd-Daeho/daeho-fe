@@ -5,7 +5,11 @@ import dayjs, { Dayjs } from "dayjs";
 import { useAuthStore } from "../../store/useAuthStore";
 import { useNavigate } from "react-router-dom";
 import MeetingForm from "./MeetingForm";
-import type { MeetingFormValues, MeetingMemberDto } from "../type/type";
+import type {
+  IssueInMeeting,
+  MeetingFormValues,
+  MeetingMemberDto,
+} from "../type/type";
 import { meetingCreate } from "../api/MeetingApi";
 import type { MasterDataType } from "../../admin/setting/type/SettingType";
 import {
@@ -18,14 +22,8 @@ import {
   getFileSize,
 } from "../../admin/setting/api/FileSettingApi";
 import axios from "axios";
-import { getIssue } from "../../issue/api/issueApi";
-import type { IssueFormValues } from "../../issue/type/type";
-
-// interface DateRangeType {
-//   startDate: Date;
-//   endDate: Date;
-//   key: string; //각 범위를 구분하기 위함
-// }
+import { getIssueInMeeting, getSelectedINM } from "../../issue/api/issueApi";
+import type { IssueIdTitle } from "../../issue/type/type";
 
 export default function MeetingCreate() {
   const [formData, setFormData] = useState<MeetingFormValues>({
@@ -37,14 +35,14 @@ export default function MeetingCreate() {
     issue: "",
     startDate: dayjs().format("YYYY-MM-DD HH:mm"), //날짜 + 시간 형식
     endDate: "",
-    category: "",
-    department: [],
+    categoryId: "",
+    departmentIds: [],
     members: [],
     isDel: false,
   });
 
   // issue, 카테고리, 부서 상태
-  const [issues, setIssues] = useState<IssueFormValues[]>([]);
+  const [issues, setIssues] = useState<IssueIdTitle[]>([]);
   const [categories, setCategories] = useState<MasterDataType[]>([]);
   const [departments, setDepartments] = useState<MasterDataType[]>([]);
   // 로그인된 사용자 id
@@ -61,7 +59,7 @@ export default function MeetingCreate() {
     async function fetchData() {
       try {
         //===============부서, 주관자 조회===================
-        const iss = await getIssue();
+        const iss = await getIssueInMeeting();
         const cat = await getCategory();
         const dep = await getDepartment();
 
@@ -78,9 +76,6 @@ export default function MeetingCreate() {
         const allowedExtensions = extensionConfig.map((e) =>
           e.name.toLowerCase()
         );
-
-        console.log("maxFileSize", maxFileSize);
-        console.log("allowedExtensions", allowedExtensions);
 
         setMaxFileSize(maxFileSize);
         setAllowedExtensions(allowedExtensions);
@@ -125,11 +120,11 @@ export default function MeetingCreate() {
       alert("시작일을 선택해주세요.");
       return;
     }
-    if (!formData.category) {
+    if (!formData.categoryId) {
       alert("카테고리를 선택해주세요.");
       return;
     }
-    if (!formData.department || formData.department.length === 0) {
+    if (!formData.departmentIds || formData.departmentIds.length === 0) {
       alert("관련 부서를 선택해주세요.");
       return;
     }
@@ -144,12 +139,12 @@ export default function MeetingCreate() {
       content: formData.content,
       status: formData.status,
       host: formData.host,
-      issueId: formData.issue,
+      issueId: Number(formData.issue), // issue ID 배열 추출
       startDate: formData.startDate,
       // endDate: formData.endDate ?? "",
       //서버로 전송 시 string -> Number 변환
-      categoryId: Number(formData.category),
-      departmentIds: formData.department.map(Number),
+      categoryId: Number(formData.categoryId),
+      departmentIds: formData.departmentIds.map(Number),
       members: meetingMembers, //PartMember에서 전달받은 객체
       isDel: false,
     };
@@ -225,8 +220,6 @@ export default function MeetingCreate() {
 
       // 2) 용량 체크
       const sizeMB = file.size / 1024 / 1024; //바이트 단위 → MB로 변환
-      console.log("sizeMB: ", sizeMB);
-      console.log("maxFileSize: ", maxFileSize);
 
       if (sizeMB > maxFileSize) {
         alert(
@@ -258,7 +251,7 @@ export default function MeetingCreate() {
   const handleDepartmentChange = (selected: string[]) => {
     setFormData((prev) => ({
       ...prev,
-      department: selected.map(Number), // 문자열 → 숫자
+      department: selected,
     }));
   };
 
@@ -307,6 +300,53 @@ export default function MeetingCreate() {
   //partmember객체 받기
   const [meetingMembers, setMeetingMembers] = useState<MeetingMemberDto[]>([]);
 
+  // ===============================================================================================
+  //                          이슈 선택시 카테고리,부서,멤버 자동선택
+  // ===============================================================================================
+
+  const onIssueSelect = async (selectedId: string) => {
+    console.log("onIssueSelect 실행");
+    console.log("선택된 ID:", selectedId);
+
+    try {
+      //string => number
+      const idNumber = Number(selectedId);
+      console.log("number로 변환된 ID:", idNumber);
+      // 1️⃣ 선택된 이슈 상세 데이터 가져오기
+      const issue: IssueInMeeting = await getSelectedINM(idNumber);
+      console.log("issue(getSelectedINM) :", issue);
+      // 2️⃣ formData 동기화
+      // setFormData((prev) => ({
+      //   ...prev,
+      //   issue: issue.title,
+      //   category: issue.category,
+      //   //Select multiple의 value로 직접 들어가기 때문에 MUI가 내부적으로 배열 안에 값만 있어야 한다(member와 다름)
+      //   department: Array.isArray(issue.department) ? issue.department : [],
+      //   members: issue.members, // IssueMemberDto[]
+      // }));
+      setFormData((prev) => {
+        const updatedFormData = {
+          ...prev,
+          issue: String(issue.id),
+          categoryId: issue.categoryId,
+          departmentIds: Array.isArray(issue.departmentIds)
+            ? issue.departmentIds
+            : [],
+          members: issue.members, // IssueMemberDto[]
+        };
+        console.log("업데이트 전 formData(prev):", prev);
+        console.log("업데이트 후 formData(updatedFormData):", updatedFormData);
+        return updatedFormData;
+      });
+
+      // 3️⃣ PartMember UI 업데이트 (선택된 멤버 표시 등)
+      setMeetingMembers(issue.members);
+      console.log("업데이트 후 meetingMembers:", issue.members);
+    } catch (error) {
+      console.error("이슈 상세 조회 실패:", error);
+    }
+  };
+
   return (
     <>
       <MeetingForm
@@ -314,10 +354,10 @@ export default function MeetingCreate() {
         issues={issues}
         categories={categories}
         departments={departments}
-        // range={range}
         isSaving={isSaving} //저장 상태(중복 방지)
         maxFileSize={maxFileSize} //허용 파일 사이즈 표시
         allowedExtensions={allowedExtensions} //허용 확장자 표시
+        onIssueSelect={onIssueSelect}
         onChangeFormData={(key, value) =>
           setFormData((prev) => ({ ...prev, [key]: value }))
         } //자식 컴포넌트에서 onChangeFormData("key", "value");로 자동 set가능

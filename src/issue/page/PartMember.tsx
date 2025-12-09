@@ -18,7 +18,7 @@ import type { IssueMemberDto, PartMemberList } from "../type/type";
 import { useAuthStore } from "../../store/useAuthStore";
 import {
   getDepartment,
-  getJobPosition,
+  // getJobPosition,
 } from "../../admin/setting/api/MasterDataApi";
 import { getPartMemberList } from "../../admin/member/api/MemberApi";
 
@@ -58,14 +58,16 @@ export default function PartMember({ onChangeMembers }: PartMemberProps) {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const positions = await getJobPosition(); // 직급 [{id, name}]
+        // const positions = await getJobPosition(); // 직급 [{id, name}]
         const departments = await getDepartment(); // 부서 [{id, name}]
 
-        const positionNames = positions.map((p) => p.name); //직급 배열 -> 분류탭으로 사용
+        // const positionNames = positions.map((p) => p.name); //직급 배열 -> 분류탭으로 사용
         const departmentNames = departments.map((d) => d.name); //부서 배열 -> 분류탭으로 사용
 
-        // 전체 + 직급 + 부서
-        setCategories(["전체", ...positionNames, ...departmentNames]);
+        // setCategories(["전체", ...positionNames, ...departmentNames]); // 전체 + 직급 + 부서
+
+        //전체, 부서
+        setCategories(["전체", ...departmentNames]);
 
         // 회원 전체 불러오기
         const memberList = await getPartMemberList();
@@ -85,9 +87,9 @@ export default function PartMember({ onChangeMembers }: PartMemberProps) {
         };
 
         // 직급별 분류
-        positionNames.forEach((pos) => {
-          categorized[pos] = mapped.filter((m) => m.jobPositionName === pos);
-        });
+        // positionNames.forEach((pos) => {
+        //   categorized[pos] = mapped.filter((m) => m.jobPositionName === pos);
+        // });
 
         // 부서별 분류
         departmentNames.forEach((dept) => {

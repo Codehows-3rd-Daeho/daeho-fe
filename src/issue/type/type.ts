@@ -18,7 +18,6 @@ export interface IssueListResponse {
 }
 
 export interface IssueFormValues {
-  id?: number;
   title: string; // 제목
   content: string; // 내용
   file?: File[]; // 첨부 파일 (다중)
@@ -54,4 +53,9 @@ export interface IssueMemberDto {
   isHost: boolean;
   isPermitted: boolean;
   isRead: boolean;
+}
+
+export interface IssueIdTitle {
+  id?: string;
+  title: string;
 }
