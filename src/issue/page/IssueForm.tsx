@@ -261,7 +261,6 @@ export default function IssueForm({
                 onChange={(e) => onChangeFormData("status", e.target.value)}
                 sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
               >
-                <MenuItem value="PLANNED">진행전</MenuItem>
                 <MenuItem value="IN_PROGRESS">진행중</MenuItem>
                 <MenuItem value="COMPLETED">진행 완료</MenuItem>
               </Select>
@@ -404,9 +403,9 @@ export default function IssueForm({
                 관련 부서
               </Typography>
               <FormControl fullWidth size="small">
-                <Select<string[]>
+                <Select
                   multiple
-                  value={formData.department.map(String)}
+                  value={formData.department}
                   onChange={(e) =>
                     onDepartmentChange(e.target.value as string[])
                   }
@@ -437,7 +436,10 @@ export default function IssueForm({
               >
                 참여자
               </Typography>
-              <PartMember onChangeMembers={onChangeMembers} />
+              <PartMember
+                onChangeMembers={onChangeMembers}
+                initialMembers={formData.members}
+              />
             </Box>
           </Box>
 

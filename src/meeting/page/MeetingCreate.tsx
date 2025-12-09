@@ -252,7 +252,7 @@ export default function MeetingCreate() {
   const handleDepartmentChange = (selected: string[]) => {
     setFormData((prev) => ({
       ...prev,
-      department: selected,
+      departmentIds: selected,
     }));
   };
 

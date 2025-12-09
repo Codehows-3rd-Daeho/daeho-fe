@@ -257,10 +257,9 @@ export default function IssueCreate() {
   const handleDepartmentChange = (selected: string[]) => {
     setFormData((prev) => ({
       ...prev,
-      department: selected.map(Number), // 문자열 → 숫자
+      department: selected, // <-- 숫자 변환 절대 하지 않기
     }));
   };
-
   // ===============================================================================================
   //                        시작일, 마감일
   // ===============================================================================================

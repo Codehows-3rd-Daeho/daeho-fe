@@ -454,14 +454,14 @@ export default function MeetingForm({
               <FormControl fullWidth size="small">
                 <Select
                   multiple
-                  value={formData.departmentIds ?? ""}
+                  value={formData.departmentIds}
                   onChange={(e) =>
                     onDepartmentChange(e.target.value as string[])
                   }
                   sx={{ borderRadius: 1.5 }}
                 >
                   {departments.map((dep) => (
-                    <MenuItem key={dep.id} value={String(dep.id)}>
+                    <MenuItem key={dep.id} value={dep.id}>
                       {dep.name}
                     </MenuItem>
                   ))}

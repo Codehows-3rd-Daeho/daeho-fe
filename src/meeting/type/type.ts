@@ -26,7 +26,7 @@ export interface MeetingFormValues {
   startDate: string; // 시작일
   endDate?: string; // 종료일 (선택)
   categoryId: string; // 카테고리
-  departmentIds: string[] | number[]; // 관련 부서 (다중)
+  departmentIds: string[]; // 관련 부서 (다중)
   members: MeetingMemberDto[]; // 관련 멤버 (다중)
   isDel: boolean;
 }
@@ -45,6 +45,6 @@ export interface IssueInMeeting {
   id?: string;
   title: string; // 제목
   categoryId: string; // 카테고리
-  departmentIds: string[] | number[]; // 관련 부서 (다중)
+  departmentIds: string[]; // 관련 부서 (다중)
   members: MeetingMemberDto[]; // 관련 멤버 (다중)
 }
