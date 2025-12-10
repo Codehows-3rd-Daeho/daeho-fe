@@ -294,6 +294,7 @@ export default function IssueCreate() {
   return (
     <>
       <IssueForm
+        mode="create"
         formData={formData}
         categories={categories}
         departments={departments}

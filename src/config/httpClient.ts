@@ -38,7 +38,7 @@ const httpClient = axios.create({
 // 요청 인터셉터: 모든 HTTP 요청에 JWT 토큰을 Authorization 헤더에 추가.
 httpClient.interceptors.request.use(
   (config) => {
-    const token = sessionStorage.getItem("jwt");
+    const token = localStorage.getItem("jwt");
     if (token) {
       config.headers.Authorization = token;
     }
@@ -56,7 +56,7 @@ httpClient.interceptors.response.use(
     if (axios.isAxiosError(error) && error.response?.status === 401) {
       if (!alreadyAlerted) {
         alreadyAlerted = true;
-        // sessionStorage.removeItem("jwt");
+        localStorage.removeItem("jwt");
         alert("인증오류가 발생했습니다. 로그인 페이지로 이동합니다.");
         // window.location.href = "/login";
       }
