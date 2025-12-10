@@ -20,9 +20,9 @@ interface IssueFormProps {
   categories: MasterDataType[];
   departments: MasterDataType[];
   range: { startDate: Date; endDate: Date; key: string }[];
-  isSaving: boolean;
-  maxFileSize: number | null;
-  allowedExtensions: string[] | null;
+  isSaving?: boolean;
+  maxFileSize?: number | null;
+  allowedExtensions?: string[] | null;
 
   //핸들러로 관리됐던 애들
   //   <K>: 제네릭 타입 변수
@@ -61,7 +61,6 @@ export default function IssueForm({
   maxFileSize,
   allowedExtensions,
   issueFiles,
-  initialMembers,
   onChangeFormData,
   onFileUpload,
   onFileRemove,
@@ -541,7 +540,13 @@ export default function IssueForm({
                 "&:hover": { boxShadow: 3 },
               }}
             >
-              {mode === "create" ? isSaving ? "등록 중..." : "등록" : isSaving ? "수정 중..." : "수정"}
+              {mode === "create"
+                ? isSaving
+                  ? "등록 중..."
+                  : "등록"
+                : isSaving
+                ? "수정 중..."
+                : "수정"}
             </Button>
           </Box>
         </Box>

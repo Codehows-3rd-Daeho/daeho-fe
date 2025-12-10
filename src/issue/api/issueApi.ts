@@ -1,4 +1,9 @@
-import type { IssueDtlDto, IssueIdTitle, IssueListResponse } from "../type/type";
+import type {
+  IssueDtlDto,
+  IssueIdTitle,
+  IssueListItem,
+  IssueListResponse,
+} from "../type/type";
 import httpClient from "../../config/httpClient";
 import type { IssueInMeeting } from "../../meeting/type/type";
 
@@ -24,7 +29,7 @@ export const issueCreate = async (formData: FormData) => {
 
 //이슈 리스트
 export const getIssueInMeeting = async (): Promise<IssueIdTitle[]> => {
-  const response = await httpClient.get(`/issue/list`);
+  const response = await httpClient.get(`/issue/list/v2`);
   return response.data;
 };
 
@@ -36,9 +41,16 @@ export const getSelectedINM = async (
   return response.data;
 };
 
-export const getKanbanIssues = async () => {
+type temp = {
+  inProgress: IssueListItem[];
+  completed: IssueListItem[];
+  delayed: IssueListItem[];
+};
+
+export const getKanbanIssues = async (): Promise<temp> => {
   const response = await httpClient.get("/issue/kanban");
-}
+  return response.data;
+};
 
 // 상세 조회
 export const getIssueDtl = async (issueId: string): Promise<IssueDtlDto> => {

@@ -66,9 +66,9 @@ export default function IssueUpdate() {
         const departmentIds = issue.departmentName
           .map((name) => {
             const dept = dpt.find((d) => d.name === name);
-            return dept ? Number(dept.id) : null;
+            return dept ? dept.id + "" : null;
           })
-          .filter((id): id is number => id !== null); // null 제거 및 타입 정리
+          .filter((id) => id !== null); // null 제거 및 타입 정리
 
         // formData 초기화
         setFormData({
@@ -271,7 +271,7 @@ export default function IssueUpdate() {
   const handleDepartmentChange = (selected: string[]) => {
     setFormData((prev) => ({
       ...prev,
-      department: selected.map(Number), // 문자열 → 숫자
+      department: selected, // 문자열 → 숫자
     }));
   };
 

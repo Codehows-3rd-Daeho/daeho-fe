@@ -1,4 +1,3 @@
-import axios from "axios";
 import type { MeetingDtlDto, MeetingListResponse } from "../type/type";
 import httpClient from "../../config/httpClient";
 
@@ -7,7 +6,7 @@ export const getMeetingList = async (
   page: number,
   size: number = 10
 ): Promise<MeetingListResponse> => {
-  const response = await axios.get(`/api/meeting`, {
+  const response = await httpClient.get(`/meeting`, {
     params: { page, size },
   });
   return response.data; // { content, totalElements }
