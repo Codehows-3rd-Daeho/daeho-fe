@@ -15,9 +15,8 @@ type MemberInfo = {
 };
 
 export const useAuthStore = create<AuthStore>((set) => {
-  // 세션스토리지에 JWT가 있으면 decode해서 초기값 세팅
-  const savedToken = sessionStorage.getItem("jwt");
-  const savedMember = sessionStorage.getItem("member");
+  const savedToken = localStorage.getItem("jwt");
+  const savedMember = localStorage.getItem("member");
 
   return {
     isAuthenticated: !!savedToken,
@@ -25,13 +24,13 @@ export const useAuthStore = create<AuthStore>((set) => {
     member: savedMember ? JSON.parse(savedMember) : null,
 
     login: (token, member) => {
-      sessionStorage.setItem("jwt", token);
-      sessionStorage.setItem("member", JSON.stringify(member));
+      localStorage.setItem("jwt", token);
+      localStorage.setItem("member", JSON.stringify(member));
       set({ token, isAuthenticated: true, member });
     },
     logout: () => {
-      sessionStorage.removeItem("jwt");
-      sessionStorage.removeItem("member");
+      localStorage.removeItem("jwt");
+      localStorage.removeItem("member");
       set({
         isAuthenticated: false,
         token: null,

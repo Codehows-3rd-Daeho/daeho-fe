@@ -18,7 +18,7 @@ import type { IssueMemberDto, PartMemberList } from "../type/type";
 import { useAuthStore } from "../../store/useAuthStore";
 import {
   getDepartment,
-  getJobPosition,
+  // getJobPosition,
 } from "../../admin/setting/api/MasterDataApi";
 import { getPartMemberList } from "../../admin/member/api/MemberApi";
 
@@ -28,6 +28,7 @@ interface Participant extends PartMemberList {
 }
 interface PartMemberProps {
   onChangeMembers: (members: IssueMemberDto[]) => void;
+  initialMembers?: IssueMemberDto[];
 }
 
 //부서랑 직급을 백에서 받아와야됨
@@ -37,7 +38,10 @@ type ParticipantList = {
   [key: string]: Participant[];
 };
 
-export default function PartMember({ onChangeMembers }: PartMemberProps) {
+export default function PartMember({
+  onChangeMembers,
+  initialMembers,
+}: PartMemberProps) {
   const [open, setOpen] = useState(false);
   //모달 열기
   const handleOpen = () => setOpen(true);
@@ -58,26 +62,58 @@ export default function PartMember({ onChangeMembers }: PartMemberProps) {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const positions = await getJobPosition(); // 직급 [{id, name}]
+        // const positions = await getJobPosition(); // 직급 [{id, name}]
         const departments = await getDepartment(); // 부서 [{id, name}]
 
-        const positionNames = positions.map((p) => p.name); //직급 배열 -> 분류탭으로 사용
+        // const positionNames = positions.map((p) => p.name); //직급 배열 -> 분류탭으로 사용
         const departmentNames = departments.map((d) => d.name); //부서 배열 -> 분류탭으로 사용
 
-        // 전체 + 직급 + 부서
-        setCategories(["전체", ...positionNames, ...departmentNames]);
+        // setCategories(["전체", ...positionNames, ...departmentNames]); // 전체 + 직급 + 부서
+
+        //전체, 부서
+        setCategories(["전체", ...departmentNames]);
 
         // 회원 전체 불러오기
         const memberList = await getPartMemberList();
 
+        // 기존 참여자
+        const initialMap = new Map(initialMembers?.map((m) => [m.memberId, m]));
+
         // 받아온 회원 전체를 기본값 추가한 Participant 형태로 변환
-        const mapped: Participant[] = memberList.map((m) => ({
-          ...m,
-          department: m.department, //department(name)을 department 매핑
-          position: m.jobPositionName, //JobPositionName을 position으로 매핑
-          selected: m.id === Number(memberId), // 작성자는 자동 선택
-          isPermitted: m.id === Number(memberId), // 작성자는 권한도 자동 체크
-        }));
+        const mapped: Participant[] = memberList.map((m) => {
+          const memberIdNum = Number(m.id);
+          const isHost = memberIdNum === Number(memberId);
+          const existingMember = initialMap.get(memberIdNum); // 기존 참여자에 있는지 확인
+          return {
+            ...m,
+            department: m.department,
+            position: m.jobPositionName,
+
+            selected: isHost || !!existingMember, // 기존 참여자거나 호스트인 경우 selected를 true로 설정
+
+            isPermitted: isHost
+              ? true
+              : existingMember
+              ? existingMember.isPermitted // 기존 참여자는 저장된 권한 사용
+              : false, // 그 외는 false
+          };
+        });
+
+        //이슈 선택시 해당 이슈의 참여자 자동 선택
+        // 5) initialMembers 기반으로 selected / isPermitted 설정
+        if (initialMembers && initialMembers.length > 0) {
+          const initialMemberMap = new Map(
+            initialMembers.map((m) => [m.memberId, m])
+          );
+
+          mapped.forEach((p) => {
+            if (initialMemberMap.has(p.id)) {
+              p.selected = true;
+              //권한 추가시 부모 컴포넌트의 수정 권한이 우선적으로 적용되어 전체 권한 선택박스로직에서 빠짐
+              // p.isPermitted = initialMemberMap.get(p.id)!.isPermitted;
+            }
+          });
+        }
 
         // 4) 카테고리별 분류
         const categorized: ParticipantList = {
@@ -85,9 +121,9 @@ export default function PartMember({ onChangeMembers }: PartMemberProps) {
         };
 
         // 직급별 분류
-        positionNames.forEach((pos) => {
-          categorized[pos] = mapped.filter((m) => m.jobPositionName === pos);
-        });
+        // positionNames.forEach((pos) => {
+        //   categorized[pos] = mapped.filter((m) => m.jobPositionName === pos);
+        // });
 
         // 부서별 분류
         departmentNames.forEach((dept) => {
@@ -101,7 +137,7 @@ export default function PartMember({ onChangeMembers }: PartMemberProps) {
     };
 
     loadData();
-  }, []);
+  }, [memberId, initialMembers]);
 
   // ===============================================================================================
   //                       분류탭
@@ -220,10 +256,15 @@ export default function PartMember({ onChangeMembers }: PartMemberProps) {
   // ===============================================================================================
 
   const handleSave = () => {
-    //최종 부모 컴포넌트로 전달할 배열 생성
-    const selectedParticipants = Object.values(participants)
-      .flat() //평탄화: 중첩된 객체를 1차원으로 풀어내거나 단순하게 만드는 것
-      .filter((p) => p.selected || p.id === memberId); // 선택되었거나 host이면 포함
+    //최종 부모 컴포넌트로 전달할 배열 생성(중복 제거)
+    const selectedParticipants = [
+      ...new Map(
+        Object.values(participants)
+          .flat() //평탄화: 중첩된 객체를 1차원으로 풀어내거나 단순하게 만드는 것
+          .filter((p) => p.selected || p.id === Number(memberId)) // 선택되었거나 host이면 포함
+          .map((p) => [p.id, p]) // key: id / value: participant
+      ).values(),
+    ];
 
     //selectedParticipants를 IssueMemberDto 타입으로 변환
     const result: IssueMemberDto[] = selectedParticipants.map((p) => ({
@@ -351,6 +392,7 @@ export default function PartMember({ onChangeMembers }: PartMemberProps) {
                       <Checkbox
                         checked={participant.selected}
                         onChange={() => handleSelectParticipant(participant.id)}
+                        disabled={participant.id === Number(memberId)} // 주관자 선택 해제 불가
                         size="small"
                       />
                     }
@@ -362,6 +404,7 @@ export default function PartMember({ onChangeMembers }: PartMemberProps) {
                       <Checkbox
                         checked={participant.isPermitted}
                         onChange={() => handleTogglePermission(participant.id)}
+                        disabled={participant.id === Number(memberId)} // 주관자 선택 해제 불가
                         size="small"
                       />
                     }

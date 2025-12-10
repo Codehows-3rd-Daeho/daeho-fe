@@ -10,7 +10,8 @@ import { Toggle } from "../../common/PageHeader/Toggle/Toggle";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { Box, Typography } from "@mui/material";
 import { useAuthStore } from "../../store/useAuthStore";
-// import { getIssueList } from "../api/api"; // 백엔드 연결
+import { getIssueList } from "../api/issueApi";
+import { getStatusLabel } from "../../common/commonFunction";
 
 export default function IssueList() {
   const navigate = useNavigate();
@@ -20,15 +21,20 @@ export default function IssueList() {
   // 페이징
   const [page, setPage] = useState(1);
   // const pageSize = 10;
-  const [data] = useState<IssueListItem[]>([]);
-  const [totalCount] = useState(0);
+  const [data, setData] = useState<IssueListItem[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
 
   // 데이터 가져오기
   useEffect(() => {
-    // getIssueList(page, 10).then((data) => {
-    //   setData(data.content); // 데이터
-    //   setTotalCount(data.totalElements); // 전체 개수
-    // });
+    getIssueList(page - 1, 10).then((data) => {
+      const list = (data.content ?? data).map((item: IssueListItem) => ({
+        ...item,
+        status: getStatusLabel(item.status),
+      }));
+
+      setData(list);
+      setTotalCount(data.totalElements); // 전체 개수
+    });
   }, [page]);
 
   // 리스트 컬럼
@@ -38,6 +44,7 @@ export default function IssueList() {
       headerName: "No",
       flex: 0.5,
       minWidth: 60,
+
       headerAlign: "center",
       align: "center",
     },
@@ -45,9 +52,17 @@ export default function IssueList() {
       field: "title",
       headerName: "제목",
       flex: 2,
-      minWidth: 300,
+      minWidth: 600,
       headerAlign: "center",
       align: "left",
+      renderCell: (params) => (
+        <div
+          style={{ width: "100%", cursor: "pointer" }}
+          onClick={() => navigate(`/issue/${params.id}`)}
+        >
+          {params.value}
+        </div>
+      ),
     },
     {
       field: "status",
@@ -61,7 +76,7 @@ export default function IssueList() {
       field: "period",
       headerName: "기간",
       flex: 1.2,
-      minWidth: 160,
+      minWidth: 190,
       headerAlign: "center",
       align: "center",
       renderCell: (params: GridRenderCellParams<IssueListItem>) => {
@@ -81,22 +96,26 @@ export default function IssueList() {
       headerName: "부서",
       flex: 1,
       minWidth: 120,
+
       headerAlign: "center",
       align: "center",
+      renderCell: (params) => params.row.department.join(", "),
     },
     {
       field: "category",
       headerName: "주제",
       flex: 1,
       minWidth: 120,
+
       headerAlign: "center",
       align: "center",
     },
     {
-      field: "isHost",
+      field: "hostName",
       headerName: "주관자",
       flex: 1,
-      minWidth: 120,
+      minWidth: 100,
+      maxWidth: 120,
       headerAlign: "center",
       align: "center",
     },

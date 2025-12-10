@@ -1,7 +1,7 @@
 import type { Member, MemberList } from "../type/MemberType";
 import httpClient from "../../../config/httpClient";
 import type { PageResponse } from "../../../common/List/type";
-import type { IssueMemberData, PartMemberList } from "../../../issue/type/type";
+import type { PartMemberList } from "../../../issue/type/type";
 
 export const createMember = async (formData: FormData) => {
   const response = await httpClient.post("/signup", formData, {
@@ -62,12 +62,4 @@ export const getPartMemberList = async (): Promise<PartMemberList[]> => {
   return response.data;
 };
 
-//주관자 정보
-//아이디를 보내서, 이름, 직급 조회
-export const getHostData = async (
-  memberId: number
-): Promise<IssueMemberData> => {
-  const response = await httpClient.get(`/partMember/${memberId}`);
-  console.log("getHostData response:", response.data);
-  return response.data;
-};
+//주관자 정보 삭제

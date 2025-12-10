@@ -6,22 +6,29 @@ import {
   Select,
   MenuItem,
   FormControl,
+  IconButton,
 } from "@mui/material";
 import { DateRange } from "react-date-range";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PartMember from "./PartMember";
-import type { IssueFormValues, IssueMemberDto } from "../type/type";
+import type { FileDto, IssueFormValues, IssueMemberDto } from "../type/type";
 import type { MasterDataType } from "../../admin/setting/type/SettingType";
 
 interface IssueFormProps {
-  //useState로 관리 됐던 애들
   formData: IssueFormValues;
   categories: MasterDataType[];
   departments: MasterDataType[];
   range: { startDate: Date; endDate: Date; key: string }[];
+  isSaving?: boolean;
+  maxFileSize?: number | null;
+  allowedExtensions?: string[] | null;
+
   //핸들러로 관리됐던 애들
   //   <K>: 제네릭 타입 변수
+  issueFiles?: FileDto[];
+  initialMembers?: IssueMemberDto[];
+  //핸들러로 관리됐던 애들 <K>: 제네릭 타입 변수
   // keyof: IssueFormValues 타입의 키들이 문자열 리터럴 유니온 타입으로 변환 "title" | "department"
   // extends keyof IssueFormValues → K는 반드시 IssueFormValues 속성 중 하나여야 함
   onChangeFormData: <K extends keyof IssueFormValues>(
@@ -31,6 +38,7 @@ interface IssueFormProps {
 
   onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onFileRemove: (idx: number) => void;
+  onRemoveExistingFile?: (fileId: number) => void;
   onOpenFileInput: () => void;
   onDepartmentChange: (selected: string[]) => void;
   onChangeMembers: (members: IssueMemberDto[]) => void;
@@ -40,6 +48,7 @@ interface IssueFormProps {
     key: string;
   }) => void;
   onSubmit: () => void;
+  mode: "create" | "update";
 }
 
 export default function IssueForm({
@@ -48,14 +57,20 @@ export default function IssueForm({
   categories,
   departments,
   range,
+  isSaving,
+  maxFileSize,
+  allowedExtensions,
+  issueFiles,
   onChangeFormData,
   onFileUpload,
   onFileRemove,
   onOpenFileInput,
+  onRemoveExistingFile,
   onDepartmentChange,
   onChangeMembers,
   onSelectRange,
   onSubmit,
+  mode,
 }: IssueFormProps) {
   return (
     <Box>
@@ -142,12 +157,91 @@ export default function IssueForm({
               <Typography
                 sx={{ fontSize: "0.875rem", fontWeight: 500, mb: 0.5 }}
               >
-                Choose a file
+                Choose files
+              </Typography>
+              <Typography
+                sx={{ fontSize: "0.875rem", fontWeight: 500, mb: 0.5 }}
+              >
+                최대 파일 크기: {maxFileSize}MB, 허용 확장자:{" "}
+                {allowedExtensions?.join(", ")}
               </Typography>
             </Box>
 
+            {/* 기존에 서버에 저장된 파일 목록 (Update일 때) */}
+            {issueFiles && issueFiles.length > 0 && (
+              <Box sx={{ mt: 2 }}>
+                <Typography
+                  sx={{ fontSize: "0.875rem", fontWeight: 600, mb: 1 }}
+                >
+                  기존 파일
+                </Typography>
+                {issueFiles.map((file) => (
+                  <Box
+                    key={file.fileId}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      p: 1.5,
+                      bgcolor: "#fafafa",
+                      borderRadius: 1.5,
+                      mb: 1,
+                    }}
+                  >
+                    <Box
+                      sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
+                    >
+                      <Box
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          bgcolor: "#e0e0e0",
+                          borderRadius: 1,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Typography sx={{ fontSize: "1.2rem" }}>📄</Typography>
+                      </Box>
+                      <Box>
+                        <Typography
+                          sx={{ fontSize: "0.875rem", fontWeight: 500 }}
+                        >
+                          {file.originalName}
+                        </Typography>
+                        <Typography
+                          sx={{ fontSize: "0.75rem", color: "text.secondary" }}
+                        >
+                          {file.size}
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <IconButton
+                      size="small"
+                      onClick={() =>
+                        onRemoveExistingFile
+                          ? onRemoveExistingFile(file.fileId)
+                          : null
+                      }
+                      sx={{ minWidth: "auto", p: 1 }}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                ))}
+              </Box>
+            )}
+
             {formData.file && formData.file.length > 0 && (
               <Box sx={{ mt: 2 }}>
+                {mode === "update" && (
+                  <Typography
+                    sx={{ fontSize: "0.875rem", fontWeight: 600, mb: 1 }}
+                  >
+                    새로 추가된 파일
+                  </Typography>
+                )}
                 {formData.file.map((file, idx) => (
                   <Box
                     key={idx}
@@ -186,7 +280,7 @@ export default function IssueForm({
                         <Typography
                           sx={{ fontSize: "0.75rem", color: "text.secondary" }}
                         >
-                          {(file.size / 1024 / 1024).toFixed(1)}MB · Uploading
+                          {(file.size / 1024 / 1024).toFixed(2)}MB
                         </Typography>
                       </Box>
                     </Box>
@@ -233,6 +327,7 @@ export default function IssueForm({
                 gap: 2,
                 borderRadius: 2,
                 px: 2,
+                mt: 2,
               }}
             >
               <Typography
@@ -247,9 +342,8 @@ export default function IssueForm({
                 onChange={(e) => onChangeFormData("status", e.target.value)}
                 sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
               >
-                <MenuItem value="PLANNED">진행전</MenuItem>
                 <MenuItem value="IN_PROGRESS">진행중</MenuItem>
-                <MenuItem value="COMPLETED">진행 완료</MenuItem>
+                <MenuItem value="COMPLETED">진행완료</MenuItem>
               </Select>
             </Box>
 
@@ -390,9 +484,9 @@ export default function IssueForm({
                 관련 부서
               </Typography>
               <FormControl fullWidth size="small">
-                <Select<string[]>
+                <Select
                   multiple
-                  value={formData.department.map(String)}
+                  value={formData.department}
                   onChange={(e) =>
                     onDepartmentChange(e.target.value as string[])
                   }
@@ -423,7 +517,10 @@ export default function IssueForm({
               >
                 참여자
               </Typography>
-              <PartMember onChangeMembers={onChangeMembers} />
+              <PartMember
+                onChangeMembers={onChangeMembers}
+                initialMembers={formData.members}
+              />
             </Box>
           </Box>
 
@@ -433,6 +530,7 @@ export default function IssueForm({
             <Button
               variant="contained"
               onClick={onSubmit}
+              disabled={isSaving} // ✔ 저장 중이면 버튼 비활성화
               sx={{
                 width: 100,
                 p: 2,
@@ -442,7 +540,13 @@ export default function IssueForm({
                 "&:hover": { boxShadow: 3 },
               }}
             >
-              등록
+              {mode === "create"
+                ? isSaving
+                  ? "등록 중..."
+                  : "등록"
+                : isSaving
+                ? "수정 중..."
+                : "수정"}
             </Button>
           </Box>
         </Box>

@@ -3,11 +3,11 @@ export type IssueListItem = {
   id: number;
   title: string;
   status: string; // 상태
-  startDate: Date;
-  endDate: Date;
+  startDate: string;
+  endDate: string;
   category: string; // 주제
   department: string[]; // 부서
-  isHost: string; // 주관자
+  host: string; // 주관자
   isDel?: boolean; // 삭제상태
 };
 
@@ -26,16 +26,9 @@ export interface IssueFormValues {
   startDate: string; // 시작일
   endDate?: string; // 종료일 (선택)
   category: string; // 카테고리
-  department: string[] | number[]; // 관련 부서 (다중)
+  department: (string | null)[]; // 관련 부서 (다중)
   members: IssueMemberDto[]; // 관련 멤버 (다중)
-  isDel: boolean;
-}
-
-//이슈 등록시 사용, 주관자
-export interface IssueMemberData {
-  id: number;
-  name: string;
-  jobPositionName: string;
+  isDel?: boolean;
 }
 
 // 회원 리스트(참여자, 참석자 추가)
@@ -46,11 +39,46 @@ export interface PartMemberList {
   jobPositionName: string;
 }
 
-//이슈 멤버 등록
+//이슈 참여자
 export interface IssueMemberDto {
   memberId: number;
   memberName: string;
+  departmentName?: string;
   isHost: boolean;
   isPermitted: boolean;
   isRead: boolean;
+}
+
+export interface IssueIdTitle {
+  id?: string;
+  title: string;
+}
+
+export interface IssueDtlDto {
+  // 왼쪽
+  title: string;
+  content: string;
+  fileList: FileDto[];
+
+  // 오른쪽
+  status: string;
+  host: string; // 이름, 직급 포함
+  startDate: string;
+  endDate: string;
+  categoryName: string;
+  departmentName: string[];
+  createdAt: string;
+  updatedAt: string;
+  isDel: boolean;
+
+  isEditPermitted: boolean; // 수정/삭제 권한 여부
+  participantList: IssueMemberDto[]; // 참여자 리스트
+}
+
+export interface FileDto {
+  fileId: number;
+  path: string;
+  originalName: string;
+  size: string; //단위포함
+  createdAt: string;
 }
