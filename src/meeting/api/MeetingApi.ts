@@ -15,7 +15,7 @@ export const getMeetingList = async (
 
 //등록
 export const meetingCreate = async (formData: FormData) => {
-  await httpClient.post(`/issue/create`, formData, {
+  await httpClient.post(`/meeting/create`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },

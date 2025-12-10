@@ -18,7 +18,7 @@ import type { IssueMemberDto, PartMemberList } from "../type/type";
 import { useAuthStore } from "../../store/useAuthStore";
 import {
   getDepartment,
-  getJobPosition,
+  // getJobPosition,
 } from "../../admin/setting/api/MasterDataApi";
 import { getPartMemberList } from "../../admin/member/api/MemberApi";
 
@@ -62,14 +62,16 @@ export default function PartMember({
   useEffect(() => {
     const loadData = async () => {
       try {
-        const positions = await getJobPosition(); // 직급 [{id, name}]
+        // const positions = await getJobPosition(); // 직급 [{id, name}]
         const departments = await getDepartment(); // 부서 [{id, name}]
 
-        const positionNames = positions.map((p) => p.name); //직급 배열 -> 분류탭으로 사용
+        // const positionNames = positions.map((p) => p.name); //직급 배열 -> 분류탭으로 사용
         const departmentNames = departments.map((d) => d.name); //부서 배열 -> 분류탭으로 사용
 
-        // 전체 + 직급 + 부서
-        setCategories(["전체", ...positionNames, ...departmentNames]);
+        // setCategories(["전체", ...positionNames, ...departmentNames]); // 전체 + 직급 + 부서
+
+        //전체, 부서
+        setCategories(["전체", ...departmentNames]);
 
         // 회원 전체 불러오기
         const memberList = await getPartMemberList();
@@ -97,15 +99,31 @@ export default function PartMember({
           };
         });
 
+        //이슈 선택시 해당 이슈의 참여자 자동 선택
+        // 5) initialMembers 기반으로 selected / isPermitted 설정
+        if (initialMembers && initialMembers.length > 0) {
+          const initialMemberMap = new Map(
+            initialMembers.map((m) => [m.memberId, m])
+          );
+
+          mapped.forEach((p) => {
+            if (initialMemberMap.has(p.id)) {
+              p.selected = true;
+              //권한 추가시 부모 컴포넌트의 수정 권한이 우선적으로 적용되어 전체 권한 선택박스로직에서 빠짐
+              // p.isPermitted = initialMemberMap.get(p.id)!.isPermitted;
+            }
+          });
+        }
+
         // 4) 카테고리별 분류
         const categorized: ParticipantList = {
           전체: mapped,
         };
 
         // 직급별 분류
-        positionNames.forEach((pos) => {
-          categorized[pos] = mapped.filter((m) => m.jobPositionName === pos);
-        });
+        // positionNames.forEach((pos) => {
+        //   categorized[pos] = mapped.filter((m) => m.jobPositionName === pos);
+        // });
 
         // 부서별 분류
         departmentNames.forEach((dept) => {
@@ -238,10 +256,15 @@ export default function PartMember({
   // ===============================================================================================
 
   const handleSave = () => {
-    //최종 부모 컴포넌트로 전달할 배열 생성
-    const selectedParticipants = Object.values(participants)
-      .flat() //평탄화: 중첩된 객체를 1차원으로 풀어내거나 단순하게 만드는 것
-      .filter((p) => p.selected || p.id === memberId); // 선택되었거나 host이면 포함
+    //최종 부모 컴포넌트로 전달할 배열 생성(중복 제거)
+    const selectedParticipants = [
+      ...new Map(
+        Object.values(participants)
+          .flat() //평탄화: 중첩된 객체를 1차원으로 풀어내거나 단순하게 만드는 것
+          .filter((p) => p.selected || p.id === Number(memberId)) // 선택되었거나 host이면 포함
+          .map((p) => [p.id, p]) // key: id / value: participant
+      ).values(),
+    ];
 
     //selectedParticipants를 IssueMemberDto 타입으로 변환
     const result: IssueMemberDto[] = selectedParticipants.map((p) => ({
@@ -369,6 +392,7 @@ export default function PartMember({
                       <Checkbox
                         checked={participant.selected}
                         onChange={() => handleSelectParticipant(participant.id)}
+                        disabled={participant.id === Number(memberId)} // 주관자 선택 해제 불가
                         size="small"
                       />
                     }
@@ -380,6 +404,7 @@ export default function PartMember({
                       <Checkbox
                         checked={participant.isPermitted}
                         onChange={() => handleTogglePermission(participant.id)}
+                        disabled={participant.id === Number(memberId)} // 주관자 선택 해제 불가
                         size="small"
                       />
                     }

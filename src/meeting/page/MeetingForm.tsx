@@ -7,56 +7,65 @@ import {
   MenuItem,
   FormControl,
 } from "@mui/material";
-import { DateRange } from "react-date-range";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PartMember from "../../issue/page/PartMember";
-import type { IssueFormValues, IssueMemberDto } from "../../issue/type/type";
 import type { MasterDataType } from "../../admin/setting/type/SettingType";
+import { StaticDatePicker, StaticTimePicker } from "@mui/x-date-pickers";
+import dayjs, { Dayjs } from "dayjs";
+import type { MeetingFormValues, MeetingMemberDto } from "../type/type";
+import type { IssueIdTitle } from "../../issue/type/type";
 
-interface IssueFormProps {
+interface MeetingFormProps {
   //useState로 관리 됐던 애들
-  formData: IssueFormValues;
+  formData: MeetingFormValues;
+  issues: IssueIdTitle[];
   categories: MasterDataType[];
   departments: MasterDataType[];
-  range: { startDate: Date; endDate: Date; key: string }[];
+  // range: { startDate: Date; endDate: Date; key: string }[];
+  isSaving: boolean;
+  maxFileSize: number | null;
+  allowedExtensions: string[] | null;
+
   //핸들러로 관리됐던 애들
   //   <K>: 제네릭 타입 변수
   // keyof: IssueFormValues 타입의 키들이 문자열 리터럴 유니온 타입으로 변환 "title" | "department"
   // extends keyof IssueFormValues → K는 반드시 IssueFormValues 속성 중 하나여야 함
-  onChangeFormData: <K extends keyof IssueFormValues>(
+  onChangeFormData: <K extends keyof MeetingFormValues>(
     key: K,
-    value: IssueFormValues[K]
+    value: MeetingFormValues[K]
   ) => void;
-
+  onIssueSelect: (selectedId: string) => void;
   onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onFileRemove: (idx: number) => void;
   onOpenFileInput: () => void;
   onDepartmentChange: (selected: string[]) => void;
-  onChangeMembers: (members: IssueMemberDto[]) => void;
-  onSelectRange: (ranges: {
-    startDate: Date;
-    endDate: Date;
-    key: string;
-  }) => void;
+  onChangeMembers: (members: MeetingMemberDto[]) => void;
+  onSelectTime: (value: Dayjs | null) => void;
+  onSelectDate: (value: Dayjs | null) => void;
   onSubmit: () => void;
 }
 
 export default function MeetingForm({
   //부모에게 전달 받을 내용
   formData,
+  issues,
   categories,
   departments,
-  range,
+  isSaving,
+  maxFileSize,
+  allowedExtensions,
+  onIssueSelect,
   onChangeFormData,
   onFileUpload,
   onFileRemove,
   onOpenFileInput,
   onDepartmentChange,
   onChangeMembers,
-  onSelectRange,
+  onSelectDate,
+  onSelectTime,
   onSubmit,
-}: IssueFormProps) {
+}: MeetingFormProps) {
   return (
     <Box>
       <Box
@@ -143,7 +152,13 @@ export default function MeetingForm({
               <Typography
                 sx={{ fontSize: "0.875rem", fontWeight: 500, mb: 0.5 }}
               >
-                Choose a file or drag & drop it here.
+                Choose files
+              </Typography>
+              <Typography
+                sx={{ fontSize: "0.875rem", fontWeight: 500, mb: 0.5 }}
+              >
+                최대 파일 크기: {maxFileSize}MB, 허용 확장자:{" "}
+                {allowedExtensions?.join(", ")}
               </Typography>
             </Box>
 
@@ -217,7 +232,7 @@ export default function MeetingForm({
         >
           <Box
             sx={{
-              height: 1000,
+              height: 1100,
               width: 380,
               display: "flex",
               flexDirection: "column",
@@ -234,6 +249,7 @@ export default function MeetingForm({
                 gap: 2,
                 borderRadius: 2,
                 px: 2,
+                mt: 2,
               }}
             >
               <Typography
@@ -280,6 +296,46 @@ export default function MeetingForm({
               />
             </Box>
 
+            {/* 관련 이슈 */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 2,
+                borderRadius: 2,
+                px: 2,
+              }}
+            >
+              <Typography
+                sx={{ fontWeight: 600, fontSize: "0.875rem", width: "80px" }}
+              >
+                관련 이슈
+              </Typography>
+              <FormControl fullWidth size="small">
+                <Select
+                  value={formData.issue ?? ""}
+                  displayEmpty
+                  onChange={(e) => {
+                    console.log(
+                      "Select onChange fired, value:",
+                      e.target.value
+                    );
+                    console.log("Current formData:", formData);
+                    console.log("Available issues:", issues);
+
+                    onIssueSelect(e.target.value); // 상위 컴포넌트에 숫자로 전달
+                  }}
+                >
+                  {issues.map((i) => (
+                    <MenuItem key={i.id} value={i.id}>
+                      {i.title}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+
             {/* 시작일/마감일 + 달력 */}
             <Box sx={{ borderRadius: 2, p: 2 }}>
               <Box
@@ -294,7 +350,7 @@ export default function MeetingForm({
                   <TextField
                     fullWidth
                     size="small"
-                    placeholder="0000-00-00"
+                    placeholder="0000-00-00 00:00"
                     value={formData.startDate}
                     onChange={(e) =>
                       onChangeFormData("startDate", e.target.value)
@@ -311,7 +367,7 @@ export default function MeetingForm({
                   <TextField
                     fullWidth
                     size="small"
-                    placeholder="0000-00-00"
+                    placeholder="진행 완료 시 작성"
                     value={formData.endDate ?? ""}
                     onChange={(e) =>
                       onChangeFormData("endDate", e.target.value)
@@ -322,22 +378,25 @@ export default function MeetingForm({
               </Box>
 
               <Box sx={{ mt: 2 }}>
-                <DateRange
-                  ranges={range}
-                  onChange={(ranges) => {
-                    const sel = ranges.selection;
-
-                    if (!sel.startDate || !sel.endDate) return;
-
-                    onSelectRange({
-                      startDate: sel.startDate,
-                      endDate: sel.endDate,
-                      key: sel.key ?? "selection",
-                    });
+                {/* 달력 (항상 표시) */}
+                <StaticDatePicker
+                  displayStaticWrapperAs="desktop"
+                  value={dayjs(formData.startDate)}
+                  onChange={(value) => onSelectDate(value)}
+                  slotProps={{
+                    actionBar: { actions: [] }, // 하단 버튼 제거
                   }}
-                  showMonthAndYearPickers={false}
-                  showDateDisplay={false}
-                  direction="horizontal"
+                />
+
+                {/* 아날로그 시계 (항상 표시) */}
+                <StaticTimePicker
+                  ampm
+                  displayStaticWrapperAs="desktop"
+                  value={dayjs(formData.startDate)}
+                  onChange={(value) => onSelectTime(value)}
+                  slotProps={{
+                    actionBar: { actions: [] }, // 하단 버튼 제거
+                  }}
                 />
               </Box>
             </Box>
@@ -360,8 +419,10 @@ export default function MeetingForm({
               </Typography>
               <FormControl fullWidth size="small">
                 <Select
-                  value={formData.category}
-                  onChange={(e) => onChangeFormData("category", e.target.value)}
+                  value={formData.categoryId}
+                  onChange={(e) =>
+                    onChangeFormData("categoryId", e.target.value)
+                  }
                   displayEmpty
                   sx={{ borderRadius: 1.5 }}
                 >
@@ -391,9 +452,9 @@ export default function MeetingForm({
                 관련 부서
               </Typography>
               <FormControl fullWidth size="small">
-                <Select<string[]>
+                <Select
                   multiple
-                  value={formData.department.map(String)}
+                  value={formData.departmentIds}
                   onChange={(e) =>
                     onDepartmentChange(e.target.value as string[])
                   }
@@ -424,7 +485,10 @@ export default function MeetingForm({
               >
                 참여자
               </Typography>
-              <PartMember onChangeMembers={onChangeMembers} />
+              <PartMember
+                onChangeMembers={onChangeMembers}
+                initialMembers={formData.members}
+              />
             </Box>
           </Box>
 
@@ -443,7 +507,7 @@ export default function MeetingForm({
                 "&:hover": { boxShadow: 3 },
               }}
             >
-              등록
+              {isSaving ? "등록 중..." : "등록"}
             </Button>
           </Box>
         </Box>
