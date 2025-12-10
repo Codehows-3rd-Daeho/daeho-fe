@@ -6,7 +6,7 @@ export const getIssueList = async (
   page: number,
   size: number = 10
 ): Promise<IssueListResponse> => {
-  const response = await httpClient.get(`/issue`, {
+  const response = await httpClient.get(`/issue/list`, {
     params: { page, size },
   });
   return response.data;
@@ -21,6 +21,9 @@ export const issueCreate = async (formData: FormData) => {
   });
 };
 
+export const getKanbanIssues = async () => {
+  const response = await httpClient.get("/issue/kanban");
+}
 // 상세 조회
 export const getIssueDtl = async (issueId: string): Promise<IssueDtlDto> => {
   const response = await httpClient.get(`/issue/${issueId}`);

@@ -15,6 +15,7 @@ const Login = lazy(() => import("./login/page/Login"));
 const IssueUpdate = lazy(() => import("./issue/page/IssueUpdate"));
 const IssueDtl = lazy(() => import("./issue/page/IssueDtl"));
 const MeetingDtl = lazy(() => import("./meeting/page/MeetingDtl"));
+const IssueKanban = lazy(() => import("./issue/page/IssueKanban"));
 
 /*===============================
   PrivateRoute 사용 안내
@@ -74,6 +75,7 @@ export default function App() {
                 <Routes>
                   <Route path="/issue/create" element={<IssueCreate />} />
                   <Route path="/issue/list" element={<IssueList />} />
+                  <Route path="/issue/kanban" element={<IssueKanban />} />
                   <Route
                     path="/issue/:issueId/update"
                     element={<IssueUpdate />}
