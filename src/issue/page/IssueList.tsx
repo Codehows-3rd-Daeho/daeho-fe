@@ -111,7 +111,7 @@ export default function IssueList() {
       align: "center",
     },
     {
-      field: "host",
+      field: "hostName",
       headerName: "주관자",
       flex: 1,
       minWidth: 100,
