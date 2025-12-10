@@ -1,3 +1,5 @@
+import type { FileDto } from "../../issue/type/type";
+
 // 미팅 리스트 조회 타입
 export type MeetingListItem = {
   id: number;
@@ -34,7 +36,32 @@ export interface MeetingFormValues {
 export interface MeetingMemberDto {
   memberId: number;
   memberName: string;
+  departmentName?: string;
   isHost: boolean;
   isPermitted: boolean;
   isRead: boolean;
+}
+
+export interface MeetingDtlDto {
+  // 왼쪽
+  title: string;
+  content: string;
+  fileList: FileDto[];
+
+  // 오른쪽
+  status: string;
+  host: string; // 이름, 직급 포함
+  issueId: number; // 관련 이슈
+  issueTitle: string;
+  startDate: string;
+  endDate: string;
+  categoryName: string;
+  departmentName: string[];
+  meetingMinutes: FileDto; // 회의록
+  createdAt: string;
+  updatedAt: string;
+  isDel: boolean;
+
+  isEditPermitted: boolean; // 수정/삭제 권한 여부
+  participantList: MeetingMemberDto[];
 }

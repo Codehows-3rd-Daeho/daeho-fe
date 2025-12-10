@@ -67,7 +67,7 @@ export default function Login() {
   };
 
   return (
-    <Paper sx={{ p: 4, width: 350, textAlign: "center" }}>
+    <Paper sx={{ p: 4, width: 380, textAlign: "center" }}>
       {/* Company Logo */}
       <Box sx={{ mb: 5 }}>
         <img

@@ -28,6 +28,7 @@ interface Participant extends PartMemberList {
 }
 interface PartMemberProps {
   onChangeMembers: (members: IssueMemberDto[]) => void;
+  initialMembers?: IssueMemberDto[];
 }
 
 //부서랑 직급을 백에서 받아와야됨
@@ -37,7 +38,10 @@ type ParticipantList = {
   [key: string]: Participant[];
 };
 
-export default function PartMember({ onChangeMembers }: PartMemberProps) {
+export default function PartMember({
+  onChangeMembers,
+  initialMembers,
+}: PartMemberProps) {
   const [open, setOpen] = useState(false);
   //모달 열기
   const handleOpen = () => setOpen(true);
@@ -70,14 +74,28 @@ export default function PartMember({ onChangeMembers }: PartMemberProps) {
         // 회원 전체 불러오기
         const memberList = await getPartMemberList();
 
+        // 기존 참여자
+        const initialMap = new Map(initialMembers?.map((m) => [m.memberId, m]));
+
         // 받아온 회원 전체를 기본값 추가한 Participant 형태로 변환
-        const mapped: Participant[] = memberList.map((m) => ({
-          ...m,
-          department: m.department, //department(name)을 department 매핑
-          position: m.jobPositionName, //JobPositionName을 position으로 매핑
-          selected: m.id === Number(memberId), // 작성자는 자동 선택
-          isPermitted: m.id === Number(memberId), // 작성자는 권한도 자동 체크
-        }));
+        const mapped: Participant[] = memberList.map((m) => {
+          const memberIdNum = Number(m.id);
+          const isHost = memberIdNum === Number(memberId);
+          const existingMember = initialMap.get(memberIdNum); // 기존 참여자에 있는지 확인
+          return {
+            ...m,
+            department: m.department,
+            position: m.jobPositionName,
+
+            selected: isHost || !!existingMember, // 기존 참여자거나 호스트인 경우 selected를 true로 설정
+
+            isPermitted: isHost
+              ? true
+              : existingMember
+              ? existingMember.isPermitted // 기존 참여자는 저장된 권한 사용
+              : false, // 그 외는 false
+          };
+        });
 
         // 4) 카테고리별 분류
         const categorized: ParticipantList = {
@@ -101,7 +119,7 @@ export default function PartMember({ onChangeMembers }: PartMemberProps) {
     };
 
     loadData();
-  }, []);
+  }, [memberId, initialMembers]);
 
   // ===============================================================================================
   //                       분류탭
