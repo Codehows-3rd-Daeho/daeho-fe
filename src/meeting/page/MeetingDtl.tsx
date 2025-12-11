@@ -366,7 +366,7 @@ export default function MeetingDtl() {
                 sx={{
                   color: "#1976d2",
                   cursor: "pointer",
-                  maxWidth: "280px",
+                  maxWidth: "290px",
                   overflow: "hidden",
                   whiteSpace: "nowrap",
                   textOverflow: "ellipsis", // 뒤에 '...' 자동 추가

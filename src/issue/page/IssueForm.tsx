@@ -20,9 +20,9 @@ interface IssueFormProps {
   categories: MasterDataType[];
   departments: MasterDataType[];
   range: { startDate: Date; endDate: Date; key: string }[];
-  isSaving?: boolean;
-  maxFileSize?: number | null;
-  allowedExtensions?: string[] | null;
+  isSaving: boolean;
+  maxFileSize: number | null;
+  allowedExtensions: string[] | null;
 
   //핸들러로 관리됐던 애들
   //   <K>: 제네릭 타입 변수
