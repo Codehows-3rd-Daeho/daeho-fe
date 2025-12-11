@@ -5,9 +5,9 @@ export type IssueListItem = {
   status: string; // 상태
   startDate: string;
   endDate: string;
-  category: string; // 주제
-  department: string[]; // 부서
-  host: string; // 주관자
+  categoryName: string; // 주제
+  departmentName: string[]; // 부서
+  hostName: string; // 주관자
   isDel?: boolean; // 삭제상태
 };
 
