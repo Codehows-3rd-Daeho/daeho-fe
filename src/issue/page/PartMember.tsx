@@ -199,20 +199,6 @@ export default function PartMember({
     });
   };
 
-  //특정 참여자의 특정 참여자의 isPermitted 상태 토글.
-  const handleTogglePermission = (id: number) => {
-    setParticipants((prev) => {
-      const updated = { ...prev };
-      Object.keys(updated).forEach((key) => {
-        updated[key] = updated[key].map((p) =>
-          p.id === id ? { ...p, isPermitted: !p.isPermitted } : p
-        );
-      });
-      handleSave(updated);
-      return updated;
-    });
-  };
-
   // 선택된 사람 수 계산
   //ID 기준으로 중복 제거 후 갯수 세기
   const selectedCount = [
@@ -246,7 +232,24 @@ export default function PartMember({
         updated[key] = updated[key].map((p) => ({
           ...p,
           isPermitted: checked,
+          selected: checked || p.selected, // 권한 체크 시 참여자도 선택, 이미 선택된 참여자는 그대로 유지
         }));
+      });
+      handleSave(updated);
+      return updated;
+    });
+  };
+
+  //특정 참여자의 특정 참여자의 isPermitted 상태 토글.
+  const handleTogglePermission = (id: number) => {
+    setParticipants((prev) => {
+      const updated = { ...prev };
+      Object.keys(updated).forEach((key) => {
+        updated[key] = updated[key].map((p) =>
+          p.id === id
+            ? { ...p, isPermitted: !p.isPermitted, selected: true }
+            : p
+        );
       });
       handleSave(updated);
       return updated;
