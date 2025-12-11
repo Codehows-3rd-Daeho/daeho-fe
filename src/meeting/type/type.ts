@@ -35,8 +35,9 @@ export interface MeetingFormValues {
 
 //회의 멤버 등록
 export interface MeetingMemberDto {
-  memberId: number;
-  memberName: string;
+  id: number;
+  name: string;
+  jobPositionName?: string;
   departmentName?: string;
   isHost: boolean;
   isPermitted: boolean;

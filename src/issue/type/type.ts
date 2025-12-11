@@ -41,8 +41,9 @@ export interface PartMemberList {
 
 //이슈 참여자
 export interface IssueMemberDto {
-  memberId: number;
-  memberName: string;
+  id: number;
+  name: string;
+  jobPositionName?: string;
   departmentName?: string;
   isHost: boolean;
   isPermitted: boolean;

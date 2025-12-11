@@ -347,8 +347,10 @@ export default function MeetingCreate() {
       // 3️⃣ PartMember UI 업데이트 (선택된 멤버 표시 등)
       setMeetingMembers(issue.members);
       console.log("업데이트 후 meetingMembers:", issue.members);
+      alert("이슈의 카테고리, 부서, 참여자 정보를 불러왔습니다.");
     } catch (error) {
       console.error("이슈 상세 조회 실패:", error);
+      alert("이슈 정보를 불러오지 못했습니다.");
     }
   };
 

@@ -61,5 +61,3 @@ export const getPartMemberList = async (): Promise<PartMemberList[]> => {
   console.log("getPartMemberList response:", response.data);
   return response.data;
 };
-
-//주관자 정보 삭제

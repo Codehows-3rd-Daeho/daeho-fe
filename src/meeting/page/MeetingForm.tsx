@@ -65,7 +65,9 @@ export default function MeetingForm({
   onSelectDateTime,
   onSubmit,
 }: MeetingFormProps) {
-  //시간 관리
+  // ================================================================================
+  //                                     시간
+  // ================================================================================
 
   const selected = dayjs(formData.startDate);
 
@@ -343,13 +345,6 @@ export default function MeetingForm({
                   value={formData.issue ?? ""}
                   displayEmpty
                   onChange={(e) => {
-                    console.log(
-                      "Select onChange fired, value:",
-                      e.target.value
-                    );
-                    console.log("Current formData:", formData);
-                    console.log("Available issues:", issues);
-
                     onIssueSelect(e.target.value); // 상위 컴포넌트에 숫자로 전달
                   }}
                 >
