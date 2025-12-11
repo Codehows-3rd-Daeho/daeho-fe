@@ -80,7 +80,7 @@ export default function KanbanCard({
 
         {/* 오른쪽 상단: Category (주제) */}
         <span className="text-xs px-2 py-1 rounded-full bg-purple-200 text-purple-800 font-medium">
-          {issue.category}
+          {issue.categoryName}
         </span>
       </div>
 
@@ -112,7 +112,9 @@ export default function KanbanCard({
           </span>
 
           {/* 오른쪽 하단: 주관자 이름 */}
-          <span className="font-medium text-gray-600">주관자 {issue.host}</span>
+          <span className="font-medium text-gray-600">
+            주관자 {issue.hostName}
+          </span>
         </div>
       </div>
     </div>
