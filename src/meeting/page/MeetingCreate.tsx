@@ -264,46 +264,6 @@ export default function MeetingCreate() {
   //                        시작일, 마감일
   // ===============================================================================================
 
-  // //날짜선택(시간)
-  // const handleSelectDate = (value: Dayjs | null) => {
-  //   if (!value) return;
-
-  //   setFormData((prev) => {
-  //     // 현재 formData에 저장되어 있는 기존 startDate를 Dayjs 객체로 변환(현재 시간)
-  //     const prevDate = dayjs(prev.startDate);
-  //     //기존 startDate가 유효한 날짜인지 검사
-  //     const isPrevValid = prevDate.isValid();
-
-  //     //사용자가 달력에서 새로 선택한 날짜에 시간, 분 0으로 초기값 설정
-  //     const combined = value
-  //       .hour(isPrevValid ? prevDate.hour() : 0)
-  //       .minute(isPrevValid ? prevDate.minute() : 0);
-
-  //     return {
-  //       ...prev,
-  //       startDate: combined.format("YYYY-MM-DD HH:mm"),
-  //     };
-  //   });
-  // };
-
-  // //시간 선택
-  // const handleSelectTime = (value: Dayjs | null) => {
-  //   if (!value) return;
-
-  //   setFormData((prev) => {
-  //     const prevDate = dayjs(prev.startDate);
-
-  //     const combined = prevDate
-  //       .hour(dayjs(value).hour())
-  //       .minute(dayjs(value).minute());
-
-  //     return {
-  //       ...prev,
-  //       startDate: combined.format("YYYY-MM-DD HH:mm"),
-  //     };
-  //   });
-  // };
-
   const handleSelectDateTime = (value: Dayjs | null) => {
     if (!value) return;
 
