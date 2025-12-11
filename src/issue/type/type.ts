@@ -41,20 +41,20 @@ export interface PartMemberList {
 
 //이슈 참여자
 export interface IssueMemberDto {
-  memberId: number;
-  memberName: string;
+  id: number;
+  name: string;
+  jobPositionName?: string;
   departmentName?: string;
   isHost: boolean;
   isPermitted: boolean;
   isRead: boolean;
 }
-
 export interface IssueIdTitle {
   id?: string;
   title: string;
 }
 
-export interface IssueDtlDto {
+export interface IssueDto {
   // 왼쪽
   title: string;
   content: string;
@@ -62,7 +62,8 @@ export interface IssueDtlDto {
 
   // 오른쪽
   status: string;
-  host: string; // 이름, 직급 포함
+  hostName: string;
+  hostJPName: string; // 주관자 직급
   startDate: string;
   endDate: string;
   categoryName: string;
@@ -70,7 +71,6 @@ export interface IssueDtlDto {
   createdAt: string;
   updatedAt: string;
   isDel: boolean;
-
   isEditPermitted: boolean; // 수정/삭제 권한 여부
   participantList: IssueMemberDto[]; // 참여자 리스트
 }

@@ -34,7 +34,7 @@ export default function ParticipantListModal({
   const filteredMembers = useMemo(() => {
     const lower = searchValue.toLowerCase();
     const filtered = members.filter((m) => {
-      const name = m.memberName.toLowerCase();
+      const name = m.name.toLowerCase();
       const dept = (m.departmentName ?? "").toLowerCase();
 
       return name.includes(lower) || dept.includes(lower);
@@ -104,7 +104,7 @@ export default function ParticipantListModal({
           {filteredMembers.length > 0 ? (
             filteredMembers.map((member) => (
               <Box
-                key={member.memberId}
+                key={member.id}
                 sx={{
                   display: "flex",
                   justifyContent: "space-between",
@@ -117,7 +117,7 @@ export default function ParticipantListModal({
               >
                 <Box>
                   <Typography sx={{ fontWeight: 600, mb: 0.5 }}>
-                    {member.memberName}
+                    {member.name} {member.jobPositionName}
                     {member.isHost && (
                       <span
                         className="ml-2 px-2 py-0.5 text-xs font-bold rounded-sm"

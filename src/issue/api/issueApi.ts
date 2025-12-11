@@ -1,5 +1,5 @@
 import type {
-  IssueDtlDto,
+  IssueDto,
   IssueIdTitle,
   IssueListItem,
   IssueListResponse,
@@ -53,7 +53,7 @@ export const getKanbanIssues = async (): Promise<temp> => {
 };
 
 // 상세 조회
-export const getIssueDtl = async (issueId: string): Promise<IssueDtlDto> => {
+export const getIssueDtl = async (issueId: string): Promise<IssueDto> => {
   const response = await httpClient.get(`/issue/${issueId}`);
   console.log(response);
   return response.data;

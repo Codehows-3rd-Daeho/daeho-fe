@@ -74,10 +74,9 @@ export default function IssueUpdate() {
         setFormData({
           title: issue.title,
           content: issue.content,
-          // ... (나머지 formData 필드)
           file: [],
           status: issue.status,
-          host: issue.host,
+          host: `${issue.hostName} ${issue.hostJPName}`,
           startDate: issue.startDate,
           endDate: issue.endDate,
           category: categoryId,
@@ -106,7 +105,6 @@ export default function IssueUpdate() {
         }
         console.error("이슈 데이터 로딩 중 오류 발생:", error);
         alert("이슈 데이터 로딩 중 오류가 발생했습니다.");
-        // 오류 발생 시 목록으로 이동
         navigate("/issue/list");
       } finally {
         setIsLoading(false);
@@ -156,16 +154,16 @@ export default function IssueUpdate() {
       isDel: false,
     };
 
-    // issueDto를 JSON 문자열로 변환하여 "data" 파트에 추가
+    // issueDto data에 추가
     formDataObj.append(
       "data",
       new Blob([JSON.stringify(issueDto)], { type: "application/json" })
     );
 
-    // 신규 파일 배열을 순회하며 "file" 파트에 추가
+    // 신규 파일 file에 추가
     formData.file?.forEach((file) => formDataObj.append("file", file));
 
-    // 삭제할 파일 ID 목록을 "removeFileIds" 파트에 추가
+    // 삭제할 파일 ID 목록 removeFileIds에 추가
     if (removedFileIds.length > 0) {
       formDataObj.append(
         "removeFileIds",
