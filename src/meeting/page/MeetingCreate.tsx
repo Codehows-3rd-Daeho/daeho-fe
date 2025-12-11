@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
-import dayjs, { Dayjs } from "dayjs";
 import { useAuthStore } from "../../store/useAuthStore";
 import { useNavigate } from "react-router-dom";
 import MeetingForm from "./MeetingForm";
@@ -23,6 +22,7 @@ import {
 import axios from "axios";
 import { getIssueInMeeting, getSelectedINM } from "../../issue/api/issueApi";
 import type { IssueIdTitle } from "../../issue/type/type";
+import dayjs, { Dayjs } from "dayjs";
 
 export default function MeetingCreate() {
   const [formData, setFormData] = useState<MeetingFormValues>({
@@ -264,44 +264,53 @@ export default function MeetingCreate() {
   //                        시작일, 마감일
   // ===============================================================================================
 
-  //날짜선택(시간)
-  const handleSelectDate = (value: Dayjs | null) => {
+  // //날짜선택(시간)
+  // const handleSelectDate = (value: Dayjs | null) => {
+  //   if (!value) return;
+
+  //   setFormData((prev) => {
+  //     // 현재 formData에 저장되어 있는 기존 startDate를 Dayjs 객체로 변환(현재 시간)
+  //     const prevDate = dayjs(prev.startDate);
+  //     //기존 startDate가 유효한 날짜인지 검사
+  //     const isPrevValid = prevDate.isValid();
+
+  //     //사용자가 달력에서 새로 선택한 날짜에 시간, 분 0으로 초기값 설정
+  //     const combined = value
+  //       .hour(isPrevValid ? prevDate.hour() : 0)
+  //       .minute(isPrevValid ? prevDate.minute() : 0);
+
+  //     return {
+  //       ...prev,
+  //       startDate: combined.format("YYYY-MM-DD HH:mm"),
+  //     };
+  //   });
+  // };
+
+  // //시간 선택
+  // const handleSelectTime = (value: Dayjs | null) => {
+  //   if (!value) return;
+
+  //   setFormData((prev) => {
+  //     const prevDate = dayjs(prev.startDate);
+
+  //     const combined = prevDate
+  //       .hour(dayjs(value).hour())
+  //       .minute(dayjs(value).minute());
+
+  //     return {
+  //       ...prev,
+  //       startDate: combined.format("YYYY-MM-DD HH:mm"),
+  //     };
+  //   });
+  // };
+
+  const handleSelectDateTime = (value: Dayjs | null) => {
     if (!value) return;
 
-    setFormData((prev) => {
-      // 현재 formData에 저장되어 있는 기존 startDate를 Dayjs 객체로 변환(현재 시간)
-      const prevDate = dayjs(prev.startDate);
-      //기존 startDate가 유효한 날짜인지 검사
-      const isPrevValid = prevDate.isValid();
-
-      //사용자가 달력에서 새로 선택한 날짜에 시간, 분 0으로 초기값 설정
-      const combined = value
-        .hour(isPrevValid ? prevDate.hour() : 0)
-        .minute(isPrevValid ? prevDate.minute() : 0);
-
-      return {
-        ...prev,
-        startDate: combined.format("YYYY-MM-DD HH:mm"),
-      };
-    });
-  };
-
-  //시간 선택
-  const handleSelectTime = (value: Dayjs | null) => {
-    if (!value) return;
-
-    setFormData((prev) => {
-      const prevDate = dayjs(prev.startDate);
-
-      const combined = prevDate
-        .hour(dayjs(value).hour())
-        .minute(dayjs(value).minute());
-
-      return {
-        ...prev,
-        startDate: combined.format("YYYY-MM-DD HH:mm"),
-      };
-    });
+    setFormData((prev) => ({
+      ...prev,
+      startDate: value.format("YYYY-MM-DD HH:mm"),
+    }));
   };
 
   // ===============================================================================================
@@ -338,8 +347,10 @@ export default function MeetingCreate() {
       // 3️⃣ PartMember UI 업데이트 (선택된 멤버 표시 등)
       setMeetingMembers(issue.members);
       console.log("업데이트 후 meetingMembers:", issue.members);
+      alert("이슈의 카테고리, 부서, 참여자 정보를 불러왔습니다.");
     } catch (error) {
       console.error("이슈 상세 조회 실패:", error);
+      alert("이슈 정보를 불러오지 못했습니다.");
     }
   };
 
@@ -365,10 +376,9 @@ export default function MeetingCreate() {
           }))
         }
         onOpenFileInput={openFileInput}
+        onSelectDateTime={handleSelectDateTime}
         onDepartmentChange={handleDepartmentChange}
         onChangeMembers={setMeetingMembers}
-        onSelectTime={handleSelectTime}
-        onSelectDate={handleSelectDate}
         onSubmit={handleSubmit}
       />
     </>

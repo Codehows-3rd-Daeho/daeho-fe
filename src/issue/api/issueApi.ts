@@ -29,7 +29,7 @@ export const issueCreate = async (formData: FormData) => {
 
 //이슈 리스트
 export const getIssueInMeeting = async (): Promise<IssueIdTitle[]> => {
-  const response = await httpClient.get(`/issue/list/v2`);
+  const response = await httpClient.get(`/issue/related`);
   return response.data;
 };
 
@@ -37,7 +37,7 @@ export const getIssueInMeeting = async (): Promise<IssueIdTitle[]> => {
 export const getSelectedINM = async (
   idNumber: number
 ): Promise<IssueInMeeting> => {
-  const response = await httpClient.get(`/issue/list/${idNumber}`);
+  const response = await httpClient.get(`/issue/related/${idNumber}`);
   return response.data;
 };
 

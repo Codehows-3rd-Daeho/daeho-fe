@@ -77,7 +77,7 @@ export default function PartMember({
         const memberList = await getPartMemberList();
 
         // 기존 참여자
-        const initialMap = new Map(initialMembers?.map((m) => [m.memberId, m]));
+        const initialMap = new Map(initialMembers?.map((m) => [m.id, m]));
 
         // 받아온 회원 전체를 기본값 추가한 Participant 형태로 변환
         const mapped: Participant[] = memberList.map((m) => {
@@ -103,7 +103,7 @@ export default function PartMember({
         // 5) initialMembers 기반으로 selected / isPermitted 설정
         if (initialMembers && initialMembers.length > 0) {
           const initialMemberMap = new Map(
-            initialMembers.map((m) => [m.memberId, m])
+            initialMembers.map((m) => [m.id, m])
           );
 
           mapped.forEach((p) => {
@@ -167,6 +167,7 @@ export default function PartMember({
           (p) => (p.id === id ? { ...p, selected: !p.selected } : p) //클릭한 참여자(id)라면: selected 값을 현재 상태의 반대로 토글 (true → false, false → true)
         );
       });
+      handleSave(updated);
       return updated;
     });
   };
@@ -193,7 +194,7 @@ export default function PartMember({
           selected: checked,
         }));
       });
-
+      handleSave(updated);
       return updated;
     });
   };
@@ -207,6 +208,7 @@ export default function PartMember({
           p.id === id ? { ...p, isPermitted: !p.isPermitted } : p
         );
       });
+      handleSave(updated);
       return updated;
     });
   };
@@ -246,20 +248,20 @@ export default function PartMember({
           isPermitted: checked,
         }));
       });
-
+      handleSave(updated);
       return updated;
     });
   };
 
   // ===============================================================================================
-  //                      저장
+  //                      저장 로직(선택 로직에서 각각 추가)
   // ===============================================================================================
 
-  const handleSave = () => {
+  const handleSave = (updatedParticipants: ParticipantList) => {
     //최종 부모 컴포넌트로 전달할 배열 생성(중복 제거)
     const selectedParticipants = [
       ...new Map(
-        Object.values(participants)
+        Object.values(updatedParticipants)
           .flat() //평탄화: 중첩된 객체를 1차원으로 풀어내거나 단순하게 만드는 것
           .filter((p) => p.selected || p.id === Number(memberId)) // 선택되었거나 host이면 포함
           .map((p) => [p.id, p]) // key: id / value: participant
@@ -268,15 +270,16 @@ export default function PartMember({
 
     //selectedParticipants를 IssueMemberDto 타입으로 변환
     const result: IssueMemberDto[] = selectedParticipants.map((p) => ({
-      memberId: p.id,
-      memberName: p.name,
+      id: p.id,
+      name: p.name,
+      jobPositionName: "",
+      departmentName: "",
       isHost: p.id === Number(memberId), // 로그인된 멤버면 true
       isPermitted: p.isPermitted,
       isRead: false,
     }));
 
     onChangeMembers(result); // 부모에게 전달
-    handleClose();
   };
 
   return (
@@ -382,48 +385,58 @@ export default function PartMember({
 
             {/* 참여자 목록 */}
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {currentParticipants.map((participant) => (
-                <Box
-                  key={participant.id}
-                  sx={{ display: "flex", gap: 4, alignItems: "center" }}
-                >
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={participant.selected}
-                        onChange={() => handleSelectParticipant(participant.id)}
-                        disabled={participant.id === Number(memberId)} // 주관자 선택 해제 불가
-                        size="small"
-                      />
-                    }
-                    label={`${participant.name} ${participant.jobPositionName}`}
-                    sx={{ minWidth: 160 }}
-                  />
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={participant.isPermitted}
-                        onChange={() => handleTogglePermission(participant.id)}
-                        disabled={participant.id === Number(memberId)} // 주관자 선택 해제 불가
-                        size="small"
-                      />
-                    }
-                    label="수정/삭제 관한"
-                    sx={{ color: "text.secondary" }}
-                  />
-                </Box>
-              ))}
+              {currentParticipants
+                .slice() // 원본 보호용
+                .sort((a, b) =>
+                  a.id === Number(memberId)
+                    ? -1
+                    : b.id === Number(memberId)
+                    ? 1
+                    : 0
+                )
+                .map((participant) => (
+                  <Box
+                    key={participant.id}
+                    sx={{ display: "flex", gap: 4, alignItems: "center" }}
+                  >
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={participant.selected}
+                          onChange={() =>
+                            handleSelectParticipant(participant.id)
+                          }
+                          disabled={participant.id === Number(memberId)} // 주관자 선택 해제 불가
+                          size="small"
+                        />
+                      }
+                      label={`${participant.name} ${participant.jobPositionName}`}
+                      sx={{ minWidth: 160 }}
+                    />
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={participant.isPermitted}
+                          onChange={() =>
+                            handleTogglePermission(participant.id)
+                          }
+                          disabled={participant.id === Number(memberId)} // 주관자 선택 해제 불가
+                          size="small"
+                        />
+                      }
+                      label="수정/삭제 관한"
+                      sx={{ color: "text.secondary" }}
+                    />
+                  </Box>
+                ))}
             </Box>
           </DialogContent>
         </Box>
 
         <DialogActions sx={{ px: 3, py: 2 }}>
-          <Button onClick={handleSave} variant="contained">
+          {/* <Button onClick={handleSave} variant="contained">
             저장
-          </Button>
-          <Button onClick={handleClose} variant="outlined" color="inherit">
-            취소
-          </Button>
+          </Button> */}
         </DialogActions>
       </Dialog>
     </>
