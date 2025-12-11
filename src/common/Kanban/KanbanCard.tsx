@@ -27,8 +27,8 @@ export default function KanbanCard({
   const dDayText = dDay >= 0 ? `D-${dDay}` : `D+${Math.abs(dDay)}`;
 
   // 부서(Department) 표시 처리 (최대 2개 표시, 3개 이상은 ...)
-  const visibleDepartments = issue.department.slice(0, 2);
-  const hasMoreDepartments = issue.department.length > 2;
+  const visibleDepartments = issue.departmentName.slice(0, 2);
+  const hasMoreDepartments = issue.departmentName.length > 2;
 
   // 날짜 형식 변경 (25.10.01) - 필요한 경우 포맷팅 로직 추가
   const formatShortDate = (dateString: string) => {
