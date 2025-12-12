@@ -22,7 +22,7 @@ import ParticipantListModal from "./component/ParticipantListModal";
 
 import { useNavigate, useParams } from "react-router-dom";
 import { deleteIssue, getIssueDtl, updateReadStatus } from "../api/issueApi";
-import type { IssueDtlDto } from "../type/type";
+import type { IssueDto } from "../type/type";
 import { BASE_URL } from "../../config/httpClient";
 import { useAuthStore } from "../../store/useAuthStore";
 import axios from "axios";
@@ -30,7 +30,7 @@ import { getFileInfo, getStatusLabel } from "../../common/commonFunction";
 
 export default function IssueDtl() {
   const { issueId } = useParams();
-  const [issue, setIssue] = useState<IssueDtlDto | null>(null);
+  const [issue, setIssue] = useState<IssueDto | null>(null);
   const [tabValue, setTabValue] = useState(0);
   const [showParticipantModal, setShowParticipantModal] = useState(false);
   const navigate = useNavigate();
@@ -64,7 +64,7 @@ export default function IssueDtl() {
 
     // 1. 현재 사용자가 참여자 목록에 있는지 확인
     const isCurrentParticipant = issue.participantList.find(
-      (p) => p.memberId === currentMemberId
+      (p) => p.id === currentMemberId
     );
 
     // 2. 참여자이며, 아직 '미확인' 상태인 경우
@@ -76,7 +76,7 @@ export default function IssueDtl() {
 
             // participantList에서 현재 사용자 항목을 찾아서 isRead를 true로 변경
             const updatedParticipants = prevIssue.participantList.map((p) =>
-              p.memberId === currentMemberId
+              p.id === currentMemberId
                 ? { ...p, isRead: true } // isRead만 true로 변경
                 : p
             );
@@ -330,7 +330,10 @@ export default function IssueDtl() {
           />
 
           {/* 주관자 */}
-          <InfoRow label="주관자" value={issue.host} />
+          <InfoRow
+            label="주관자"
+            value={`${issue.hostName || ""} ${issue.hostJPName || ""}`}
+          />
 
           {/* 시작일 + 마감일*/}
           <Box

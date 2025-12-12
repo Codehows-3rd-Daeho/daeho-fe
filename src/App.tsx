@@ -57,7 +57,7 @@ export default function App() {
           path="/login"
           element={
             isAuthenticated ? (
-              <Navigate to="/meeting/create" replace />
+              <Navigate to="/issue/list" replace />
             ) : (
               <div className="flex justify-center items-center min-h-screen">
                 <Login />

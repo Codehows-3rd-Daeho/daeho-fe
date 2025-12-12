@@ -39,8 +39,11 @@ export default function IssueUpdate() {
   const [issueMembers, setIssueMembers] = useState<IssueMemberDto[]>([]);
   const [issueFiles, setIssueFiles] = useState<FileDto[]>([]); // 기존에 등록된 파일 목록
   const [removedFileIds, setRemovedFileIds] = useState<number[]>([]); // 삭제할 기존 파일 id
-
+  const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [maxFileSize, setMaxFileSize] = useState<number>(0);
+  const [allowedExtensions, setAllowedExtensions] = useState<string[]>([]);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -74,10 +77,9 @@ export default function IssueUpdate() {
         setFormData({
           title: issue.title,
           content: issue.content,
-          // ... (나머지 formData 필드)
           file: [],
           status: issue.status,
-          host: issue.host,
+          host: `${issue.hostName ?? ""} ${issue.hostJPName ?? ""}`.trim(),
           startDate: issue.startDate,
           endDate: issue.endDate,
           category: categoryId,
@@ -106,13 +108,28 @@ export default function IssueUpdate() {
         }
         console.error("이슈 데이터 로딩 중 오류 발생:", error);
         alert("이슈 데이터 로딩 중 오류가 발생했습니다.");
-        // 오류 발생 시 목록으로 이동
         navigate("/issue/list");
       } finally {
         setIsLoading(false);
       }
     })();
   }, [issueId, navigate]);
+
+  useEffect(() => {
+    async function fetchFileConfig() {
+      try {
+        const sizeConfig = await getFileSize();
+        const extensionConfig = await getExtensions();
+
+        setMaxFileSize(Number(sizeConfig.name) / 1024 / 1024); // MB 단위 변환
+        setAllowedExtensions(extensionConfig.map((e) => e.name.toLowerCase()));
+      } catch (e) {
+        console.error("파일 설정 로딩 오류:", e);
+      }
+    }
+
+    fetchFileConfig();
+  }, []);
 
   const handleSubmit = async () => {
     if (!formData.title.trim()) {
@@ -156,16 +173,16 @@ export default function IssueUpdate() {
       isDel: false,
     };
 
-    // issueDto를 JSON 문자열로 변환하여 "data" 파트에 추가
+    // issueDto data에 추가
     formDataObj.append(
       "data",
       new Blob([JSON.stringify(issueDto)], { type: "application/json" })
     );
 
-    // 신규 파일 배열을 순회하며 "file" 파트에 추가
+    // 신규 파일 file에 추가
     formData.file?.forEach((file) => formDataObj.append("file", file));
 
-    // 삭제할 파일 ID 목록을 "removeFileIds" 파트에 추가
+    // 삭제할 파일 ID 목록 removeFileIds에 추가
     if (removedFileIds.length > 0) {
       formDataObj.append(
         "removeFileIds",
@@ -174,6 +191,7 @@ export default function IssueUpdate() {
     }
 
     try {
+      setIsSaving(true);
       await updateIssue(issueId as string, formDataObj);
       console.log(formData);
       alert("이슈가 수정되었습니다!");
@@ -184,6 +202,8 @@ export default function IssueUpdate() {
       }
       console.error("이슈 수정 실패:", error);
       alert("이슈 수정 중 오류가 발생했습니다.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -194,13 +214,6 @@ export default function IssueUpdate() {
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const uploadedFiles = Array.from(e.target.files || []);
-
-    const sizeConfig = await getFileSize();
-    const extensionConfig = await getExtensions();
-
-    const maxFileSizeByte = Number(sizeConfig.name); // number만 추출
-    const maxFileSize = maxFileSizeByte / 1024 / 1024; //바이트 단위 → MB로 변환
-    const allowedExtensions = extensionConfig.map((e) => e.name.toLowerCase());
 
     //업로드 가능한 확장자, 용량의 파일을 담을 배열
     const validFiles: File[] = [];
@@ -320,6 +333,9 @@ export default function IssueUpdate() {
       issueFiles={issueFiles} // 기존 파일 목록 전달
       initialMembers={issueMembers} // 기존 참여자 목록 전달
       range={range}
+      isSaving={isSaving}
+      maxFileSize={maxFileSize}
+      allowedExtensions={allowedExtensions}
       onChangeFormData={(key, value) =>
         setFormData((prev) => ({ ...prev, [key]: value }))
       }

@@ -11,10 +11,11 @@ import UploadFileIcon from "@mui/icons-material/UploadFile";
 import DeleteIcon from "@mui/icons-material/Delete";
 import PartMember from "../../issue/page/PartMember";
 import type { MasterDataType } from "../../admin/setting/type/SettingType";
-import { StaticDatePicker, StaticTimePicker } from "@mui/x-date-pickers";
+import { StaticDateTimePicker } from "@mui/x-date-pickers";
 import dayjs, { Dayjs } from "dayjs";
 import type { MeetingFormValues, MeetingMemberDto } from "../type/type";
 import type { IssueIdTitle } from "../../issue/type/type";
+import { useState } from "react";
 
 interface MeetingFormProps {
   //useState로 관리 됐던 애들
@@ -41,13 +42,13 @@ interface MeetingFormProps {
   onOpenFileInput: () => void;
   onDepartmentChange: (selected: string[]) => void;
   onChangeMembers: (members: MeetingMemberDto[]) => void;
-  onSelectTime: (value: Dayjs | null) => void;
-  onSelectDate: (value: Dayjs | null) => void;
+  onSelectDateTime: (value: Dayjs | null) => void;
   onSubmit: () => void;
+  mode: "create" | "update";
 }
 
 export default function MeetingForm({
-  //부모에게 전달 받을 내용
+  //부모에게 전달할 내용
   formData,
   issues,
   categories,
@@ -62,10 +63,39 @@ export default function MeetingForm({
   onOpenFileInput,
   onDepartmentChange,
   onChangeMembers,
-  onSelectDate,
-  onSelectTime,
+  onSelectDateTime,
   onSubmit,
+  mode,
 }: MeetingFormProps) {
+  // ================================================================================
+  //                                     시간
+  // ================================================================================
+
+  const selected = dayjs(formData.startDate);
+
+  const [selectedDay, setSelectedDay] = useState(selected.format("YYYY-MM-DD"));
+  const [selectedTime, setSelectedTime] = useState(selected.format("HH:mm"));
+
+  //날짜/시간을 받아서 startDate를 갱신하는 공통 함수
+  const updateStartDate = (day: string, time: string) => {
+    // formData.startDate 최종 업데이트
+    const combined = dayjs(`${day} ${time}`).format("YYYY-MM-DDTHH:mm:ss");
+    onChangeFormData("startDate", combined);
+  };
+
+  const handleDateTimeChange = (value: Dayjs | null) => {
+    if (!value) return;
+
+    const day = value.format("YYYY-MM-DD");
+    const time = value.format("HH:mm");
+
+    setSelectedDay(day);
+    setSelectedTime(time);
+
+    // 부모에게 전달
+    onSelectDateTime(value);
+  };
+
   return (
     <Box>
       <Box
@@ -74,7 +104,6 @@ export default function MeetingForm({
           gap: 3,
           p: 3,
           bgcolor: "#f5f5f5",
-          minHeight: "100vh",
           minWidth: "1000px",
         }}
       >
@@ -232,7 +261,7 @@ export default function MeetingForm({
         >
           <Box
             sx={{
-              height: 1100,
+              height: 950,
               width: 380,
               display: "flex",
               flexDirection: "column",
@@ -317,13 +346,6 @@ export default function MeetingForm({
                   value={formData.issue ?? ""}
                   displayEmpty
                   onChange={(e) => {
-                    console.log(
-                      "Select onChange fired, value:",
-                      e.target.value
-                    );
-                    console.log("Current formData:", formData);
-                    console.log("Available issues:", issues);
-
                     onIssueSelect(e.target.value); // 상위 컴포넌트에 숫자로 전달
                   }}
                 >
@@ -338,6 +360,16 @@ export default function MeetingForm({
 
             {/* 시작일/마감일 + 달력 */}
             <Box sx={{ borderRadius: 2, p: 2 }}>
+              <Box sx={{ mt: 2 }}>
+                {/* 달력 (항상 표시) */}
+                <StaticDateTimePicker
+                  ampm={false}
+                  value={dayjs(`${selectedDay} ${selectedTime}`)}
+                  onChange={handleDateTimeChange}
+                  slots={{ toolbar: () => null }}
+                  slotProps={{ actionBar: { actions: [] } }}
+                />
+              </Box>
               <Box
                 sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
               >
@@ -350,55 +382,62 @@ export default function MeetingForm({
                   <TextField
                     fullWidth
                     size="small"
-                    placeholder="0000-00-00 00:00"
-                    value={formData.startDate}
-                    onChange={(e) =>
-                      onChangeFormData("startDate", e.target.value)
-                    }
-                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
+                    placeholder="0000-00-00"
+                    value={selectedDay}
+                    onChange={(e) => {
+                      const day = e.target.value;
+                      setSelectedDay(day);
+                      updateStartDate(day, selectedTime); //시간이랑 합쳐서 formData에 반영
+                    }}
                   />
                 </Box>
                 <Box>
                   <Typography
                     sx={{ fontWeight: 600, fontSize: "0.875rem", mb: 1.5 }}
                   >
-                    마감일
+                    시작시간
                   </Typography>
                   <TextField
                     fullWidth
                     size="small"
-                    placeholder="진행 완료 시 작성"
-                    value={formData.endDate ?? ""}
-                    onChange={(e) =>
-                      onChangeFormData("endDate", e.target.value)
-                    }
-                    sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
+                    placeholder="00:00"
+                    value={selectedTime}
+                    onChange={(e) => {
+                      const time = e.target.value;
+                      setSelectedTime(time);
+
+                      updateStartDate(selectedDay, time);
+                    }}
                   />
                 </Box>
               </Box>
+            </Box>
 
-              <Box sx={{ mt: 2 }}>
-                {/* 달력 (항상 표시) */}
-                <StaticDatePicker
-                  displayStaticWrapperAs="desktop"
-                  value={dayjs(formData.startDate)}
-                  onChange={(value) => onSelectDate(value)}
-                  slotProps={{
-                    actionBar: { actions: [] }, // 하단 버튼 제거
-                  }}
-                />
-
-                {/* 아날로그 시계 (항상 표시) */}
-                <StaticTimePicker
-                  ampm
-                  displayStaticWrapperAs="desktop"
-                  value={dayjs(formData.startDate)}
-                  onChange={(value) => onSelectTime(value)}
-                  slotProps={{
-                    actionBar: { actions: [] }, // 하단 버튼 제거
-                  }}
-                />
-              </Box>
+            {/* 마감일 */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 2,
+                borderRadius: 2,
+                px: 2,
+              }}
+            >
+              <Typography
+                sx={{ fontWeight: 600, fontSize: "0.875rem", width: "80px" }}
+              >
+                마감일
+              </Typography>
+              <TextField
+                disabled
+                fullWidth
+                size="small"
+                placeholder="진행 완료 시 작성"
+                value={formData.endDate ?? ""}
+                onChange={(e) => onChangeFormData("endDate", e.target.value)}
+                sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
+              />
             </Box>
 
             {/* 카테고리 */}
@@ -488,6 +527,7 @@ export default function MeetingForm({
               <PartMember
                 onChangeMembers={onChangeMembers}
                 initialMembers={formData.members}
+                mode={mode}
               />
             </Box>
           </Box>

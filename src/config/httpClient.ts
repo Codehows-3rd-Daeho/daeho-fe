@@ -58,7 +58,7 @@ httpClient.interceptors.response.use(
         alreadyAlerted = true;
         localStorage.removeItem("jwt");
         alert("인증오류가 발생했습니다. 로그인 페이지로 이동합니다.");
-        // window.location.href = "/login";
+        window.location.href = "/login";
       }
       return Promise.reject(error);
     }

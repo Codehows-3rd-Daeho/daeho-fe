@@ -35,9 +35,10 @@ export interface MeetingFormValues {
 
 //회의 멤버 등록
 export interface MeetingMemberDto {
-  memberId: number;
-  memberName: string;
+  id: number;
+  name: string;
   departmentName?: string;
+  jobPositionName?: string;
   isHost: boolean;
   isPermitted: boolean;
   isRead: boolean;
@@ -52,7 +53,7 @@ export interface IssueInMeeting {
   members: MeetingMemberDto[]; // 관련 멤버 (다중)
 }
 
-export interface MeetingDtlDto {
+export interface MeetingDto {
   // 왼쪽
   title: string;
   content: string;
@@ -60,7 +61,8 @@ export interface MeetingDtlDto {
 
   // 오른쪽
   status: string;
-  host: string; // 이름, 직급 포함
+  hostName: string;
+  hostJPName: string;
   issueId: number; // 관련 이슈
   issueTitle: string;
   startDate: string;
