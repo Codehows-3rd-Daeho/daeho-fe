@@ -1,6 +1,6 @@
 import React from "react";
 import { FileText } from "lucide-react";
-import type { CommentData } from "./type";
+import type { CommentData } from "./type/type";
 
 interface CommentItemProps {
   comment: CommentData;

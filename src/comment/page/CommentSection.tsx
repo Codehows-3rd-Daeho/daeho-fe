@@ -3,7 +3,8 @@
 import React, { useState } from "react";
 import CommentInputForm from "./CommentInputForm";
 import CommentItem from "./CommentItem";
-import type { CommentData, NewCommentPayload } from "./type";
+import type { CommentData, NewCommentPayload } from "./type/type";
+import { CreateComment } from "../api/CommentApi";
 
 // 초기 댓글 데이터 (CommentData 타입 적용)
 const initialComments: CommentData[] = [
@@ -29,27 +30,19 @@ const CommentSection: React.FC = () => {
   const currentAvatar: string = "/avatar-placeholder.jpg";
 
   // 댓글 추가 핸들러
-  const handleAddComment = (payload: NewCommentPayload) => {
-    const newCommentObject: CommentData = {
-      id: Date.now(),
-      author: currentAuthor,
-      content: payload.content,
-      files: payload.files,
-      timestamp: new Date()
-        .toLocaleString("ko-KR", {
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-        })
-        .replace(/\. /g, ".")
-        .replace(":", ":")
-        .replace(/\./g, ".")
-        .slice(0, -3),
-    };
 
-    setComments([newCommentObject, ...comments]);
+  const issueId = 123; // TODO: 실제 이슈 ID를 props로 받아오게 하면 됨
+
+  const handleAddComment = async (payload: NewCommentPayload) => {
+    try {
+      const res = await CreateComment(issueId, payload.content, payload.files);
+
+      // 백엔드에서 돌려준 값(res)을 댓글 목록에 추가
+      setComments((prev) => [res, ...prev]);
+    } catch (e) {
+      console.error(e);
+      alert("댓글 등록 실패");
+    }
   };
 
   return (

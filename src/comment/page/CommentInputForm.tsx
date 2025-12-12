@@ -1,6 +1,6 @@
 import React, { useState, type ChangeEvent, type MouseEvent } from "react";
 import { CloudUpload } from "lucide-react";
-import type { Attachment, NewCommentPayload } from "./type";
+import type { Attachment, NewCommentPayload } from "./type/type";
 
 interface CommentInputFormProps {
   onAddComment: (payload: NewCommentPayload) => void;
