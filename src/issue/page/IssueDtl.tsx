@@ -15,7 +15,6 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
 
-import TabComment from "./component/TabComment";
 import TabMeeting from "./component/TabMeeting";
 import TabLog from "./component/TabLog";
 import ParticipantListModal from "./component/ParticipantListModal";
@@ -301,7 +300,7 @@ export default function IssueDtl() {
           </Tabs>
 
           <Box p={2}>
-            {tabValue === 0 && <TabComment />}
+            {/* {tabValue === 0 && <TabComment />} */}
             {tabValue === 1 && <TabMeeting />}
             {tabValue === 2 && <TabLog />}
           </Box>
