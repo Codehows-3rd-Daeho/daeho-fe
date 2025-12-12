@@ -104,7 +104,6 @@ export default function MeetingForm({
           gap: 3,
           p: 3,
           bgcolor: "#f5f5f5",
-          minHeight: "100vh",
           minWidth: "1000px",
         }}
       >
@@ -262,7 +261,7 @@ export default function MeetingForm({
         >
           <Box
             sx={{
-              height: 1100,
+              height: 950,
               width: 380,
               display: "flex",
               flexDirection: "column",

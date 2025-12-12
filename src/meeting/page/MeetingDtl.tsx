@@ -355,7 +355,7 @@ export default function MeetingDtl() {
           {/* 주관자 */}
           <InfoRow
             label="주관자"
-            value={`${meeting.hostName} ${meeting.hostJPName || ""}`}
+            value={`${meeting.hostName || ""} ${meeting.hostJPName || ""}`}
           />
 
           {/* 관련 이슈 */}
