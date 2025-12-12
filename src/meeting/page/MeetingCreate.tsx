@@ -340,6 +340,7 @@ export default function MeetingCreate() {
         onDepartmentChange={handleDepartmentChange}
         onChangeMembers={setMeetingMembers}
         onSubmit={handleSubmit}
+        mode="create"
       />
     </>
   );

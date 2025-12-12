@@ -310,7 +310,7 @@ export default function IssueForm({
         >
           <Box
             sx={{
-              height: 1000,
+              height: 800,
               width: 380,
               display: "flex",
               flexDirection: "column",
@@ -520,6 +520,7 @@ export default function IssueForm({
               <PartMember
                 onChangeMembers={onChangeMembers}
                 initialMembers={formData.members}
+                mode={mode}
               />
             </Box>
           </Box>

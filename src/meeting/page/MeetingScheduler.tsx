@@ -88,7 +88,7 @@ export default function MeetingScheduler() {
   return (
     <Container style={{ marginTop: 40 }}>
       <Scheduler
-        locale="en"
+        locale="ko"
         events={events}
         legacyStyle={false}
         options={state.options}

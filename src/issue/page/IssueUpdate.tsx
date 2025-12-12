@@ -79,7 +79,7 @@ export default function IssueUpdate() {
           content: issue.content,
           file: [],
           status: issue.status,
-          host: `${issue.hostName} ${issue.hostJPName}`,
+          host: `${issue.hostName ?? ""} ${issue.hostJPName ?? ""}`.trim(),
           startDate: issue.startDate,
           endDate: issue.endDate,
           category: categoryId,

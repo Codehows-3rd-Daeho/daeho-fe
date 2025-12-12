@@ -6,7 +6,7 @@ export const getMeetingList = async (
   page: number,
   size: number = 10
 ): Promise<MeetingListResponse> => {
-  const response = await httpClient.get(`/meeting/list`, {
+  const response = await httpClient.get(`/meeting`, {
     params: { page, size },
   });
   return response.data; // { content, totalElements }

@@ -4,7 +4,6 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
   Box,
   Checkbox,
   FormControlLabel,
@@ -25,10 +24,12 @@ import { getPartMemberList } from "../../admin/member/api/MemberApi";
 interface Participant extends PartMemberList {
   selected: boolean;
   isPermitted: boolean;
+  isHost: boolean; // 수정시 참여자 명단에서 host 구별을 위함
 }
 interface PartMemberProps {
   onChangeMembers: (members: IssueMemberDto[]) => void;
   initialMembers?: IssueMemberDto[];
+  mode: "create" | "update";
 }
 
 //부서랑 직급을 백에서 받아와야됨
@@ -41,6 +42,7 @@ type ParticipantList = {
 export default function PartMember({
   onChangeMembers,
   initialMembers,
+  mode,
 }: PartMemberProps) {
   const [open, setOpen] = useState(false);
   //모달 열기
@@ -76,26 +78,45 @@ export default function PartMember({
         // 회원 전체 불러오기
         const memberList = await getPartMemberList();
 
-        // 기존 참여자
-        const initialMap = new Map(initialMembers?.map((m) => [m.id, m]));
-
+        // 기존 참여자 -> Participant 타입으로 변환
+        const initialMap = new Map(
+          initialMembers?.map((m) => [
+            m.id,
+            {
+              ...m,
+              selected: true, // 기존 참여자는 선택됨
+              isPermitted: m.isPermitted,
+              isHost: m.isHost,
+            },
+          ])
+        );
         // 받아온 회원 전체를 기본값 추가한 Participant 형태로 변환
         const mapped: Participant[] = memberList.map((m) => {
           const memberIdNum = Number(m.id);
-          const isHost = memberIdNum === Number(memberId);
+          const isHost = memberIdNum === Number(memberId); //로그인한 사람 체크
           const existingMember = initialMap.get(memberIdNum); // 기존 참여자에 있는지 확인
           return {
             ...m,
             department: m.department,
             position: m.jobPositionName,
 
-            selected: isHost || !!existingMember, // 기존 참여자거나 호스트인 경우 selected를 true로 설정
+            selected:
+              mode === "create"
+                ? isHost // 등록: 로그인한 사람만 기본 선택
+                : isHost || existingMember?.selected || false, // 수정: host + 기존 참여자 유지
 
             isPermitted: isHost
               ? true
               : existingMember
               ? existingMember.isPermitted // 기존 참여자는 저장된 권한 사용
               : false, // 그 외는 false
+            isHost:
+              mode === "create"
+                ? isHost
+                : existingMember
+                ? existingMember.isHost
+                : false,
+            // host 지정
           };
         });
 
@@ -191,7 +212,7 @@ export default function PartMember({
       Object.keys(updated).forEach((key) => {
         updated[key] = updated[key].map((p) => ({
           ...p,
-          selected: checked,
+          selected: p.isHost ? true : checked, //주관자는 고정
         }));
       });
       handleSave(updated);
@@ -390,13 +411,7 @@ export default function PartMember({
             <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
               {currentParticipants
                 .slice() // 원본 보호용
-                .sort((a, b) =>
-                  a.id === Number(memberId)
-                    ? -1
-                    : b.id === Number(memberId)
-                    ? 1
-                    : 0
-                )
+                .sort((a, b) => (a.isHost ? -1 : b.isHost ? 1 : 0))
                 .map((participant) => (
                   <Box
                     key={participant.id}
@@ -409,7 +424,7 @@ export default function PartMember({
                           onChange={() =>
                             handleSelectParticipant(participant.id)
                           }
-                          disabled={participant.id === Number(memberId)} // 주관자 선택 해제 불가
+                          disabled={participant.isHost} // host는 체크 해제 불가
                           size="small"
                         />
                       }
@@ -423,7 +438,7 @@ export default function PartMember({
                           onChange={() =>
                             handleTogglePermission(participant.id)
                           }
-                          disabled={participant.id === Number(memberId)} // 주관자 선택 해제 불가
+                          disabled={participant.isHost} // host는 체크 해제 불가
                           size="small"
                         />
                       }
@@ -435,12 +450,6 @@ export default function PartMember({
             </Box>
           </DialogContent>
         </Box>
-
-        <DialogActions sx={{ px: 3, py: 2 }}>
-          {/* <Button onClick={handleSave} variant="contained">
-            저장
-          </Button> */}
-        </DialogActions>
       </Dialog>
     </>
   );

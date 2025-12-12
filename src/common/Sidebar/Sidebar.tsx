@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import HomeIcon from "@mui/icons-material/Home";
 import LogoutIcon from "@mui/icons-material/Logout";
-import MenuOpenIcon from "@mui/icons-material/MenuOpen";
-import MenuIcon from "@mui/icons-material/Menu";
 import {
   Badge,
   Box,
@@ -10,7 +8,6 @@ import {
   Collapse,
   Divider,
   Drawer,
-  IconButton,
   List,
   ListItemButton,
   ListItemIcon,
@@ -22,10 +19,9 @@ import ExpandMore from "@mui/icons-material/ExpandMore";
 import type { SidebarProps } from "./type";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/useAuthStore";
-
 export default function Sidebar({
   items,
-  collapsed: collapsedProp = false,
+  collapsed = false,
   onSelect,
   width = 300,
 }: SidebarProps & { isAdmin?: boolean }) {
@@ -33,17 +29,11 @@ export default function Sidebar({
   const { member, logout } = useAuthStore();
   const role = member?.role;
 
-  // 내부에서 collapsed 상태 직접 관리
-  const [collapsed, setCollapsed] = useState(collapsedProp);
-
-  const toggleSidebar = () => setCollapsed((prev) => !prev);
-
-  // 로그아웃
+  //로그아웃
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
-
   // 초기 open 상태
   const [open, setOpen] = useState<{ [key: string]: boolean }>(() => {
     const path = window.location.pathname;
@@ -55,11 +45,9 @@ export default function Sidebar({
     });
     return initialOpen;
   });
-
   const handleToggle = (id: string) => {
     setOpen((prev) => ({ ...prev, [id]: !prev[id] }));
   };
-
   // 현재 선택된 메뉴
   const selectedId = (() => {
     const path = window.location.pathname;
@@ -72,10 +60,8 @@ export default function Sidebar({
     });
     return selected;
   })();
-
   const userMenu = items.filter((item) => item.id !== "admin");
   const adminMenu = items.find((item) => item.id === "admin");
-
   return (
     <Drawer
       variant="permanent"
@@ -85,44 +71,26 @@ export default function Sidebar({
         "& .MuiDrawer-paper": {
           width: collapsed ? 72 : width,
           boxSizing: "border-box",
-          overflowX: "hidden",
         },
       }}
     >
-      {/* 상단 로고 + 접기 버튼 */}
-      <Toolbar
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: collapsed ? "center" : "space-between",
-          px: 2,
-          py: 3,
-        }}
-      >
-        {!collapsed && (
-          <Box
-            display="flex"
-            alignItems="center"
-            gap={1}
-            sx={{ cursor: "pointer" }}
-            onClick={() => navigate("/")}
-          >
-            <img
-              src="/daehologo.gif"
-              alt="로고"
-              style={{ width: 200, height: 40 }}
-            />
-          </Box>
-        )}
-
-        {/* 오른쪽 상단 토글 버튼 */}
-        <IconButton onClick={toggleSidebar} size="small">
-          {collapsed ? <MenuIcon /> : <MenuOpenIcon />}
-        </IconButton>
+      {/* 로고 */}
+      <Toolbar>
+        <Box
+          display="flex"
+          alignItems="center"
+          gap={1}
+          sx={{ cursor: "pointer", py: 3.7 }}
+          onClick={() => navigate("/")}
+        >
+          <img
+            src="/daehologo.gif"
+            alt="로고"
+            style={{ width: 244, height: 50 }}
+          />
+        </Box>
       </Toolbar>
-
       <Divider />
-
       {/* 일반 메뉴 */}
       <List>
         {userMenu.map((item) => {
@@ -149,14 +117,11 @@ export default function Sidebar({
                     item.icon ?? <HomeIcon />
                   )}
                 </ListItemIcon>
-
                 {!collapsed && <ListItemText primary={item.label} />}
-
                 {!collapsed &&
                   hasChildren &&
                   (open[item.id] ? <ExpandLess /> : <ExpandMore />)}
               </ListItemButton>
-
               {hasChildren && (
                 <Collapse in={open[item.id]} timeout="auto" unmountOnExit>
                   <List component="div" disablePadding>
@@ -181,8 +146,8 @@ export default function Sidebar({
           );
         })}
       </List>
-
       {/* 관리자 메뉴 */}
+      {/* 관리자일경우만 보이게 */}
       {adminMenu && role === "ADMIN" && (
         <>
           <Divider />
@@ -206,14 +171,11 @@ export default function Sidebar({
                     <ListItemIcon>
                       {adminMenu.icon ?? <HomeIcon />}
                     </ListItemIcon>
-
                     {!collapsed && <ListItemText primary={adminMenu.label} />}
-
                     {!collapsed &&
                       adminChildren.length > 0 &&
                       (open[adminMenu.id] ? <ExpandLess /> : <ExpandMore />)}
                   </ListItemButton>
-
                   {adminChildren.length > 0 && (
                     <Collapse
                       in={open[adminMenu.id]}
@@ -244,11 +206,9 @@ export default function Sidebar({
           </List>
         </>
       )}
-
       {/* Logout */}
       <Box flexGrow={1} />
       <Divider />
-
       <Box p={2}>
         <Button
           variant="text"

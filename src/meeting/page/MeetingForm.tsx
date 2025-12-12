@@ -44,6 +44,7 @@ interface MeetingFormProps {
   onChangeMembers: (members: MeetingMemberDto[]) => void;
   onSelectDateTime: (value: Dayjs | null) => void;
   onSubmit: () => void;
+  mode: "create" | "update";
 }
 
 export default function MeetingForm({
@@ -64,6 +65,7 @@ export default function MeetingForm({
   onChangeMembers,
   onSelectDateTime,
   onSubmit,
+  mode,
 }: MeetingFormProps) {
   // ================================================================================
   //                                     시간
@@ -102,7 +104,6 @@ export default function MeetingForm({
           gap: 3,
           p: 3,
           bgcolor: "#f5f5f5",
-          minHeight: "100vh",
           minWidth: "1000px",
         }}
       >
@@ -260,7 +261,7 @@ export default function MeetingForm({
         >
           <Box
             sx={{
-              height: 1100,
+              height: 950,
               width: 380,
               display: "flex",
               flexDirection: "column",
@@ -526,6 +527,7 @@ export default function MeetingForm({
               <PartMember
                 onChangeMembers={onChangeMembers}
                 initialMembers={formData.members}
+                mode={mode}
               />
             </Box>
           </Box>
