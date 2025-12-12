@@ -413,33 +413,6 @@ export default function MeetingForm({
               </Box>
             </Box>
 
-            {/* 마감일 */}
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 2,
-                borderRadius: 2,
-                px: 2,
-              }}
-            >
-              <Typography
-                sx={{ fontWeight: 600, fontSize: "0.875rem", width: "80px" }}
-              >
-                마감일
-              </Typography>
-              <TextField
-                disabled
-                fullWidth
-                size="small"
-                placeholder="진행 완료 시 작성"
-                value={formData.endDate ?? ""}
-                onChange={(e) => onChangeFormData("endDate", e.target.value)}
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
-              />
-            </Box>
-
             {/* 카테고리 */}
             <Box
               sx={{
@@ -538,6 +511,7 @@ export default function MeetingForm({
             <Button
               variant="contained"
               onClick={onSubmit}
+              disabled={isSaving}
               sx={{
                 width: 100,
                 p: 2,
@@ -547,7 +521,13 @@ export default function MeetingForm({
                 "&:hover": { boxShadow: 3 },
               }}
             >
-              {isSaving ? "등록 중..." : "등록"}
+              {mode === "create"
+                ? isSaving
+                  ? "등록 중..."
+                  : "등록"
+                : isSaving
+                ? "수정 중..."
+                : "수정"}
             </Button>
           </Box>
         </Box>
