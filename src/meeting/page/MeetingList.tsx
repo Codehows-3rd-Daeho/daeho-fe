@@ -21,7 +21,7 @@ export default function MeetingList() {
   const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
-    getMeetingList(page, 10).then((data) => {
+    getMeetingList(page - 1, 10).then((data) => {
       setData(data.content); // 데이터
       setTotalCount(data.totalElements); // 전체 개수
     });
@@ -43,6 +43,14 @@ export default function MeetingList() {
       minWidth: 180,
       headerAlign: "center",
       align: "left",
+      renderCell: (params) => (
+        <div
+          style={{ width: "100%", cursor: "pointer" }}
+          onClick={() => navigate(`/meeting/${params.id}`)}
+        >
+          {params.value}
+        </div>
+      ),
     },
     {
       field: "period",

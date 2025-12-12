@@ -1,31 +1,8 @@
-export interface Attachment {
-  name: string;
-  size: number;
-  type: string;
-}
-
-export interface CommentData {
+export interface CommentDto {
   id: number;
-  author: string;
+  writerName: string;
   content: string;
-  timestamp: string;
-  files: Attachment[];
-}
-
-export interface NewCommentPayload {
-  content: string;
-  files: Attachment[];
-}
-
-export type Comment = {
-  id: number;
-  content: string;
-  writer: string;
-  isDel?: boolean; // 삭제상태
-};
-
-//
-export interface CommentsResponse {
-  content: Comment[];
-  totalElements: number;
+  createdAt: string;
+  updatedAt: string;
+  isDel: boolean;
 }

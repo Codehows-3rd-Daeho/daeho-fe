@@ -1,22 +1,66 @@
 import httpClient from "../../config/httpClient";
-import type { CommentsResponse } from "../type/type";
+import type { CommentDto } from "../type/type";
 
-// 댓글 조회
-export const getComments = async (
+export interface CommentsResponse {
+  content: CommentDto[];
+  totalElements: number;
+}
+
+// 이슈 댓글 조회
+export const getIssueComments = async (
+  issueId: number,
   page: number,
   size: number = 10
 ): Promise<CommentsResponse> => {
-  const response = await httpClient.get(`/issue/{id}/commnets`, {
+  const response = await httpClient.get(`/issue/${issueId}/comments`, {
     params: { page, size },
   });
+
   return response.data;
 };
 
-// 이슈 댓글 등록
-export const CommentCreate = async (formData: FormData) => {
-  await httpClient.post(`/issue/{id}/comment`, formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
+// 이슈 댓글 생성
+export const createIssueComment = async (
+  issueId: number,
+  content: string
+): Promise<CommentDto> => {
+  const payload = {
+    targetId: issueId,
+    targetType: "ISSUE",
+    content,
+  };
+
+  const response = await httpClient.post(`/issue/${issueId}/comment`, payload);
+  return response.data;
+};
+
+// 회의 댓글 조회
+export const getMeetingComments = async (
+  meetingId: number,
+  page: number,
+  size: number = 10
+): Promise<CommentsResponse> => {
+  const response = await httpClient.get(`/meeting/${meetingId}/comments`, {
+    params: { page, size },
   });
+
+  return response.data;
+};
+
+// 회의 댓글 생성
+export const createMeetingComment = async (
+  meetingId: number,
+  content: string
+): Promise<CommentDto> => {
+  const payload = {
+    targetId: meetingId,
+    targetType: "MEETING",
+    content,
+  };
+
+  const response = await httpClient.post(
+    `/meeting/${meetingId}/comment`,
+    payload
+  );
+  return response.data;
 };

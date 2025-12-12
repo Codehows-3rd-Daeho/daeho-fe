@@ -301,7 +301,7 @@ export default function IssueDtl() {
           </Tabs>
 
           <Box p={2}>
-            {tabValue === 0 && <TabComment />}
+            {tabValue === 0 && <TabComment issueId={Number(issueId)} />}
             {tabValue === 1 && <TabMeeting />}
             {tabValue === 2 && <TabLog />}
           </Box>
