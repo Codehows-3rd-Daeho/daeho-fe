@@ -31,7 +31,7 @@ import TabComment from "../../issue/page/component/TabComment";
 import TabLog from "../../issue/page/component/TabLog";
 import ParticipantListModal from "../../issue/page/component/ParticipantListModal";
 import FileUploadModal from "../component/FileUploadModal";
-import TabSTT from "./TabSTT";
+import TabSTT from "../../stt/page/TabSTT";
 
 export default function MeetingDtl() {
   const { meetingId } = useParams();
