@@ -332,7 +332,7 @@ export default function IssueDtl() {
           {/* 주관자 */}
           <InfoRow
             label="주관자"
-            value={`${issue.hostName} ${issue.hostJPName || ""}`}
+            value={`${issue.hostName || ""} ${issue.hostJPName || ""}`}
           />
 
           {/* 시작일 + 마감일*/}
