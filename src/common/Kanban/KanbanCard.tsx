@@ -27,8 +27,8 @@ export default function KanbanCard({
   const dDayText = dDay >= 0 ? `D-${dDay}` : `D+${Math.abs(dDay)}`;
 
   // 부서(Department) 표시 처리 (최대 2개 표시, 3개 이상은 ...)
-  const visibleDepartments = issue.department.slice(0, 2);
-  const hasMoreDepartments = issue.department.length > 2;
+  const visibleDepartments = issue.departmentName.slice(0, 2);
+  const hasMoreDepartments = issue.departmentName.length > 2;
 
   // 날짜 형식 변경 (25.10.01) - 필요한 경우 포맷팅 로직 추가
   const formatShortDate = (dateString: string) => {
@@ -80,7 +80,7 @@ export default function KanbanCard({
 
         {/* 오른쪽 상단: Category (주제) */}
         <span className="text-xs px-2 py-1 rounded-full bg-purple-200 text-purple-800 font-medium">
-          {issue.category}
+          {issue.categoryName}
         </span>
       </div>
 
@@ -112,7 +112,9 @@ export default function KanbanCard({
           </span>
 
           {/* 오른쪽 하단: 주관자 이름 */}
-          <span className="font-medium text-gray-600">주관자 {issue.host}</span>
+          <span className="font-medium text-gray-600">
+            주관자 {issue.hostName}
+          </span>
         </div>
       </div>
     </div>

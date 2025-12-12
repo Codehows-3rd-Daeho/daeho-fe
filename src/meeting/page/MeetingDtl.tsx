@@ -20,7 +20,7 @@ import { useAuthStore } from "../../store/useAuthStore";
 import axios from "axios";
 import { getFileInfo, getStatusLabel } from "../../common/commonFunction";
 import { useNavigate, useParams } from "react-router-dom";
-import type { MeetingDtlDto } from "../type/type";
+import type { MeetingDto } from "../type/type";
 import {
   deleteMeeting,
   deleteMeetingMinutes,
@@ -35,7 +35,7 @@ import FileUploadModal from "../component/FileUploadModal";
 
 export default function MeetingDtl() {
   const { meetingId } = useParams();
-  const [meeting, setMeeting] = useState<MeetingDtlDto | null>(null);
+  const [meeting, setMeeting] = useState<MeetingDto | null>(null);
   const [tabValue, setTabValue] = useState(0);
   const [showParticipantModal, setShowParticipantModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -69,7 +69,7 @@ export default function MeetingDtl() {
 
     // 현재 사용자가 참여자 목록에 있는지 확인
     const isCurrentParticipant = meeting.participantList.find(
-      (p) => p.memberId === currentMemberId
+      (p) => p.id === currentMemberId
     );
 
     // 참여자이며, 아직 '미확인' 상태인 경우
@@ -79,7 +79,7 @@ export default function MeetingDtl() {
           setMeeting((prevMeeting) => {
             if (!prevMeeting) return null;
             const updatedParticipants = prevMeeting.participantList.map((p) =>
-              p.memberId === currentMemberId
+              p.id === currentMemberId
                 ? { ...p, isRead: true } // isRead만 true로 변경
                 : p
             );
@@ -353,7 +353,10 @@ export default function MeetingDtl() {
           />
 
           {/* 주관자 */}
-          <InfoRow label="주관자" value={meeting.host} />
+          <InfoRow
+            label="주관자"
+            value={`${meeting.hostName || ""} ${meeting.hostJPName || ""}`}
+          />
 
           {/* 관련 이슈 */}
           <InfoRow
@@ -363,7 +366,7 @@ export default function MeetingDtl() {
                 sx={{
                   color: "#1976d2",
                   cursor: "pointer",
-                  maxWidth: "280px",
+                  maxWidth: "290px",
                   overflow: "hidden",
                   whiteSpace: "nowrap",
                   textOverflow: "ellipsis", // 뒤에 '...' 자동 추가

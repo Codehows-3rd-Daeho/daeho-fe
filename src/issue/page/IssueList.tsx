@@ -92,17 +92,17 @@ export default function IssueList() {
       },
     },
     {
-      field: "department",
+      field: "departmentName",
       headerName: "부서",
       flex: 1,
       minWidth: 120,
 
       headerAlign: "center",
       align: "center",
-      renderCell: (params) => params.row.department.join(", "),
+      renderCell: (params) => params.row.departmentName.join(", "),
     },
     {
-      field: "category",
+      field: "categoryName",
       headerName: "주제",
       flex: 1,
       minWidth: 120,

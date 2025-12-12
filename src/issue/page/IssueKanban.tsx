@@ -76,8 +76,8 @@ export default function IssueKanban() {
       <KanbanBoard
         columns={[
           { key: "pending", title: "진행중" },
-          { key: "done", title: "완료" },
-          { key: "delay", title: "지연" },
+          { key: "done", title: "진행완료" },
+          { key: "delay", title: "미결(기한초과)" },
         ]}
         issues={data}
         onClickIssue={(issue) => navigate(`/issue/${issue.id}`)}

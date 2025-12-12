@@ -1,4 +1,4 @@
-import type { MeetingDtlDto, MeetingListResponse } from "../type/type";
+import type { MeetingDto, MeetingListResponse } from "../type/type";
 import httpClient from "../../config/httpClient";
 
 // 회의 목록 조회
@@ -22,9 +22,7 @@ export const meetingCreate = async (formData: FormData) => {
 };
 
 // 상세 조회
-export const getMeetingDtl = async (
-  meetingId: string
-): Promise<MeetingDtlDto> => {
+export const getMeetingDtl = async (meetingId: string): Promise<MeetingDto> => {
   const response = await httpClient.get(`/meeting/${meetingId}`);
   console.log(response);
   return response.data;
