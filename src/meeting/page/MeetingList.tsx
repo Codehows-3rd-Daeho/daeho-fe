@@ -5,11 +5,11 @@ import { ListDataGrid } from "../../common/List/ListDataGrid";
 import { CommonPagination } from "../../common/Pagination/Pagination";
 import { Box, Typography } from "@mui/material";
 import { PageHeader } from "../../common/PageHeader/PageHeader";
+import { Toggle } from "../../common/PageHeader/Toggle/Toggle";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { useNavigate } from "react-router-dom";
 import { getMeetingList } from "../api/MeetingApi";
 import { useAuthStore } from "../../store/useAuthStore";
-import { getStatusLabel } from "../../common/commonFunction";
 
 export default function MeetingList() {
   const navigate = useNavigate();
@@ -21,13 +21,9 @@ export default function MeetingList() {
   const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
-    getMeetingList(page - 1, 10).then((data) => {
-      const list = (data.content ?? data).map((item: MeetingListItem) => ({
-        ...item,
-        status: getStatusLabel(item.status),
-      }));
-      setData(list);
-      setTotalCount(data.totalElements);
+    getMeetingList(page, 10).then((data) => {
+      setData(data.content); // 데이터
+      setTotalCount(data.totalElements); // 전체 개수
     });
   }, [page]);
 
@@ -47,14 +43,6 @@ export default function MeetingList() {
       minWidth: 180,
       headerAlign: "center",
       align: "left",
-      renderCell: (params) => (
-        <div
-          style={{ width: "100%", cursor: "pointer" }}
-          onClick={() => navigate(`/meeting/${params.id}`)}
-        >
-          {params.value}
-        </div>
-      ),
     },
     {
       field: "period",
@@ -76,7 +64,7 @@ export default function MeetingList() {
       },
     },
     {
-      field: "departmentName",
+      field: "department",
       headerName: "부서",
       flex: 1,
       minWidth: 120,
@@ -84,7 +72,7 @@ export default function MeetingList() {
       align: "center",
     },
     {
-      field: "categoryName",
+      field: "category",
       headerName: "주제",
       flex: 1,
       minWidth: 120,
@@ -92,7 +80,7 @@ export default function MeetingList() {
       align: "center",
     },
     {
-      field: "hostName",
+      field: "isHost",
       headerName: "주관자",
       flex: 1,
       minWidth: 120,
@@ -115,6 +103,12 @@ export default function MeetingList() {
       </Box>
 
       <PageHeader>
+        <Toggle
+          options={[
+            { label: "리스트", value: "list", path: "/issue/list" },
+            { label: "칸반", value: "kanban", path: "/issue/kanban" },
+          ]}
+        />
         {role === "USER" && (
           <AddButton onClick={() => navigate("/meeting/create")} />
         )}
