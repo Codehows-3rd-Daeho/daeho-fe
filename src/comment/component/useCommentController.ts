@@ -14,51 +14,44 @@ interface Props {
   ) => Promise<CommentDto>;
 }
 export function useCommentController({ targetId, fetchApi, createApi }: Props) {
-  const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState<CommentDto[]>([]);
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-  const [mentionedMemberIds, setMentionedMemberIds] = useState<number[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const size = 10;
 
   // 댓글 조회
-  const loadComments = async (reset = false) => {
-    const data = await fetchApi(targetId, reset ? 0 : page);
+  const loadComments = async (pageNumber: number) => {
+    const data = await fetchApi(targetId, pageNumber - 1, size);
 
-    if (reset) setComments(data.content);
-    else setComments((prev) => [...prev, ...data.content]);
-
-    setHasMore(!data.last);
-    setPage(data.number + 1);
+    setComments(data.content);
+    setTotalCount(data.totalElements);
   };
 
   // 댓글 작성
-  const submit = async () => {
-    if (!commentText.trim()) return;
-    console.log("멘션 IDS 👉", mentionedMemberIds);
-    const newC = await createApi(targetId, {
-      content: commentText,
-      mentionedMemberIds,
-    });
+  const submit = async (payload: {
+    content: string;
+    mentionedMemberIds: number[];
+  }) => {
+    const newComment = await createApi(targetId, payload);
 
-    setComments((prev) => [newC, ...prev]);
-    setCommentText("");
-    setMentionedMemberIds([]); // 🔥 초기화
+    const newTotal = totalCount + 1;
+    const lastPage = Math.ceil(newTotal / size);
+
+    setPage(lastPage);
+
+    setTimeout(() => loadComments(lastPage), 0);
   };
 
   // 초기 로드
   useEffect(() => {
-    (async () => {
-      await loadComments(true);
-    })();
-  }, [targetId]);
+    loadComments(page);
+  }, [page, targetId]);
 
   return {
     comments,
-    commentText,
-    hasMore,
-    setCommentText,
-    setMentionedMemberIds,
-    loadComments,
+    page,
+    totalCount,
+    setPage,
     submit,
   };
 }

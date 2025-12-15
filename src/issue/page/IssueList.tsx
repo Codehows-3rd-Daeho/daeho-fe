@@ -43,7 +43,6 @@ export default function IssueList() {
       headerName: "No",
       flex: 0.5,
       minWidth: 60,
-
       headerAlign: "center",
       align: "center",
     },

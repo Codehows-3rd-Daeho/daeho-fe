@@ -67,7 +67,7 @@ export default function MeetingList() {
       align: "center",
     },
     {
-      field: "period",
+      field: "startDate",
       headerName: "일시",
       flex: 1.2,
       minWidth: 190,

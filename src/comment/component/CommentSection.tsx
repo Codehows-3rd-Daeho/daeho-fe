@@ -1,4 +1,3 @@
-// common/comment/CommentSection.tsx
 import {
   Box,
   Avatar,
@@ -26,9 +25,7 @@ interface Props {
 export default function CommentSection({
   comments,
   commentText,
-  hasMore,
   onChangeText,
-  onLoadMore,
   onSubmit,
   onAddMention,
 }: Props) {
@@ -94,18 +91,6 @@ export default function CommentSection({
           </Box>
         </Box>
       ))}
-
-      {/* 더보기 */}
-      {hasMore && (
-        <Button
-          fullWidth
-          variant="outlined"
-          sx={{ mt: 1 }}
-          onClick={onLoadMore}
-        >
-          더 보기
-        </Button>
-      )}
 
       {/* 입력 */}
       <Box sx={{ display: "flex", gap: 2, mt: 3 }}>
