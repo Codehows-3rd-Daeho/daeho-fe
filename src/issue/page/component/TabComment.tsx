@@ -11,6 +11,7 @@ export default function TabComment({ issueId }: { issueId: number }) {
     commentText,
     hasMore,
     setCommentText,
+    setMentionedMemberIds,
     loadComments,
     submit,
   } = useCommentController({
@@ -27,6 +28,11 @@ export default function TabComment({ issueId }: { issueId: number }) {
       onChangeText={setCommentText}
       onLoadMore={() => loadComments(false)}
       onSubmit={submit}
+      onAddMention={(id) =>
+        setMentionedMemberIds((prev) =>
+          prev.includes(id) ? prev : [...prev, id]
+        )
+      }
     />
   );
 }

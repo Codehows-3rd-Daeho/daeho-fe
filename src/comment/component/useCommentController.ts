@@ -5,14 +5,20 @@ import type { CommentDto, CommentsResponse } from "../type/type";
 interface Props {
   targetId: number;
   fetchApi: (id: number, page: number) => Promise<CommentsResponse>;
-  createApi: (id: number, content: string) => Promise<CommentDto>;
+  createApi: (
+    id: number,
+    payload: {
+      content: string;
+      mentionedMemberIds: number[];
+    }
+  ) => Promise<CommentDto>;
 }
-
 export function useCommentController({ targetId, fetchApi, createApi }: Props) {
   const [commentText, setCommentText] = useState("");
   const [comments, setComments] = useState<CommentDto[]>([]);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const [mentionedMemberIds, setMentionedMemberIds] = useState<number[]>([]);
 
   // 댓글 조회
   const loadComments = async (reset = false) => {
@@ -28,9 +34,15 @@ export function useCommentController({ targetId, fetchApi, createApi }: Props) {
   // 댓글 작성
   const submit = async () => {
     if (!commentText.trim()) return;
-    const newC = await createApi(targetId, commentText);
+    console.log("멘션 IDS 👉", mentionedMemberIds);
+    const newC = await createApi(targetId, {
+      content: commentText,
+      mentionedMemberIds,
+    });
+
     setComments((prev) => [newC, ...prev]);
     setCommentText("");
+    setMentionedMemberIds([]); // 🔥 초기화
   };
 
   // 초기 로드
@@ -45,6 +57,7 @@ export function useCommentController({ targetId, fetchApi, createApi }: Props) {
     commentText,
     hasMore,
     setCommentText,
+    setMentionedMemberIds,
     loadComments,
     submit,
   };

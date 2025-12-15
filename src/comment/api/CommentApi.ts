@@ -1,10 +1,9 @@
 import httpClient from "../../config/httpClient";
-import type { CommentDto } from "../type/type";
-
-export interface CommentsResponse {
-  content: CommentDto[];
-  totalElements: number;
-}
+import type {
+  CommentDto,
+  CommentsResponse,
+  MentionMemberDto,
+} from "../type/type";
 
 // 이슈 댓글 조회
 export const getIssueComments = async (
@@ -22,15 +21,18 @@ export const getIssueComments = async (
 // 이슈 댓글 생성
 export const createIssueComment = async (
   issueId: number,
-  content: string
+  payload: {
+    content: string;
+    mentionedMemberIds: number[];
+  }
 ): Promise<CommentDto> => {
-  const payload = {
+  const response = await httpClient.post(`/issue/${issueId}/comment`, {
     targetId: issueId,
     targetType: "ISSUE",
-    content,
-  };
+    content: payload.content,
+    mentionedMemberIds: payload.mentionedMemberIds,
+  });
 
-  const response = await httpClient.post(`/issue/${issueId}/comment`, payload);
   return response.data;
 };
 
@@ -50,17 +52,27 @@ export const getMeetingComments = async (
 // 회의 댓글 생성
 export const createMeetingComment = async (
   meetingId: number,
-  content: string
+  payload: {
+    content: string;
+    mentionedMemberIds: number[];
+  }
 ): Promise<CommentDto> => {
-  const payload = {
+  const response = await httpClient.post(`/meeting/${meetingId}/comment`, {
     targetId: meetingId,
     targetType: "MEETING",
-    content,
-  };
+    content: payload.content,
+    mentionedMemberIds: payload.mentionedMemberIds,
+  });
 
-  const response = await httpClient.post(
-    `/meeting/${meetingId}/comment`,
-    payload
-  );
+  return response.data;
+};
+
+export const searchMembersForMention = async (
+  keyword: string
+): Promise<MentionMemberDto[]> => {
+  const response = await httpClient.get("/members/search", {
+    params: { keyword },
+  });
+
   return response.data;
 };
