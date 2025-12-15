@@ -19,7 +19,12 @@ import { uploadSTT } from "../api/sttApi";
 import axios from "axios";
 import { useParams } from "react-router-dom";
 
-export default function TabSTT() {
+// TabSTTModal props
+interface TabSTTModalProps {
+  onUploadSuccess: () => void;
+}
+
+export default function TabSTT(props: TabSTTModalProps) {
   const [open, setOpen] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File[]>([]);
 
@@ -33,6 +38,8 @@ export default function TabSTT() {
   const [isSaving, setIsSaving] = useState(false);
 
   const { meetingId } = useParams();
+
+  const { onUploadSuccess } = props;
 
   //모달 열기
   const handleOpen = () => setOpen(true);
@@ -134,8 +141,9 @@ export default function TabSTT() {
       console.log("보내는 데이터", formData);
 
       await uploadSTT(meetingId, formData); //id넣어야됨
-      alert("음성 파일이 등록되었습니다!");
-      // navigator("/meeting/{id}");
+
+      alert("음성 파일이 변환 되었습니다!");
+      onUploadSuccess?.(); // 부모에 알림
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 401) {
         return;
