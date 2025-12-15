@@ -1,8 +1,9 @@
 import httpClient from "../../config/httpClient";
 
-//stt
-export const uploadSTT = async (meetingId: string, formData: FormData) => {
-  await httpClient.post(`/stt/meeting/${meetingId}`, formData, {
+//stt 등록
+export const uploadSTT = async (id: string, formData: FormData) => {
+  console.log("id: ", id);
+  await httpClient.post(`/stt/meeting/${id}`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },

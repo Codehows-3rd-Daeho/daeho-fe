@@ -134,7 +134,6 @@ export default function TabSTT() {
       console.log("보내는 데이터", formData);
 
       await uploadSTT(meetingId, formData); //id넣어야됨
-
       alert("음성 파일이 등록되었습니다!");
       // navigator("/meeting/{id}");
     } catch (error) {
@@ -194,10 +193,7 @@ export default function TabSTT() {
             alignItems: "center",
           }}
         >
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>
-            음성 파일 등록
-          </Typography>
-
+          음성 파일 등록
           {/* 모달 닫기 버튼 */}
           <IconButton size="small" onClick={handleClose}>
             <CloseIcon />
