@@ -115,6 +115,7 @@ export default function MeetingList() {
       </Box>
 
       <PageHeader>
+        <Box />
         {role === "USER" && (
           <AddButton onClick={() => navigate("/meeting/create")} />
         )}

@@ -97,8 +97,17 @@ export default function ParticipantListModal({
             display: "flex",
             flexDirection: "column",
             gap: 2,
-            height: "calc(47vh - 100px)", // TextField와 제목 공간을 제외하고 대략적인 높이 고정
-            overflowY: "auto",
+            maxHeight:
+              filteredMembers.length > 5 ? "calc(47vh - 100px)" : "none",
+
+            overflowY: filteredMembers.length > 5 ? "auto" : "visible",
+            "&::-webkit-scrollbar": {
+              width: 6,
+            },
+            "&::-webkit-scrollbar-thumb": {
+              backgroundColor: "#ccc",
+              borderRadius: 3,
+            },
           }}
         >
           {filteredMembers.length > 0 ? (

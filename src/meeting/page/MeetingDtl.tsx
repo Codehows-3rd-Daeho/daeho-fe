@@ -204,13 +204,15 @@ export default function MeetingDtl() {
         {/* 본문 */}
         <Box
           sx={{
-            p: 3,
+            p: 2,
             bgcolor: "#fafafa",
             borderRadius: 2,
             mb: 3,
             minHeight: 200,
             lineHeight: 1.7,
-            color: "text.secondary",
+            border: "1px solid",
+            borderColor: "divider",
+            whiteSpace: "pre-line",
           }}
         >
           {meeting.content}
@@ -272,6 +274,7 @@ export default function MeetingDtl() {
                       color: "#fff",
                       fontSize: "0.7rem",
                       fontWeight: 700,
+                      flexShrink: 0,
                     }}
                   >
                     {label}
@@ -583,7 +586,8 @@ export default function MeetingDtl() {
         </Box>
 
         {/* 버튼 */}
-        {(meeting.isEditPermitted || role === "ADMIN") &&
+        {((meeting.isEditPermitted && meeting.status !== "COMPLETED") ||
+          role === "ADMIN") &&
           meeting.isDel === false && (
             <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
               <Button
