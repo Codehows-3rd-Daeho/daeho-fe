@@ -21,18 +21,17 @@ export const getIssueComments = async (
 // 이슈 댓글 생성
 export const createIssueComment = async (
   issueId: number,
-  payload: {
-    content: string;
-    mentionedMemberIds: number[];
-  }
+  formData: FormData
 ): Promise<CommentDto> => {
-  const response = await httpClient.post(`/issue/${issueId}/comment`, {
-    targetId: issueId,
-    targetType: "ISSUE",
-    content: payload.content,
-    mentionedMemberIds: payload.mentionedMemberIds,
-  });
-
+  const response = await httpClient.post(
+    `/issue/${issueId}/comment`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
   return response.data;
 };
 
@@ -52,18 +51,17 @@ export const getMeetingComments = async (
 // 회의 댓글 생성
 export const createMeetingComment = async (
   meetingId: number,
-  payload: {
-    content: string;
-    mentionedMemberIds: number[];
-  }
+  formData: FormData
 ): Promise<CommentDto> => {
-  const response = await httpClient.post(`/meeting/${meetingId}/comment`, {
-    targetId: meetingId,
-    targetType: "MEETING",
-    content: payload.content,
-    mentionedMemberIds: payload.mentionedMemberIds,
-  });
-
+  const response = await httpClient.post(
+    `/meeting/${meetingId}/comment`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
   return response.data;
 };
 

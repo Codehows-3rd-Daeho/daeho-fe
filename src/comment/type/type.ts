@@ -1,3 +1,5 @@
+import type { FileItem } from "../component/FileList";
+
 export interface CommentDto {
   id: number;
   writerName: string;
@@ -6,6 +8,7 @@ export interface CommentDto {
   createdAt: string;
   updatedAt: string;
   isDel: boolean;
+  fileList: FileItem[];
 }
 
 export interface CommentsResponse {

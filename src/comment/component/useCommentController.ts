@@ -1,57 +1,102 @@
-// common/comment/useCommentController.ts
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { CommentDto, CommentsResponse } from "../type/type";
 
 interface Props {
   targetId: number;
-  fetchApi: (id: number, page: number) => Promise<CommentsResponse>;
-  createApi: (
+  fetchApi: (
     id: number,
-    payload: {
-      content: string;
-      mentionedMemberIds: number[];
-    }
-  ) => Promise<CommentDto>;
+    page: number,
+    size: number
+  ) => Promise<CommentsResponse>;
+  createApi: (id: number, formData: FormData) => Promise<CommentDto>;
 }
+
 export function useCommentController({ targetId, fetchApi, createApi }: Props) {
   const [comments, setComments] = useState<CommentDto[]>([]);
+  const [commentText, setCommentText] = useState("");
+  const [mentionedMemberIds, setMentionedMemberIds] = useState<number[]>([]);
+
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+
   const size = 10;
 
-  // 댓글 조회
-  const loadComments = async (pageNumber: number) => {
-    const data = await fetchApi(targetId, pageNumber - 1, size);
+  /* =========================
+     초기 로딩 (마지막 페이지)
+  ========================= */
+  useEffect(() => {
+    const init = async () => {
+      const first = await fetchApi(targetId, 0, size);
+      const total = first.totalElements;
+      const lastPage = Math.max(1, Math.ceil(total / size));
 
-    setComments(data.content);
-    setTotalCount(data.totalElements);
+      const last = await fetchApi(targetId, lastPage - 1, size);
+
+      setComments(last.content);
+      setTotalCount(total);
+      setPage(lastPage);
+    };
+
+    init();
+  }, [targetId]);
+
+  /* =========================
+     멘션 추가
+  ========================= */
+  const addMentionedMemberId = (memberId: number) => {
+    setMentionedMemberIds((prev) =>
+      prev.includes(memberId) ? prev : [...prev, memberId]
+    );
   };
 
-  // 댓글 작성
-  const submit = async (payload: {
-    content: string;
-    mentionedMemberIds: number[];
-  }) => {
-    const newComment = await createApi(targetId, payload);
+  /* =========================
+     댓글 작성
+  ========================= */
+  const submit = async (files: File[]) => {
+    if (!commentText.trim()) return;
+
+    const formData = new FormData();
+
+    formData.append(
+      "data",
+      new Blob([JSON.stringify({ content: commentText, mentionedMemberIds })], {
+        type: "application/json",
+      })
+    );
+    files.forEach((f) => formData.append("file", f));
+    await createApi(targetId, formData);
+
+    setCommentText("");
+    setMentionedMemberIds([]);
 
     const newTotal = totalCount + 1;
     const lastPage = Math.ceil(newTotal / size);
 
-    setPage(lastPage);
+    const data = await fetchApi(targetId, lastPage - 1, size);
 
-    setTimeout(() => loadComments(lastPage), 0);
+    setComments(data.content);
+    setTotalCount(data.totalElements);
+    setPage(lastPage);
   };
 
-  // 초기 로드
-  useEffect(() => {
-    loadComments(page);
-  }, [page, targetId]);
+  /* =========================
+     페이지 변경
+  ========================= */
+  const changePage = async (nextPage: number) => {
+    const data = await fetchApi(targetId, nextPage - 1, size);
+    setComments(data.content);
+    setTotalCount(data.totalElements);
+    setPage(nextPage);
+  };
 
   return {
     comments,
+    commentText,
     page,
     totalCount,
-    setPage,
+    setCommentText,
+    changePage,
+    addMentionedMemberId,
     submit,
   };
 }

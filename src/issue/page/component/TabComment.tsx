@@ -1,61 +1,57 @@
-import { useEffect, useState } from "react";
 import {
   getIssueComments,
   createIssueComment,
 } from "../../../comment/api/CommentApi";
-import CommentSection from "../../../comment/component/CommentSection";
 import { useCommentController } from "../../../comment/component/useCommentController";
 import { CommonPagination } from "../../../common/Pagination/Pagination";
-import type { CommentDto } from "../../../comment/type/type";
+import CommentSection from "../../../comment/component/CommentSection";
+import { Box } from "@mui/material";
 
 export default function TabComment({ issueId }: { issueId: number }) {
   const {
     comments,
     commentText,
-    hasMore,
     setCommentText,
-    setMentionedMemberIds,
-    loadComments,
+    addMentionedMemberId,
     submit,
+    page,
+    totalCount,
+    changePage,
   } = useCommentController({
     targetId: issueId,
     fetchApi: getIssueComments,
     createApi: createIssueComment,
   });
-  const [page, setPage] = useState(1);
-  const [data, setData] = useState<CommentDto[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
 
-  useEffect(() => {
-    getIssueComments(page - 1, 10).then((data) => {
-      const list = (data.content ?? data).map((item: CommentDto) => ({
-        ...item,
-      }));
-
-      setData(list);
-      setTotalCount(data.totalElements); // 전체 개수
-    });
-  }, [page]);
   return (
-    <>
+    <Box>
+      {/* 1️⃣ 댓글 목록 */}
+      <CommentSection comments={comments} enableInput={false} />
+
+      {comments.length === 0 && (
+        <Box sx={{ textAlign: "center", color: "text.disabled", my: 2 }}>
+          아직 등록된 댓글이 없습니다.
+        </Box>
+      )}
+
+      {/* 2️⃣ 페이지네이션 (목록 아래 / 입력창 위) */}
+      <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
+        <CommonPagination
+          page={page}
+          totalCount={totalCount}
+          onPageChange={changePage}
+        />
+      </Box>
+
+      {/* 3️⃣ 댓글 입력창 */}
       <CommentSection
-        comments={comments}
+        comments={[]}
+        enableMention
         commentText={commentText}
-        hasMore={hasMore}
         onChangeText={setCommentText}
-        onLoadMore={() => loadComments(false)}
+        onAddMention={addMentionedMemberId}
         onSubmit={submit}
-        onAddMention={(id) =>
-          setMentionedMemberIds((prev) =>
-            prev.includes(id) ? prev : [...prev, id]
-          )
-        }
       />
-      <CommonPagination
-        page={page}
-        totalCount={totalCount}
-        onPageChange={setPage}
-      />
-    </>
+    </Box>
   );
 }
