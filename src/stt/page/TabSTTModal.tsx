@@ -74,7 +74,7 @@ export default function TabSTT(props: TabSTTModalProps) {
   };
 
   // 파일 업로드 핸들러
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     //STT Api 호출 시 meetinfId undefind 예외 처리
     if (!meetingId) {
       alert("해당 회의의 id를 찾을 수 없습니다.");
@@ -134,42 +134,45 @@ export default function TabSTT(props: TabSTTModalProps) {
     if (validFiles.length > 0) {
       setUploadedFile((prev) => [...prev, ...validFiles]);
     }
-
-    //============================전송============================
-    try {
-      setIsSaving(true); // 저장 시작 (중복 클릭 방지)
-      console.log("보내는 데이터", formData);
-
-      await uploadSTT(meetingId, formData); //id넣어야됨
-
-      alert("음성 파일이 변환 되었습니다!");
-      onUploadSuccess?.(); // 부모에 알림
-    } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
-        return;
-      }
-      console.error("음성 파일 등록 실패:", error);
-      alert("음성 파일 등록 중 오류가 발생했습니다.");
-    } finally {
-      setIsSaving(false); // 버튼 원상복귀
-    }
   };
+  // ===============================================================
+  //                           저장
+  // ===============================================================
 
-  // 음성 파일 등록 버튼
   const handleRegisterClick = async () => {
+    if (!meetingId) {
+      alert("해당 회의의 id를 찾을 수 없습니다.");
+      return;
+    }
+
     if (uploadedFile.length === 0) {
-      alert("음성 파일 파일을 먼저 업로드해주세요.");
+      alert("음성 파일을 먼저 업로드해주세요.");
       return;
     }
 
     const ok = confirm("음성 파일을 등록하시겠습니까?");
     if (!ok) return;
 
+    setIsSaving(true); // 버튼 등록 중으로 변경
+
+    const formData = new FormData();
+    uploadedFile.forEach((file) => {
+      formData.append("file", file);
+    });
+
     try {
-      alert("음성 파일이 등록되었습니다.");
+      await uploadSTT(meetingId, formData); //id넣어야됨
+
+      alert("음성 파일이 변환 되었습니다!");
+      setIsSaving(false); // 버튼 원상복귀
+      onUploadSuccess?.(); // 부모에 알림
+      setUploadedFile([]);
       handleClose();
-    } catch {
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 401) return;
+      console.error(error);
       alert("음성 파일 등록 중 오류가 발생했습니다.");
+      setIsSaving(false); // 버튼 원상복귀
     }
   };
 
@@ -220,7 +223,7 @@ export default function TabSTT(props: TabSTTModalProps) {
               multiple
               id="fileUpload"
               style={{ display: "none" }}
-              onChange={handleFileUpload}
+              onChange={handleFileSelect}
             />
 
             <Box
@@ -312,7 +315,7 @@ export default function TabSTT(props: TabSTTModalProps) {
           {/* 등록 버튼 */}
           <Box sx={{ display: "flex", justifyContent: "center" }}>
             <Button variant="outlined" onClick={handleRegisterClick}>
-              {isSaving ? "음성 파일 등록 중..." : "음성 파일 등록 완료"}
+              {isSaving ? "음성 파일 등록 중..." : "등록"}
             </Button>
           </Box>
         </DialogContent>
