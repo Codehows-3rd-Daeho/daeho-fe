@@ -132,7 +132,7 @@ export default function TabSTT(props: TabSTTModalProps) {
     }
   };
   // ===============================================================
-  //                           저장
+  //                          stt 등록
   // ===============================================================
 
   const handleRegisterClick = async () => {
