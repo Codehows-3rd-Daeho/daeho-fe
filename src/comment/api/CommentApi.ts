@@ -5,6 +5,10 @@ import type {
   MentionMemberDto,
 } from "../type/type";
 
+/* ==================================================
+   Issue
+================================================== */
+
 // 이슈 댓글 조회
 export const getIssueComments = async (
   issueId: number,
@@ -14,7 +18,6 @@ export const getIssueComments = async (
   const response = await httpClient.get(`/issue/${issueId}/comments`, {
     params: { page, size },
   });
-
   return response.data;
 };
 
@@ -26,14 +29,36 @@ export const createIssueComment = async (
   const response = await httpClient.post(
     `/issue/${issueId}/comment`,
     formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    }
+    { headers: { "Content-Type": "multipart/form-data" } }
   );
   return response.data;
 };
+
+/* ==================================================
+   Comment (공통: Issue / Meeting)
+================================================== */
+
+// ✅ 댓글 수정
+export const updateComment = async (
+  commentId: number,
+  formData: FormData
+): Promise<CommentDto> => {
+  const response = await httpClient.put(
+    `/comment/${commentId}`,
+    formData,
+    { headers: { "Content-Type": "multipart/form-data" } }
+  );
+  return response.data;
+};
+
+// ✅ 댓글 삭제 (soft delete)
+export const deleteComment = async (commentId: number): Promise<void> => {
+  await httpClient.delete(`/comment/${commentId}`);
+};
+
+/* ==================================================
+   Meeting
+================================================== */
 
 // 회의 댓글 조회
 export const getMeetingComments = async (
@@ -44,7 +69,6 @@ export const getMeetingComments = async (
   const response = await httpClient.get(`/meeting/${meetingId}/comments`, {
     params: { page, size },
   });
-
   return response.data;
 };
 
@@ -56,14 +80,14 @@ export const createMeetingComment = async (
   const response = await httpClient.post(
     `/meeting/${meetingId}/comment`,
     formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    }
+    { headers: { "Content-Type": "multipart/form-data" } }
   );
   return response.data;
 };
+
+/* ==================================================
+   Mention
+================================================== */
 
 export const searchMembersForMention = async (
   keyword: string
@@ -71,6 +95,5 @@ export const searchMembersForMention = async (
   const response = await httpClient.get("/members/search", {
     params: { keyword },
   });
-
   return response.data;
 };

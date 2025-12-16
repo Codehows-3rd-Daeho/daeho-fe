@@ -2,6 +2,7 @@ import type { FileItem } from "../component/FileList";
 
 export interface CommentDto {
   id: number;
+  writerMemberId: number; 
   writerName: string;
   writerJPName: string;
   content: string;

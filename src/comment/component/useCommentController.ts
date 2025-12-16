@@ -9,16 +9,22 @@ interface Props {
     size: number
   ) => Promise<CommentsResponse>;
   createApi: (id: number, formData: FormData) => Promise<CommentDto>;
+  updateApi?: (commentId: number, formData: FormData) => Promise<CommentDto>;
+  deleteApi?: (commentId: number) => Promise<void>;
 }
 
-export function useCommentController({ targetId, fetchApi, createApi }: Props) {
+export function useCommentController({
+  targetId,
+  fetchApi,
+  createApi,
+  updateApi,
+  deleteApi,
+}: Props) {
   const [comments, setComments] = useState<CommentDto[]>([]);
   const [commentText, setCommentText] = useState("");
   const [mentionedMemberIds, setMentionedMemberIds] = useState<number[]>([]);
-
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
-
   const size = 10;
 
   /* =========================
@@ -36,7 +42,6 @@ export function useCommentController({ targetId, fetchApi, createApi }: Props) {
       setTotalCount(total);
       setPage(lastPage);
     };
-
     init();
   }, [targetId]);
 
@@ -53,17 +58,18 @@ export function useCommentController({ targetId, fetchApi, createApi }: Props) {
      댓글 작성
   ========================= */
   const submit = async (files: File[]) => {
-    if (!commentText.trim()) return;
+    if (!commentText.trim() && files.length === 0) return;
 
     const formData = new FormData();
-
     formData.append(
       "data",
-      new Blob([JSON.stringify({ content: commentText, mentionedMemberIds })], {
-        type: "application/json",
-      })
+      new Blob(
+        [JSON.stringify({ content: commentText, mentionedMemberIds })],
+        { type: "application/json" }
+      )
     );
     files.forEach((f) => formData.append("file", f));
+
     await createApi(targetId, formData);
 
     setCommentText("");
@@ -73,7 +79,6 @@ export function useCommentController({ targetId, fetchApi, createApi }: Props) {
     const lastPage = Math.ceil(newTotal / size);
 
     const data = await fetchApi(targetId, lastPage - 1, size);
-
     setComments(data.content);
     setTotalCount(data.totalElements);
     setPage(lastPage);
@@ -89,6 +94,52 @@ export function useCommentController({ targetId, fetchApi, createApi }: Props) {
     setPage(nextPage);
   };
 
+  /* =========================
+     댓글 수정
+  ========================= */
+  const updateComment = async (
+    commentId: number,
+    content: string,
+    newFiles: File[],
+    removeFileIds: number[]
+  ) => {
+    if (!updateApi) return;
+
+    const formData = new FormData();
+    formData.append(
+      "data",
+      new Blob(
+        [JSON.stringify({ content, removeFileIds })],
+        { type: "application/json" }
+      )
+    );
+    newFiles.forEach((f) => formData.append("file", f));
+
+    await updateApi(commentId, formData);
+
+    // 수정 후 새로 불러오기
+    const data = await fetchApi(targetId, page - 1, size);
+    setComments(data.content);
+    setTotalCount(data.totalElements);
+  };
+
+  /* =========================
+     댓글 삭제
+  ========================= */
+  const deleteComment = async (commentId: number) => {
+    if (!deleteApi) return;
+
+    await deleteApi(commentId);
+
+    const newTotal = totalCount - 1;
+    const lastPage = Math.max(1, Math.ceil(newTotal / size));
+    const data = await fetchApi(targetId, lastPage - 1, size);
+
+    setComments(data.content);
+    setTotalCount(data.totalElements);
+    setPage(lastPage);
+  };
+
   return {
     comments,
     commentText,
@@ -98,5 +149,7 @@ export function useCommentController({ targetId, fetchApi, createApi }: Props) {
     changePage,
     addMentionedMemberId,
     submit,
+    updateComment,
+    deleteComment,
   };
 }

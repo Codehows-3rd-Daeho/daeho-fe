@@ -1,6 +1,7 @@
+
 import { useEffect, useRef, useState } from "react";
-import type { CommentDto, MentionMemberDto } from "../type/type";
-import { searchMembersForMention } from "../api/CommentApi";
+import type { CommentDto, MentionMemberDto } from "../type/type"; // type 경로 확인
+import { searchMembersForMention } from "../api/CommentApi"; // api 경로 확인
 import {
   Avatar,
   Box,
@@ -9,7 +10,14 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import FileList from "./FileList";
+import CloseIcon from "@mui/icons-material/Close";
+
+// ✨ 분리된 CommentItem 컴포넌트와 Props 인터페이스를 불러옴
+import { CommentItem } from "./CommentItem"; // 경로 확인
+
+// =====================================================================
+// 3. CommentSection Props 인터페이스
+// =====================================================================
 
 interface Props {
   comments?: CommentDto[];
@@ -19,7 +27,20 @@ interface Props {
   onChangeText?: (text: string) => void;
   onSubmit?: (files: File[]) => void;
   onAddMention?: (memberId: number) => void;
+
+  onUpdateComment?: (
+    commentId: number,
+    content: string,
+    newFiles: File[],
+    removeFileIds: number[]
+  ) => Promise<void>;
+  onDeleteComment?: (commentId: number) => Promise<void>;
+  currentMemberId?: number;
 }
+
+// =====================================================================
+// 4. CommentSection 메인 컴포넌트
+// =====================================================================
 
 export default function CommentSection({
   comments = [],
@@ -29,7 +50,11 @@ export default function CommentSection({
   onChangeText,
   onSubmit,
   onAddMention,
+  onUpdateComment,
+  onDeleteComment,
+  currentMemberId,
 }: Props) {
+
   const [mentionKeyword, setMentionKeyword] = useState<string | null>(null);
   const [mentionList, setMentionList] = useState<MentionMemberDto[]>([]);
   const [showMentionBox, setShowMentionBox] = useState(false);
@@ -40,8 +65,8 @@ export default function CommentSection({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   /* =========================
-     멘션 외부 클릭 닫기
-  ========================= */
+     멘션 외부 클릭 닫기
+  ========================= */
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -57,8 +82,8 @@ export default function CommentSection({
   }, []);
 
   /* =========================
-     입력 변경 + 멘션 검색
-  ========================= */
+     입력 변경 + 멘션 검색
+  ========================= */
   const handleChange = async (value: string) => {
     onChangeText?.(value);
 
@@ -87,31 +112,13 @@ export default function CommentSection({
     <Box>
       {/* ================= 댓글 목록 ================= */}
       {comments.map((c) => (
-        <Box key={c.id} sx={{ mb: 3, display: "flex", gap: 2 }}>
-          <Avatar sx={{ width: 40, height: 40 }}>👤</Avatar>
-
-          <Box sx={{ flex: 1 }}>
-            <Typography fontWeight={600}>
-              {c.writerName} {c.writerJPName}
-            </Typography>
-            <Typography color="text.secondary">{c.content}</Typography>
-            <Typography fontSize="0.8rem" color="text.disabled">
-              {c.createdAt?.slice(0, 16).replace("T", " ")}
-            </Typography>
-
-            {/* 첨부파일 */}
-            {c.fileList && c.fileList.length > 0 && (
-              <FileList
-                files={c.fileList.map((f) => ({
-                  fileId: f.fileId,
-                  originalName: f.originalName,
-                  path: f.path,
-                  size: f.size,
-                }))}
-              />
-            )}
-          </Box>
-        </Box>
+        <CommentItem 
+          key={c.id}
+          comment={c}
+          currentUserId={currentMemberId ?? -1}
+          onUpdateComment={onUpdateComment}
+          onDeleteComment={onDeleteComment}
+        />
       ))}
 
       {/* ================= 입력 영역 ================= */}
@@ -147,24 +154,33 @@ export default function CommentSection({
                 ref={fileInputRef}
                 onChange={(e) => {
                   if (!e.target.files) return;
-                  setFiles(Array.from(e.target.files));
+                  // Array.from() 대신 스프레드 문법 사용
+                  setFiles((prev) => [...prev, ...e.target.files!]); 
                 }}
+                onClick={(e) => (e.currentTarget.value = "")}
               />
 
-              {/* 첨부된 파일 목록 */}
+              {/* 첨부된 파일 목록 (삭제 버튼 포함) */}
               {files.map((file, idx) => (
                 <Box
                   key={idx}
-                  sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                  sx={{ 
+                    display: "flex", 
+                    alignItems: "center", 
+                    gap: 1,
+                    py: 0.5,
+                    fontSize: "0.85rem",
+                    color: "text.secondary",
+                  }}
                 >
-                  <Typography fontSize="0.85rem">{file.name}</Typography>
+                  {file.name}
                   <IconButton
                     size="small"
                     onClick={() =>
                       setFiles((prev) => prev.filter((_, i) => i !== idx))
                     }
                   >
-                    ✕
+                    <CloseIcon fontSize="small" />
                   </IconButton>
                 </Box>
               ))}
@@ -176,9 +192,9 @@ export default function CommentSection({
                 ref={mentionBoxRef}
                 sx={{
                   position: "absolute",
-                  top: "100%",
+                  bottom: "100%", 
                   left: 12,
-                  mt: 0.5,
+                  mb: 0.5,
                   backgroundColor: "#fff",
                   border: "1px solid #ddd",
                   borderRadius: 1,
@@ -236,7 +252,9 @@ export default function CommentSection({
 
                   await onSubmit?.(files);
                   setFiles([]);
+                  onChangeText?.("");
                 }}
+                disabled={!commentText?.trim() && files.length === 0}
               >
                 저장
               </Button>

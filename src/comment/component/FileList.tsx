@@ -1,5 +1,6 @@
 import { Box, IconButton, Typography } from "@mui/material";
 import DownloadIcon from "@mui/icons-material/Download";
+import CloseIcon from "@mui/icons-material/Close"; // ✕ 아이콘 사용을 위해 import
 import { BASE_URL } from "../../config/httpClient";
 import { getFileInfo } from "../../common/commonFunction";
 
@@ -12,10 +13,15 @@ export interface FileItem {
 
 interface Props {
   files: FileItem[];
+  // 파일 삭제 핸들러 추가: fileId를 받아서 처리
+  onRemoveFile?: (fileId: number) => void; 
 }
 
-export default function FileList({ files }: Props) {
+export default function FileList({ files, onRemoveFile }: Props) {
   if (!files || files.length === 0) return null;
+
+  // onRemoveFile이 있으면 삭제 모드
+  const isRemovable = !!onRemoveFile;
 
   return (
     <Box sx={{ mb: 2 }}>
@@ -28,7 +34,10 @@ export default function FileList({ files }: Props) {
             key={file.fileId}
             sx={{
               display: "grid",
-              gridTemplateColumns: "1fr 120px 150px 50px",
+              // onRemoveFile이 있으면 삭제 버튼 공간을 위해 gridTemplateColumns 변경
+              gridTemplateColumns: isRemovable
+                ? "1fr 120px 50px 50px"
+                : "1fr 120px 150px 50px",
               alignItems: "center",
               px: 2,
               py: 1.5,
@@ -59,6 +68,11 @@ export default function FileList({ files }: Props) {
                 component="a"
                 href={`${BASE_URL}${file.path}`}
                 download={file.originalName}
+                sx={{ 
+                  overflow: "hidden", 
+                  textOverflow: "ellipsis", 
+                  whiteSpace: "nowrap" 
+                }}
               >
                 {file.originalName}
               </Typography>
@@ -68,6 +82,17 @@ export default function FileList({ files }: Props) {
             <Typography sx={{ color: "text.secondary" }}>
               {file.size}
             </Typography>
+
+            {/* 삭제 버튼 (수정 모드일 때만) */}
+            {isRemovable && (
+              <IconButton
+                size="small"
+                onClick={() => onRemoveFile(file.fileId)}
+                sx={{ ml: 1 }}
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            )}
 
             {/* 다운로드 버튼 */}
             <IconButton
