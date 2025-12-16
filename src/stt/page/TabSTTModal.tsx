@@ -22,7 +22,7 @@ interface TabSTTModalProps {
 
 export default function TabSTT(props: TabSTTModalProps) {
   const [open, setOpen] = useState(false);
-  const [uploadedFile, setUploadedFile] = useState<File[]>([]);
+  const [uploadedFile, setUploadedFile] = useState<File[]>([]); //파일 선택 관련 로직에 사용
 
   //저장 상태 (지연시 중복 등록 방지)
   const [isSaving, setIsSaving] = useState(false);
@@ -74,63 +74,63 @@ export default function TabSTT(props: TabSTTModalProps) {
     document.getElementById("fileUpload")?.click();
   };
 
-  // 파일 업로드 핸들러
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    //STT Api 호출 시 meetinfId undefind 예외 처리
+  // ========================================================================
+  //                               파일 선택
+  // ========================================================================
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!meetingId) {
       alert("해당 회의의 id를 찾을 수 없습니다.");
       return;
     }
 
-    //HTML input[type="file"]의 파일 목록 속성 이름은 files
     const uploadedFiles = Array.from(e.target.files || []);
-    const formData = new FormData();
+    const validFiles = uploadedFiles.filter(validateFile);
 
-    // 백엔드의 @RequestPart("file")과 맞춰야 함
-    uploadedFiles.forEach((file) => {
-      formData.append("file", file);
-    });
-
-    //업로드 가능한 확장자, 용량의 파일을 담을 배열
-    const validFiles: File[] = [];
-
-    //업로드된 파일 배열을 돌면서 체크
-    uploadedFiles.forEach((file) => {
-      //확장자 추출
-      const ext = file.name.split(".").pop()?.toLowerCase();
-
-      // 1) 확장자 체크
-      const isAllowed = ext != null && allowedExtensions.includes(ext);
-
-      if (!isAllowed) {
-        alert(
-          `허용되지 않은 파일입니다: ${
-            file.name
-          }\n허용 확장자: ${allowedExtensions.join(", ")}`
-        );
-        return;
-      }
-
-      // 2) 용량 체크
-      const sizeMB = file.size / 1024 / 1024; //바이트 단위 → MB로 변환
-
-      if (sizeMB > maxFileSizeMB) {
-        alert(
-          `${file.name} 파일의 크기가 ${maxFileSizeMB}MB를 초과했습니다.
-           (현재: ${sizeMB.toFixed(2)}MB)`
-        );
-        return; // 이 파일만 제외
-      }
-
-      //확장자, 용량 체크 성공한 file만 배열에 추가
-      validFiles.push(file);
-    });
-
-    // 검증된 파일만 반영
     if (validFiles.length > 0) {
       setUploadedFile((prev) => [...prev, ...validFiles]);
     }
   };
+
+  // ========================================================================
+  //                               파일 검증
+  // ========================================================================
+
+  const validateFile = (file: File): boolean => {
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    if (!ext || !allowedExtensions.includes(ext)) {
+      alert(
+        `허용되지 않은 파일: ${
+          file.name
+        }\n허용 확장자: ${allowedExtensions.join(", ")}`
+      );
+      return false;
+    }
+
+    const sizeMB = file.size / 1024 / 1024;
+    if (sizeMB > maxFileSizeMB) {
+      alert(
+        `${
+          file.name
+        } 파일의 크기가 ${maxFileSizeMB}MB를 초과했습니다. (현재: ${sizeMB.toFixed(
+          2
+        )}MB)`
+      );
+      return false;
+    }
+
+    return true;
+  };
+  // ========================================================================
+  //                               FormData 생성
+  // ========================================================================
+
+  const createFormData = (files: File[]) => {
+    const formData = new FormData();
+    files.forEach((file) => formData.append("file", file));
+    return formData;
+  };
+
   // ===============================================================
   //                          stt 등록
   // ===============================================================
@@ -151,12 +151,8 @@ export default function TabSTT(props: TabSTTModalProps) {
 
     setIsSaving(true); // 버튼 등록 중으로 변경
 
-    const formData = new FormData();
-    uploadedFile.forEach((file) => {
-      formData.append("file", file);
-    });
-
     try {
+      const formData = createFormData(uploadedFile); //formdata 생성
       await uploadSTT(meetingId, formData); //id넣어야됨
 
       alert("음성 파일이 변환 되었습니다!");

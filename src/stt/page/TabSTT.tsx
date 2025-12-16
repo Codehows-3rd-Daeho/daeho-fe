@@ -45,6 +45,10 @@ export default function TabSTT() {
 
   const selectedStt = stts.find((stt) => stt.id === selectedSttId);
 
+  // ========================================================================
+  //                               요약
+  // ========================================================================
+
   const handleSummary = async () => {
     if (!selectedStt) return;
 
