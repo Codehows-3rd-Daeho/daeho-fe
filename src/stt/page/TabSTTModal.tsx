@@ -10,11 +10,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
-import { useEffect, useState } from "react";
-import {
-  getExtensions,
-  getFileSize,
-} from "../../admin/setting/api/FileSettingApi";
+import { useState } from "react";
 import { uploadSTT } from "../api/sttApi";
 import axios from "axios";
 import { useParams } from "react-router-dom";
@@ -28,12 +24,6 @@ export default function TabSTT(props: TabSTTModalProps) {
   const [open, setOpen] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File[]>([]);
 
-  //파일 설정 값
-  const [maxFileSize, setMaxFileSize] = useState<number | null>(null);
-  const [allowedExtensions, setAllowedExtensions] = useState<string[] | null>(
-    null
-  );
-
   //저장 상태 (지연시 중복 등록 방지)
   const [isSaving, setIsSaving] = useState(false);
 
@@ -41,32 +31,43 @@ export default function TabSTT(props: TabSTTModalProps) {
 
   const { onUploadSuccess } = props;
 
+  //daglo 최대 업로드 용량, 허용 확장자
+  const maxFileSizeMB = 2 * 1000; //2GB (MB)
+  const allowedExtensions = [
+    // audio
+    "3gp",
+    "3gpp",
+    "ac3",
+    "aac",
+    "aiff",
+    "amr",
+    "au",
+    "flac",
+    "m4a",
+    "mp3",
+    "mxf",
+    "opus",
+    "ra",
+    "wav",
+    "weba",
+
+    // video
+    "asx",
+    "avi",
+    "ogm",
+    "ogv",
+    "m4v",
+    "mov",
+    "mp4",
+    "mpeg",
+    "mpg",
+    "wmv",
+  ];
+
   //모달 열기
   const handleOpen = () => setOpen(true);
   //모달 닫기
   const handleClose = () => setOpen(false);
-
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        //=======================파일 설정값 조회===================
-        const sizeConfig = await getFileSize();
-        const extensionConfig = await getExtensions();
-
-        const maxFileSizeByte = Number(sizeConfig.name); // number만 추출
-        const maxFileSize = maxFileSizeByte / 1024 / 1024; //바이트 단위 → MB로 변환
-        const allowedExtensions = extensionConfig.map((e) =>
-          e.name.toLowerCase()
-        );
-
-        setMaxFileSize(maxFileSize);
-        setAllowedExtensions(allowedExtensions);
-      } catch {
-        console.log("파일 설정 로딩 실패");
-      }
-    }
-    fetchData();
-  }, []);
 
   // 파일 입력창 열기
   const openFileInput = () => {
@@ -89,11 +90,6 @@ export default function TabSTT(props: TabSTTModalProps) {
     uploadedFiles.forEach((file) => {
       formData.append("file", file);
     });
-
-    if (!maxFileSize || !allowedExtensions) {
-      alert("파일 설정값을 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
-      return;
-    }
 
     //업로드 가능한 확장자, 용량의 파일을 담을 배열
     const validFiles: File[] = [];
@@ -118,9 +114,9 @@ export default function TabSTT(props: TabSTTModalProps) {
       // 2) 용량 체크
       const sizeMB = file.size / 1024 / 1024; //바이트 단위 → MB로 변환
 
-      if (sizeMB > maxFileSize) {
+      if (sizeMB > maxFileSizeMB) {
         alert(
-          `${file.name} 파일의 크기가 ${maxFileSize}MB를 초과했습니다.
+          `${file.name} 파일의 크기가 ${maxFileSizeMB}MB를 초과했습니다.
            (현재: ${sizeMB.toFixed(2)}MB)`
         );
         return; // 이 파일만 제외
@@ -250,7 +246,7 @@ export default function TabSTT(props: TabSTTModalProps) {
               <Typography
                 sx={{ fontSize: "0.875rem", fontWeight: 500, mb: 0.5 }}
               >
-                최대 파일 크기: {maxFileSize}MB, 허용 확장자:{" "}
+                최대 파일 크기: 2GB, 허용 확장자:{" "}
                 {allowedExtensions?.join(", ")}
               </Typography>
             </Box>
