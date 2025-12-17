@@ -2,12 +2,27 @@ import { Box } from "@mui/material";
 import {
   createMeetingComment,
   getMeetingComments,
+  updateComment as updateCommentApi,
+  deleteComment as deleteCommentApi,
 } from "../../comment/api/CommentApi";
 import { useCommentController } from "../../comment/component/useCommentController";
+import { useAuthStore } from "../../store/useAuthStore";
 import CommentSection from "../../comment/component/CommentSection";
 import { CommonPagination } from "../../common/Pagination/Pagination";
 
-export default function TabComment({ meetingId }: { meetingId: number }) {
+interface Props {
+  meetingId: number;
+}
+
+export default function TabComment({ meetingId }: Props) {
+  /* =========================
+     로그인 사용자
+  ========================= */
+  const { member } = useAuthStore(); // member.id
+
+  /* =========================
+     댓글 컨트롤러
+  ========================= */
   const {
     comments,
     commentText,
@@ -17,16 +32,26 @@ export default function TabComment({ meetingId }: { meetingId: number }) {
     page,
     totalCount,
     changePage,
+    updateComment,
+    deleteComment,
   } = useCommentController({
     targetId: meetingId,
     fetchApi: getMeetingComments,
     createApi: createMeetingComment,
+    updateApi: updateCommentApi,
+    deleteApi: deleteCommentApi,
   });
 
   return (
     <Box>
-      {/* 1️⃣ 댓글 목록 */}
-      <CommentSection comments={comments} enableInput={false} />
+      {/* ================= 댓글 목록 ================= */}
+      <CommentSection
+        comments={comments}
+        enableInput={false}
+        currentMemberId={member?.memberId}
+        onUpdateComment={updateComment}
+        onDeleteComment={deleteComment}
+      />
 
       {comments.length === 0 && (
         <Box sx={{ textAlign: "center", color: "text.disabled", my: 2 }}>
@@ -34,7 +59,7 @@ export default function TabComment({ meetingId }: { meetingId: number }) {
         </Box>
       )}
 
-      {/* 2️⃣ 페이지네이션 (목록 아래 / 입력창 위) */}
+      {/* ================= 페이지네이션 ================= */}
       <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
         <CommonPagination
           page={page}
@@ -43,7 +68,7 @@ export default function TabComment({ meetingId }: { meetingId: number }) {
         />
       </Box>
 
-      {/* 3️⃣ 댓글 입력창 */}
+      {/* ================= 댓글 입력 ================= */}
       <CommentSection
         comments={[]}
         enableMention
