@@ -1,21 +1,20 @@
-import {
-  getIssueComments,
-  createIssueComment,
-  updateComment as updateCommentApi,
-  deleteComment as deleteCommentApi, 
-} from "../../../comment/api/CommentApi";
-import { useCommentController } from "../../../comment/component/useCommentController";
-import { CommonPagination } from "../../../common/Pagination/Pagination";
-import CommentSection from "../../../comment/component/CommentSection";
 import { Box } from "@mui/material";
-import { useAuthStore } from "../../../store/useAuthStore";
-
+import {
+  createMeetingComment,
+  getMeetingComments,
+  updateComment as updateCommentApi,
+  deleteComment as deleteCommentApi,
+} from "../../comment/api/CommentApi";
+import { useCommentController } from "../../comment/component/useCommentController";
+import { useAuthStore } from "../../store/useAuthStore";
+import CommentSection from "../../comment/component/CommentSection";
+import { CommonPagination } from "../../common/Pagination/Pagination";
 
 interface Props {
-  issueId: number;
+  meetingId: number;
 }
 
-export default function TabComment({ issueId }: Props) {
+export default function TabComment({ meetingId }: Props) {
   /* =========================
      로그인 사용자
   ========================= */
@@ -36,9 +35,9 @@ export default function TabComment({ issueId }: Props) {
     updateComment,
     deleteComment,
   } = useCommentController({
-    targetId: issueId,
-    fetchApi: getIssueComments,
-    createApi: createIssueComment,
+    targetId: meetingId,
+    fetchApi: getMeetingComments,
+    createApi: createMeetingComment,
     updateApi: updateCommentApi,
     deleteApi: deleteCommentApi,
   });

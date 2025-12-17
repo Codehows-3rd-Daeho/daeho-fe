@@ -7,7 +7,8 @@ export default function KanbanColumn({
   hasMore,
   onLoadMore,
   onClickIssue,
-}: KanbanColumnProps) {
+  isDoneColumn = false,
+}: KanbanColumnProps & { isDoneColumn?: boolean }) {
   const handleClick = () => {
     // 로딩할 데이터가 없는데 버튼 클릭하면 무시
     if (issues.length === 0) return;
@@ -27,6 +28,7 @@ export default function KanbanColumn({
           <KanbanCard
             key={issue.id}
             issue={issue}
+            isDone={isDoneColumn}
             onClick={() => onClickIssue?.(issue)}
           />
         ))}

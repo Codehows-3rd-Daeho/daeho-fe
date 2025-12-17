@@ -79,7 +79,7 @@ export default function IssueUpdate() {
           content: issue.content,
           file: [],
           status: issue.status,
-          host: `${issue.hostName ?? ""} ${issue.hostJPName ?? ""}`.trim(),
+          host: `${issue.hostName ?? ""} ${issue.hostJPName ?? ""}`,
           startDate: issue.startDate,
           endDate: issue.endDate,
           category: categoryId,
@@ -131,6 +131,9 @@ export default function IssueUpdate() {
     fetchFileConfig();
   }, []);
 
+  const isValidDateFormat = (date: string) =>
+    dayjs(date, "YYYY-MM-DD", true).isValid();
+
   const handleSubmit = async () => {
     if (!formData.title.trim()) {
       alert("제목을 입력해주세요.");
@@ -148,6 +151,13 @@ export default function IssueUpdate() {
       alert("마감일을 선택해주세요.");
       return;
     }
+    if (
+      !isValidDateFormat(formData.startDate) ||
+      !isValidDateFormat(formData.endDate)
+    ) {
+      alert("날짜 형식은 YYYY-MM-DD 형식으로 입력해주세요.");
+      return;
+    }
     if (!formData.category) {
       alert("카테고리를 선택해주세요.");
       return;
@@ -155,6 +165,15 @@ export default function IssueUpdate() {
     if (!formData.department || formData.department.length === 0) {
       alert("관련 부서를 선택해주세요.");
       return;
+    }
+
+    if (formData.status === "COMPLETED") {
+      const isConfirmed = window.confirm(
+        "이슈 상태를 진행 완료로 변경하면, 이후 관리자만 수정할 수 있게 됩니다. 수정하시겠습니까?"
+      );
+      if (!isConfirmed) {
+        return;
+      }
     }
 
     const formDataObj = new FormData();
