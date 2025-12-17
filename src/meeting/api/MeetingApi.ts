@@ -14,11 +14,12 @@ export const getMeetingList = async (
 
 //등록
 export const meetingCreate = async (formData: FormData) => {
-  await httpClient.post(`/meeting/create`, formData, {
+  const response = await httpClient.post(`/meeting/create`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
   });
+  return response.data;
 };
 
 // 상세 조회

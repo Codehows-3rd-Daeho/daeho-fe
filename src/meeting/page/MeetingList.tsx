@@ -84,7 +84,7 @@ export default function MeetingList() {
     },
     {
       field: "categoryName",
-      headerName: "주제",
+      headerName: "카테고리",
       flex: 1,
       minWidth: 120,
       headerAlign: "center",
