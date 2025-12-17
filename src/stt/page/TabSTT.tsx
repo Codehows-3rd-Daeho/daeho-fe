@@ -273,6 +273,7 @@ export default function TabSTT() {
       });
 
       alert("음성 파일이 삭제되었습니다.");
+      setIsUploadMode(true);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 401) {
         return;
