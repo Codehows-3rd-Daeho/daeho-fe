@@ -27,11 +27,12 @@ import {
   getMeetingDtl,
   updateMeetingReadStatus,
 } from "../api/MeetingApi";
-import TabComment from "../../issue/page/component/TabComment";
+
 import TabLog from "../../issue/page/component/TabLog";
 import TabMeeting from "../../issue/page/component/TabMeeting";
 import ParticipantListModal from "../../issue/page/component/ParticipantListModal";
 import FileUploadModal from "../component/FileUploadModal";
+import TabComment from "../component/TabComment";
 
 export default function MeetingDtl() {
   const { meetingId } = useParams();
@@ -325,7 +326,7 @@ export default function MeetingDtl() {
           </Tabs>
 
           <Box p={2}>
-            {tabValue === 0 && <TabComment />}
+            {tabValue === 0 && <TabComment meetingId={Number(meetingId)} />}
             {tabValue === 1 && <TabMeeting />}
             {tabValue === 2 && <TabLog />}
           </Box>

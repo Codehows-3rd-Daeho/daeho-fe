@@ -335,7 +335,7 @@ export default function IssueDtl() {
 
         {/* 탭 내용 */}
         <Box p={2}>
-          {tabValue === 0 && <TabComment />}
+          {tabValue === 0 && <TabComment issueId={Number(issueId)} />}
           {tabValue === 1 && <TabMeeting />}
           {tabValue === 2 && <TabLog />}
         </Box>
