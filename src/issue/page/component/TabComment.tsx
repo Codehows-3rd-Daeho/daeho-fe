@@ -1,137 +1,83 @@
 import {
-  Box,
-  Avatar,
-  Typography,
-  TextField,
-  Button,
-  IconButton,
-} from "@mui/material";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import { useState } from "react";
+  getIssueComments,
+  createIssueComment,
+  updateComment as updateCommentApi,
+  deleteComment as deleteCommentApi, 
+} from "../../../comment/api/CommentApi";
+import { useCommentController } from "../../../comment/component/useCommentController";
+import { CommonPagination } from "../../../common/Pagination/Pagination";
+import CommentSection from "../../../comment/component/CommentSection";
+import { Box } from "@mui/material";
+import { useAuthStore } from "../../../store/useAuthStore";
 
-interface Comment {
-  id: number;
-  author: string;
-  content: string;
-  timestamp: string;
-  avatar: string;
+
+interface Props {
+  issueId: number;
 }
 
-export default function TabComment() {
-  const [commentText, setCommentText] = useState("");
+export default function TabComment({ issueId }: Props) {
+  /* =========================
+     로그인 사용자
+  ========================= */
+  const { member } = useAuthStore(); // member.id
 
-  const [comments, setComments] = useState<Comment[]>([
-    {
-      id: 1,
-      author: "홍길동 대리",
-      content:
-        "Ultricies ultricies interdum dolor sodales. Vitae feugiat vitae vitae quis id consectetur. Aenean urna, lectus enim suscipit eget. Tristique bibendum nibh enim dui.",
-      timestamp: "2025.11.11 15:32",
-      avatar: "👤",
-    },
-  ]);
-
-  const handleAddComment = () => {
-    if (!commentText.trim()) return;
-
-    const newComment: Comment = {
-      id: comments.length + 1,
-      author: "홍길동 대리",
-      content: commentText,
-      timestamp: new Date()
-        .toLocaleString("ko-KR", {
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-        })
-        .replace(/\. /g, "."),
-      avatar: "👤",
-    };
-
-    setComments([...comments, newComment]);
-    setCommentText("");
-  };
+  /* =========================
+     댓글 컨트롤러
+  ========================= */
+  const {
+    comments,
+    commentText,
+    setCommentText,
+    addMentionedMemberId,
+    submit,
+    page,
+    totalCount,
+    changePage,
+    updateComment,
+    deleteComment,
+  } = useCommentController({
+    targetId: issueId,
+    fetchApi: getIssueComments,
+    createApi: createIssueComment,
+    updateApi: updateCommentApi,
+    deleteApi: deleteCommentApi,
+  });
 
   return (
     <Box>
-      {/* 댓글 목록 */}
-      {comments.map((comment) => (
-        <Box key={comment.id} sx={{ mb: 3, display: "flex", gap: 2 }}>
-          <Avatar sx={{ width: 40, height: 40, bgcolor: "#e0e0e0" }}>
-            {comment.avatar}
-          </Avatar>
+      {/* ================= 댓글 목록 ================= */}
+      <CommentSection
+        comments={comments}
+        enableInput={false}
+        currentMemberId={member?.memberId}
+        onUpdateComment={updateComment}
+        onDeleteComment={deleteComment}
+      />
 
-          <Box sx={{ flex: 1 }}>
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                mb: 0.5,
-              }}
-            >
-              <Typography sx={{ fontWeight: 600 }}>{comment.author}</Typography>
-
-              <IconButton size="small">
-                <MoreVertIcon fontSize="small" />
-              </IconButton>
-            </Box>
-
-            <Typography
-              sx={{
-                color: "text.secondary",
-                mb: 1,
-                lineHeight: 1.6,
-              }}
-            >
-              {comment.content}
-            </Typography>
-
-            <Typography sx={{ fontSize: "0.85rem", color: "text.disabled" }}>
-              {comment.timestamp}
-            </Typography>
-          </Box>
+      {comments.length === 0 && (
+        <Box sx={{ textAlign: "center", color: "text.disabled", my: 2 }}>
+          아직 등록된 댓글이 없습니다.
         </Box>
-      ))}
+      )}
 
-      {/* 댓글 입력 */}
-      <Box sx={{ display: "flex", gap: 2, alignItems: "start", mt: 3 }}>
-        <Avatar sx={{ width: 40, height: 40, bgcolor: "#e0e0e0" }}>👤</Avatar>
-
-        <Box sx={{ flex: 1 }}>
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
-            placeholder="@홍"
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            sx={{
-              mb: 2,
-              "& .MuiOutlinedInput-root": {
-                borderRadius: 1.5,
-                bgcolor: "#fafafa",
-              },
-            }}
-          />
-
-          <Box sx={{ display: "flex", gap: 1, justifyContent: "flex-end" }}>
-            <Button variant="outlined" size="small" sx={{ borderRadius: 1.5 }}>
-              취소
-            </Button>
-            <Button
-              variant="contained"
-              size="small"
-              onClick={handleAddComment}
-              sx={{ borderRadius: 1.5 }}
-            >
-              저장
-            </Button>
-          </Box>
-        </Box>
+      {/* ================= 페이지네이션 ================= */}
+      <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
+        <CommonPagination
+          page={page}
+          totalCount={totalCount}
+          onPageChange={changePage}
+        />
       </Box>
+
+      {/* ================= 댓글 입력 ================= */}
+      <CommentSection
+        comments={[]}
+        enableMention
+        commentText={commentText}
+        onChangeText={setCommentText}
+        onAddMention={addMentionedMemberId}
+        onSubmit={submit}
+      />
     </Box>
   );
 }

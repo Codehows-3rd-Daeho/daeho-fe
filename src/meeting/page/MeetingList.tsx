@@ -1,4 +1,4 @@
-import { type GridColDef, type GridRenderCellParams } from "@mui/x-data-grid";
+import { type GridColDef } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
 import type { MeetingListItem } from "../type/type";
 import { ListDataGrid } from "../../common/List/ListDataGrid";
@@ -26,8 +26,9 @@ export default function MeetingList() {
         ...item,
         status: getStatusLabel(item.status),
       }));
+
       setData(list);
-      setTotalCount(data.totalElements);
+      setTotalCount(data.totalElements); // 전체 개수
     });
   }, [page]);
 
@@ -44,7 +45,7 @@ export default function MeetingList() {
       field: "title",
       headerName: "제목",
       flex: 2,
-      minWidth: 180,
+      minWidth: 600,
       headerAlign: "center",
       align: "left",
       renderCell: (params) => (
@@ -57,23 +58,20 @@ export default function MeetingList() {
       ),
     },
     {
-      field: "period",
-      headerName: "기간",
-      flex: 1.2,
-      minWidth: 160,
+      field: "status",
+      headerName: "상태",
+      flex: 0.5,
+      minWidth: 80,
       headerAlign: "center",
       align: "center",
-      renderCell: (params: GridRenderCellParams<MeetingListItem>) => {
-        const row = params.row;
-        const start = new Date(row.startDate);
-        const end = new Date(row.endDate);
-        const format = (d: Date) =>
-          `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
-            2,
-            "0"
-          )}-${String(d.getDate()).padStart(2, "0")}`;
-        return `${format(start)} ~ ${format(end)}`;
-      },
+    },
+    {
+      field: "startDate",
+      headerName: "일시",
+      flex: 1.2,
+      minWidth: 190,
+      headerAlign: "center",
+      align: "center",
     },
     {
       field: "departmentName",
@@ -82,6 +80,7 @@ export default function MeetingList() {
       minWidth: 120,
       headerAlign: "center",
       align: "center",
+      renderCell: (params) => params.row.departmentName.join(", "),
     },
     {
       field: "categoryName",
