@@ -321,7 +321,7 @@ export default function MeetingDtl() {
             sx={{ mb: 2 }}
           >
             <Tab label="댓글" />
-            <Tab label="회의 내용" />
+            <Tab label="STT" />
             <Tab label="로그" />
           </Tabs>
 
