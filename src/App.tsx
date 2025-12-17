@@ -35,9 +35,6 @@ function PrivateRoute({ children, isAdmin = false }: PrivateRouteProps) {
   const { isAuthenticated, member } = useAuthStore();
   const role = member?.role;
 
-  console.log(`isAuthentication : ${isAuthenticated}`);
-  console.log(`role : ${role}`);
-
   // 로그인 안 했으면 로그인 페이지로
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 

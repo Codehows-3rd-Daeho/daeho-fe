@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import type { CommentDto, MentionMemberDto } from "../type/type"; // type 경로 확인
 import { searchMembersForMention } from "../api/CommentApi"; // api 경로 확인
@@ -11,12 +10,15 @@ import {
   Typography,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-
-// ✨ 분리된 CommentItem 컴포넌트와 Props 인터페이스를 불러옴
-import { CommentItem } from "./CommentItem"; // 경로 확인
+import UploadFileIcon from "@mui/icons-material/UploadFile";
+import { CommentItem } from "./CommentItem";
+import {
+  getExtensions,
+  getFileSize,
+} from "../../admin/setting/api/FileSettingApi";
 
 // =====================================================================
-// 3. CommentSection Props 인터페이스
+//  CommentSection Props 인터페이스
 // =====================================================================
 
 interface Props {
@@ -39,7 +41,7 @@ interface Props {
 }
 
 // =====================================================================
-// 4. CommentSection 메인 컴포넌트
+//  CommentSection 메인 컴포넌트
 // =====================================================================
 
 export default function CommentSection({
@@ -54,7 +56,6 @@ export default function CommentSection({
   onDeleteComment,
   currentMemberId,
 }: Props) {
-
   const [mentionKeyword, setMentionKeyword] = useState<string | null>(null);
   const [mentionList, setMentionList] = useState<MentionMemberDto[]>([]);
   const [showMentionBox, setShowMentionBox] = useState(false);
@@ -65,8 +66,8 @@ export default function CommentSection({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   /* =========================
-     멘션 외부 클릭 닫기
-  ========================= */
+     멘션 외부 클릭 닫기
+  ========================= */
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -82,8 +83,8 @@ export default function CommentSection({
   }, []);
 
   /* =========================
-     입력 변경 + 멘션 검색
-  ========================= */
+    입력 변경 + 멘션 검색
+  ========================= */
   const handleChange = async (value: string) => {
     onChangeText?.(value);
 
@@ -108,14 +109,40 @@ export default function CommentSection({
     setShowMentionBox(true);
   };
 
+  const [maxFileSize, setMaxFileSize] = useState<number | null>(null);
+  const [allowedExtensions, setAllowedExtensions] = useState<string[] | null>(
+    null
+  );
+
+  useEffect(() => {
+    async function fetchFileSetting() {
+      const sizeConfig = await getFileSize();
+      const extensionConfig = await getExtensions();
+
+      const maxFileSizeByte = Number(sizeConfig.name);
+      const maxFileSize = maxFileSizeByte / 1024 / 1024;
+
+      const allowedExtensions = extensionConfig.map((e) =>
+        e.name.toLowerCase()
+      );
+
+      setMaxFileSize(maxFileSize);
+      setAllowedExtensions(allowedExtensions);
+    }
+
+    fetchFileSetting();
+  }, []);
+
   return (
     <Box>
       {/* ================= 댓글 목록 ================= */}
       {comments.map((c) => (
-        <CommentItem 
+        <CommentItem
           key={c.id}
           comment={c}
           currentUserId={currentMemberId ?? -1}
+          maxFileSize={maxFileSize}
+          allowedExtensions={allowedExtensions}
           onUpdateComment={onUpdateComment}
           onDeleteComment={onDeleteComment}
         />
@@ -139,41 +166,74 @@ export default function CommentSection({
 
             {/* 첨부파일 영역 */}
             <Box sx={{ mt: 1 }}>
-              <Button
-                size="small"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                파일 첨부
-              </Button>
-
               <input
                 type="file"
                 multiple
                 hidden
-                id="comment-file"
                 ref={fileInputRef}
                 onChange={(e) => {
                   if (!e.target.files) return;
-                  // Array.from() 대신 스프레드 문법 사용
-                  setFiles((prev) => [...prev, ...e.target.files!]); 
+                  setFiles((prev) => [...prev, ...Array.from(e.target.files!)]);
                 }}
                 onClick={(e) => (e.currentTarget.value = "")}
               />
+              <Box
+                sx={{
+                  border: "2px dashed #d0d0d0",
+                  borderRadius: 2,
+                  p: 2,
+                  textAlign: "center",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  "&:hover": {
+                    bgcolor: "#fafafa",
+                    borderColor: "#999",
+                  },
+                }}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <UploadFileIcon
+                  sx={{ fontSize: 36, color: "#9e9e9e", mb: 0.5 }}
+                />
+                <Typography sx={{ fontSize: "0.875rem", fontWeight: 500 }}>
+                  파일 첨부
+                </Typography>
+                {maxFileSize && allowedExtensions && (
+                  <Typography
+                    sx={{
+                      mt: 0.5,
+                      fontSize: "0.75rem",
+                      color: "text.secondary",
+                    }}
+                  >
+                    {" "}
+                    최대 파일 크기: {maxFileSize}MB <br /> 허용 확장자: .
+                    {allowedExtensions.join(", .")}
+                  </Typography>
+                )}
+              </Box>
 
               {/* 첨부된 파일 목록 (삭제 버튼 포함) */}
               {files.map((file, idx) => (
                 <Box
                   key={idx}
-                  sx={{ 
-                    display: "flex", 
-                    alignItems: "center", 
-                    gap: 1,
-                    py: 0.5,
-                    fontSize: "0.85rem",
-                    color: "text.secondary",
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    p: 1.2,
+                    bgcolor: "#f5f5f5",
+                    borderRadius: 1.5,
+                    mb: 1,
                   }}
                 >
-                  {file.name}
+                  <Typography
+                    sx={{ fontSize: "0.85rem", fontWeight: 500 }}
+                    noWrap
+                  >
+                    {file.name}
+                  </Typography>
+
                   <IconButton
                     size="small"
                     onClick={() =>
@@ -192,7 +252,7 @@ export default function CommentSection({
                 ref={mentionBoxRef}
                 sx={{
                   position: "absolute",
-                  bottom: "100%", 
+                  bottom: "100%",
                   left: 12,
                   mb: 0.5,
                   backgroundColor: "#fff",
