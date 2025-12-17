@@ -5,7 +5,10 @@ import type {
   IssueListResponse,
 } from "../type/type";
 import httpClient from "../../config/httpClient";
-import type { IssueInMeeting } from "../../meeting/type/type";
+import type {
+  IssueInMeeting,
+  MeetingListResponse,
+} from "../../meeting/type/type";
 
 // 이슈 목록 조회
 export const getIssueList = async (
@@ -63,6 +66,19 @@ export const getIssueDtl = async (issueId: string): Promise<IssueDto> => {
 export const updateReadStatus = async (issueId: string): Promise<void> => {
   await httpClient.put(`/issue/${issueId}/readStatus`);
   console.log(`API: 이슈 ${issueId}의 읽음 상태를 '확인'으로 업데이트`);
+};
+
+// 상세 조회 - 해당 이슈의 관련 회의 list받아오기
+export const getMeetingRelatedIssue = async (
+  issueId: string,
+  page: number,
+  size: number = 5
+): Promise<MeetingListResponse> => {
+  const response = await httpClient.get(`/issue/${issueId}/meeting`, {
+    params: { page, size },
+  });
+  console.log(response);
+  return response.data;
 };
 
 // 수정

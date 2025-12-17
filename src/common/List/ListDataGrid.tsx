@@ -10,7 +10,7 @@ export function ListDataGrid<T extends object>({
 }: CommonDataGridProps<T>) {
   return (
     <>
-      <Box sx={{ p: 2, display: "flex", justifyContent: "center" }}>
+      <Box sx={{ pt: 2, display: "flex", justifyContent: "center" }}>
         <Box sx={{ width: "100%", maxWidth }}>
           <DataGrid<T>
             columnHeaderHeight={48}

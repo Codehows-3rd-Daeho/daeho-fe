@@ -14,6 +14,8 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import PartMember from "./PartMember";
 import type { FileDto, IssueFormValues, IssueMemberDto } from "../type/type";
 import type { MasterDataType } from "../../admin/setting/type/SettingType";
+import { useEffect, useRef } from "react";
+import { formatFileSize, getFileInfo } from "../../common/commonFunction";
 
 interface IssueFormProps {
   formData: IssueFormValues;
@@ -72,6 +74,17 @@ export default function IssueForm({
   onSubmit,
   mode,
 }: IssueFormProps) {
+  // 파일 개수 변화를 감지해 새로 추가된 파일만 강조하고, 파일 목록은 항상 최신 항목이 보이도록 자동 스크롤 처리
+  const listRef = useRef<HTMLDivElement>(null);
+  const fileLength = formData.file?.length ?? 0;
+  const prevLengthRef = useRef<number>(fileLength);
+
+  useEffect(() => {
+    if (!listRef.current) return;
+    listRef.current.scrollTop = listRef.current.scrollHeight;
+    prevLengthRef.current = fileLength;
+  }, [fileLength]);
+
   return (
     <Box>
       <Box
@@ -162,7 +175,7 @@ export default function IssueForm({
               <Typography
                 sx={{ fontSize: "0.875rem", fontWeight: 500, mb: 0.5 }}
               >
-                최대 파일 크기: {maxFileSize}MB, 허용 확장자:{" "}
+                최대 파일 크기: {maxFileSize}MB <br /> 허용 확장자:{" "}
                 {allowedExtensions?.join(", ")}
               </Typography>
             </Box>
@@ -175,61 +188,92 @@ export default function IssueForm({
                 >
                   기존 파일
                 </Typography>
-                {issueFiles.map((file) => (
-                  <Box
-                    key={file.fileId}
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      p: 1.5,
-                      bgcolor: "#fafafa",
-                      borderRadius: 1.5,
-                      mb: 1,
-                    }}
-                  >
-                    <Box
-                      sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
-                    >
+                <Box
+                  sx={{
+                    maxHeight: 300,
+                    overflowY: "auto",
+                    pr: 1,
+                    "&::-webkit-scrollbar": {
+                      width: 6,
+                    },
+                    "&::-webkit-scrollbar-thumb": {
+                      backgroundColor: "#ccc",
+                      borderRadius: 3,
+                    },
+                  }}
+                >
+                  {issueFiles.map((file) => {
+                    const { label, color } = getFileInfo(file.originalName);
+
+                    return (
                       <Box
+                        key={file.fileId}
                         sx={{
-                          width: 40,
-                          height: 40,
-                          bgcolor: "#e0e0e0",
-                          borderRadius: 1,
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "center",
+                          justifyContent: "space-between",
+                          p: 1.5,
+                          bgcolor: "#fafafa",
+                          borderRadius: 1.5,
+                          mb: 1,
                         }}
                       >
-                        <Typography sx={{ fontSize: "1.2rem" }}>📄</Typography>
-                      </Box>
-                      <Box>
-                        <Typography
-                          sx={{ fontSize: "0.875rem", fontWeight: 500 }}
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1.5,
+                          }}
                         >
-                          {file.originalName}
-                        </Typography>
-                        <Typography
-                          sx={{ fontSize: "0.75rem", color: "text.secondary" }}
+                          {/* 확장자 라벨 */}
+                          <Box
+                            sx={{
+                              width: 35,
+                              height: 35,
+                              bgcolor: color,
+                              borderRadius: 1,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              color: "#fff",
+                              fontWeight: 700,
+                              fontSize: "0.75rem",
+                            }}
+                          >
+                            {label}
+                          </Box>
+
+                          <Box>
+                            <Typography
+                              sx={{ fontSize: "0.875rem", fontWeight: 500 }}
+                            >
+                              {file.originalName}
+                            </Typography>
+                            <Typography
+                              sx={{
+                                fontSize: "0.75rem",
+                                color: "text.secondary",
+                              }}
+                            >
+                              {file.size}
+                            </Typography>
+                          </Box>
+                        </Box>
+
+                        <IconButton
+                          size="small"
+                          onClick={() =>
+                            onRemoveExistingFile
+                              ? onRemoveExistingFile(file.fileId)
+                              : null
+                          }
                         >
-                          {file.size}
-                        </Typography>
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
                       </Box>
-                    </Box>
-                    <IconButton
-                      size="small"
-                      onClick={() =>
-                        onRemoveExistingFile
-                          ? onRemoveExistingFile(file.fileId)
-                          : null
-                      }
-                      sx={{ minWidth: "auto", p: 1 }}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Box>
-                ))}
+                    );
+                  })}
+                </Box>
               </Box>
             )}
 
@@ -242,57 +286,89 @@ export default function IssueForm({
                     새로 추가된 파일
                   </Typography>
                 )}
-                {formData.file.map((file, idx) => (
-                  <Box
-                    key={idx}
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      p: 1.5,
-                      bgcolor: "#f5f5f5",
-                      borderRadius: 1.5,
-                      mb: 1,
-                    }}
-                  >
-                    <Box
-                      sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
-                    >
+                <Box
+                  ref={listRef}
+                  sx={{
+                    maxHeight: 300,
+                    overflowY: "auto",
+                    pr: 1,
+                    "&::-webkit-scrollbar": {
+                      width: 6,
+                    },
+                    "&::-webkit-scrollbar-thumb": {
+                      backgroundColor: "#ccc",
+                      borderRadius: 3,
+                    },
+                  }}
+                >
+                  {formData.file.map((file, idx) => {
+                    const { label, color } = getFileInfo(file.name);
+
+                    return (
                       <Box
+                        key={idx}
                         sx={{
-                          width: 40,
-                          height: 40,
-                          bgcolor: "#e0e0e0",
-                          borderRadius: 1,
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "center",
+                          justifyContent: "space-between",
+                          p: 1.5,
+                          bgcolor: "#f5f5f5",
+                          borderRadius: 1.5,
+                          mb: 1,
                         }}
                       >
-                        <Typography sx={{ fontSize: "1.2rem" }}>📄</Typography>
-                      </Box>
-                      <Box>
-                        <Typography
-                          sx={{ fontSize: "0.875rem", fontWeight: 500 }}
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1.5,
+                          }}
                         >
-                          {file.name}
-                        </Typography>
-                        <Typography
-                          sx={{ fontSize: "0.75rem", color: "text.secondary" }}
+                          {/* 확장자 라벨 */}
+                          <Box
+                            sx={{
+                              width: 35,
+                              height: 35,
+                              bgcolor: color,
+                              borderRadius: 1,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              color: "#fff",
+                              fontWeight: 700,
+                              fontSize: "0.75rem",
+                            }}
+                          >
+                            {label}
+                          </Box>
+
+                          <Box>
+                            <Typography
+                              sx={{ fontSize: "0.875rem", fontWeight: 500 }}
+                            >
+                              {file.name}
+                            </Typography>
+                            <Typography
+                              sx={{
+                                fontSize: "0.75rem",
+                                color: "text.secondary",
+                              }}
+                            >
+                              {formatFileSize(file.size)}
+                            </Typography>
+                          </Box>
+                        </Box>
+
+                        <IconButton
+                          size="small"
+                          onClick={() => onFileRemove(idx)}
                         >
-                          {(file.size / 1024 / 1024).toFixed(2)}MB
-                        </Typography>
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
                       </Box>
-                    </Box>
-                    <Button
-                      size="small"
-                      onClick={() => onFileRemove(idx)}
-                      sx={{ minWidth: "auto", p: 1 }}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </Button>
-                  </Box>
-                ))}
+                    );
+                  })}
+                </Box>
               </Box>
             )}
           </Box>
@@ -526,16 +602,20 @@ export default function IssueForm({
           </Box>
 
           {/* 등록 버튼 */}
-          <Box sx={{ display: "flex" }}>
-            <Box sx={{ width: 250 }}></Box>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "flex-end",
+              width: 380,
+            }}
+          >
             <Button
               variant="contained"
               onClick={onSubmit}
-              disabled={isSaving} // ✔ 저장 중이면 버튼 비활성화
+              disabled={isSaving}
               sx={{
+                mt: 3,
                 width: 100,
-                p: 2,
-                m: 3,
                 fontWeight: 600,
                 borderRadius: 1.5,
                 "&:hover": { boxShadow: 3 },

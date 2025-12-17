@@ -14,7 +14,7 @@ const IssueUpdate = lazy(() => import("./issue/page/IssueUpdate"));
 const IssueDtl = lazy(() => import("./issue/page/IssueDtl"));
 const MeetingList = lazy(() => import("./meeting/page/MeetingList"));
 const MeetingDtl = lazy(() => import("./meeting/page/MeetingDtl"));
-// const MeetingUpdate = lazy(() => import("./meeting/page/MeetingUpdate"));
+const MeetingUpdate = lazy(() => import("./meeting/page/MeetingUpdate"));
 const AdminSetting = lazy(() => import("./admin/setting/page/AdminSetting"));
 const MemberList = lazy(() => import("./admin/member/page/MemberList"));
 
@@ -90,10 +90,10 @@ export default function App() {
                   />
                   <Route path="/meeting/create" element={<MeetingCreate />} />
                   <Route path="/meeting/:meetingId" element={<MeetingDtl />} />
-                  {/* <Route
+                  <Route
                     path="/meeting/:meetingId/update"
                     element={<MeetingUpdate />}
-                  /> */}
+                  />
 
                   {/* 관리자 */}
                   <Route

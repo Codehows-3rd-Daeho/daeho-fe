@@ -20,7 +20,6 @@ export default function IssueList() {
 
   // 페이징
   const [page, setPage] = useState(1);
-  // const pageSize = 10;
   const [data, setData] = useState<IssueListItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
 
@@ -44,7 +43,6 @@ export default function IssueList() {
       headerName: "No",
       flex: 0.5,
       minWidth: 60,
-
       headerAlign: "center",
       align: "center",
     },

@@ -17,6 +17,7 @@ import {
   getExtensions,
   getFileSize,
 } from "../../admin/setting/api/FileSettingApi";
+import { Box, CircularProgress } from "@mui/material";
 
 export interface DateRangeType {
   startDate: Date;
@@ -54,6 +55,7 @@ export default function IssueCreate() {
   const [allowedExtensions, setAllowedExtensions] = useState<string[] | null>(
     null
   );
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
@@ -93,7 +95,12 @@ export default function IssueCreate() {
           console.log("memberId 없음:", memberId);
         }
       } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          return;
+        }
         console.log("데이터를 불러오는 중 오류 발생", error);
+      } finally {
+        setIsLoading(false);
       }
     }
     fetchData();
@@ -106,6 +113,9 @@ export default function IssueCreate() {
   //저장 상태
   const [isSaving, setIsSaving] = useState(false);
 
+  const isValidDateFormat = (date: string) =>
+    dayjs(date, "YYYY-MM-DD", true).isValid();
+
   const handleSubmit = async () => {
     //=================필수 입력값 체크=====================
     if (!formData.title.trim()) {
@@ -116,12 +126,21 @@ export default function IssueCreate() {
       alert("본문을 입력해주세요.");
       return;
     }
+    console.log(formData.content);
     if (!formData.startDate) {
       alert("시작일을 선택해주세요.");
       return;
     }
     if (!formData.endDate) {
       alert("마감일을 선택해주세요.");
+      return;
+    }
+    // ================= 날짜 형식 검증 =================
+    if (
+      !isValidDateFormat(formData.startDate) ||
+      !isValidDateFormat(formData.endDate)
+    ) {
+      alert("날짜 형식은 YYYY-MM-DD 형식으로 입력해주세요.");
       return;
     }
     if (!formData.category) {
@@ -290,6 +309,21 @@ export default function IssueCreate() {
 
   //partmember객체 받기
   const [issueMembers, setIssueMembers] = useState<IssueMemberDto[]>([]);
+
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          height: "80vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <>

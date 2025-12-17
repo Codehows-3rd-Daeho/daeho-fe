@@ -35,7 +35,7 @@ export const CommonPagination = ({
 //   const [totalCount, setTotalCount] = useState(0);
 
 // useEffect(() => {
-//   getIssueList(page, 10).then((data) => { // 수정
+//   getIssueList(page -1, 10).then((data) => { // 수정
 //     setData(data.content); // 데이터
 //     setTotalCount(data.totalElements); // 전체 개수
 //   });
