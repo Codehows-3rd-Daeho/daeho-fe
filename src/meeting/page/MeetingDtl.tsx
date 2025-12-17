@@ -244,6 +244,11 @@ export default function MeetingDtl() {
           </Box>
 
           {/* 파일 리스트 */}
+          {meeting.fileList.length == 0 && (
+            <Box sx={{ textAlign: "center", color: "text.disabled", my: 2 }}>
+              등록된 파일이 없습니다.
+            </Box>
+          )}
           {meeting.fileList.map((file) => {
             const { label, color } = getFileInfo(file.originalName);
 
