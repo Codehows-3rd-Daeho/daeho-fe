@@ -25,6 +25,8 @@ export default function TabSTT() {
   const [selectedSttId, setSelectedSttId] = useState<number | null>(null);
   //등록 상태(등록 후 업로드란 안보이게, true: 업로드 화면, false: 결과화면)
   const [isUploadMode, setIsUploadMode] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingText, setLoadingText] = useState("로딩중. . .");
 
   //daglo 최대 업로드 용량, 허용 확장자
   const maxFileSizeMB = 2 * 1000; //2GB (MB)
@@ -85,6 +87,7 @@ export default function TabSTT() {
       } catch (error) {
         if (axios.isAxiosError(error) && error.response?.status === 404) {
           setStts([]);
+          setIsUploadMode(true)
         } else {
           console.error("STT 불러오기 실패:", error);
         }
@@ -93,8 +96,6 @@ export default function TabSTT() {
 
     fetch();
   }, [meetingId]);
-
-  const selectedStt = stts.find((stt) => stt.id === selectedSttId);
 
   // 파일 입력창 열기
   const openFileInput = () => {
@@ -187,6 +188,8 @@ export default function TabSTT() {
     const ok = window.confirm("음성 파일을 등록하시겠습니까?");
     if (!ok) return;
 
+    setIsLoading(true);
+    setLoadingText("음성 파일을 변환 중 입니다. . .")
     setIsUploadMode(false); //결과란 보이게
 
     //새탭 생성시 임시 탭 생성
@@ -213,6 +216,7 @@ export default function TabSTT() {
 
       //변환 결과 조회
       const response = await getSTT(meetingId);
+      setLoadingText("음성 파일이 변환 되었습니다!")
 
       //변환된 STT를 화면에서 선택 상태로 만듦
 
@@ -221,14 +225,12 @@ export default function TabSTT() {
       setStts(response);
       setSelectedSttId(newStt.id);
 
-      alert("음성 파일이 변환 되었습니다!");
-
       //2. 요약
-      alert("요약을 시작합니다!");
+      setLoadingText("요약을 시작합니다. . .");
 
       await uploadContext(newStt.id, newStt.content); //id넣어야됨
 
-      alert("요약 완료!");
+      setLoadingText("요약 완료. . .");
 
       //변환 결과 조회
       const updated = await getSTT(meetingId!);
@@ -238,6 +240,8 @@ export default function TabSTT() {
       alert("음성 파일 등록 중 오류가 발생했습니다.");
       setStts((prev) => prev.filter((stt) => stt.id !== TEMP_STT_ID));
       setIsUploadMode(true); //업로드란 보이게
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -246,7 +250,7 @@ export default function TabSTT() {
   // ========================================================================
 
   const handleDelete = async (sttId: number) => {
-    if (!selectedStt) {
+    if (!selectedSttId) {
       alert("삭제할 STT가 선택되지 않았습니다.");
       return;
     }
@@ -285,16 +289,20 @@ export default function TabSTT() {
       </Typography>
 
       {/* stt 헤더 바 */}
-      <Box display="flex" alignItems="center" gap={1}>
+      <Box display="flex" alignItems="center" mb={3} gap={1}>
         {/* STT 버튼들 */}
         <Tabs
           value={selectedSttId}
-          onChange={(_, newValue) => setSelectedSttId(newValue)}
+          onChange={(_, newValue) => { 
+            setSelectedSttId(newValue)
+            setIsUploadMode(false)
+          }}
         >
           {stts.map((stt, index) => (
             <Tab
               key={stt.id}
               value={stt.id}
+              sx={{padding: '0px 2px'}}
               label={
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   {index + 1}
@@ -314,7 +322,10 @@ export default function TabSTT() {
         </Tabs>
         <Button
           variant="outlined"
-          onClick={() => setIsUploadMode(true)}
+          onClick={() => {
+            setIsUploadMode(true)
+            setSelectedSttId(-1);
+          }}
           sx={{ minWidth: 40 }}
         >
           +
@@ -374,44 +385,54 @@ export default function TabSTT() {
           </Box>
         )}
       </Box>
-
-      {!isUploadMode && (
-        <Box>
-          <Box sx={{ display: "flex", gap: 2, alignItems: "start", mt: 3 }}>
-            <Box sx={{ flex: 1 }}>
-              <Typography>요약 결과</Typography>
-              <TextField
-                fullWidth
-                multiline
-                rows={10}
-                value={selectedStt?.summary ?? "텍스트 없음"}
-                disabled
-                sx={{
-                  mb: 2,
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: 1.5,
-                    bgcolor: "#fafafa",
-                  },
-                }}
-              />
-              <Typography>회의 내용</Typography>
-              <TextField
-                fullWidth
-                multiline
-                value={selectedStt?.content ?? "텍스트 없음"}
-                rows={15}
-                sx={{
-                  mb: 2,
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: 1.5,
-                    bgcolor: "#fafafa",
-                  },
-                }}
-              />
+      
+      <div className="relative">
+        {isLoading && (
+          <div className="absolute inset-0 bg-black/20 backdrop-blur-none z-40 flex items-center justify-center rounded-lg">
+            <div className="bg-white/50 p-6 rounded-xl shadow-2xl flex flex-col items-center gap-3">
+              <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin"></div>
+              <span className="text-sm font-medium text-gray-700">{loadingText}</span>
+            </div>
+          </div>
+        )}
+        {!isUploadMode && (
+          <Box>
+            <Box sx={{ display: "flex", gap: 2, alignItems: "start", mt: 3 }}>
+              <Box sx={{ flex: 1 }}>
+                <Typography>요약 결과</Typography>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={10}
+                  value={stts.find((stt) => stt.id === selectedSttId)?.summary ?? "텍스트 없음"}
+                  disabled
+                  sx={{
+                    mb: 2,
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 1.5,
+                      bgcolor: "#fafafa",
+                    },
+                  }}
+                />
+                <Typography>회의 내용</Typography>
+                <TextField
+                  fullWidth
+                  multiline
+                  value={stts.find((stt) => stt.id === selectedSttId)?.content ?? "텍스트 없음"}
+                  rows={15}
+                  sx={{
+                    mb: 2,
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 1.5,
+                      bgcolor: "#fafafa",
+                    },
+                  }}
+                />
+              </Box>
             </Box>
           </Box>
-        </Box>
-      )}
+        )}
+      </div>
     </>
   );
 }
