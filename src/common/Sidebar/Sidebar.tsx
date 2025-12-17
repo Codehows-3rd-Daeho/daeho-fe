@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import HomeIcon from "@mui/icons-material/Home";
 import LogoutIcon from "@mui/icons-material/Logout";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import {
   Badge,
   Box,
@@ -8,11 +10,13 @@ import {
   Collapse,
   Divider,
   Drawer,
+  IconButton,
   List,
   ListItemButton,
   ListItemIcon,
   ListItemText,
   Toolbar,
+  Tooltip,
 } from "@mui/material";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
@@ -23,6 +27,7 @@ export default function Sidebar({
   items,
   collapsed = false,
   onSelect,
+  onToggle,
   width = 300,
 }: SidebarProps & { isAdmin?: boolean }) {
   const navigate = useNavigate();
@@ -68,27 +73,60 @@ export default function Sidebar({
       sx={{
         width: collapsed ? 72 : width,
         flexShrink: 0,
+        overflow: "visible",
+        transition: "width 0.3s ease",
         "& .MuiDrawer-paper": {
           width: collapsed ? 72 : width,
           boxSizing: "border-box",
+          overflow: "visible",
+          transition: "width 0.3s ease",
         },
       }}
     >
       {/* 로고 */}
       <Toolbar>
-        <Box
-          display="flex"
-          alignItems="center"
-          gap={1}
-          sx={{ cursor: "pointer", py: 3.7 }}
-          onClick={() => navigate("/")}
+        {!collapsed ? (
+          <Box
+            display="flex"
+            alignItems="center"
+            gap={1}
+            sx={{ cursor: "pointer", py: 3.7 }}
+            onClick={() => navigate("/")}
+          >
+            <img
+              src="/daehologo.gif"
+              alt="로고"
+              style={{ width: 244, height: 50 }}
+            />
+          </Box>
+        ) : (
+          <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            sx={{ height: 110 }}
+          >
+            <IconButton onClick={() => navigate("/")}>
+              <HomeIcon />
+            </IconButton>
+          </Box>
+        )}
+        <IconButton
+          onClick={onToggle}
+          sx={{
+            position: "absolute",
+            right: -20,
+            top: "50%",
+            transform: "translateY(-50%)",
+            backgroundColor: "#fff",
+            border: "1px solid #ccc",
+            "&:hover": { backgroundColor: "#f0f0f0" },
+            zIndex: 10,
+            cursor: "ew-resize",
+          }}
         >
-          <img
-            src="/daehologo.gif"
-            alt="로고"
-            style={{ width: 244, height: 50 }}
-          />
-        </Box>
+          {collapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+        </IconButton>
       </Toolbar>
       <Divider />
       {/* 일반 메뉴 */}
@@ -107,23 +145,44 @@ export default function Sidebar({
                   if (hasChildren) handleToggle(item.id);
                   else if (item.href) navigate(item.href);
                 }}
+                sx={{
+                  minHeight: 48,
+                }}
               >
                 <ListItemIcon>
-                  {item.badge ? (
-                    <Badge badgeContent={item.badge} color="primary">
-                      {item.icon ?? <HomeIcon />}
-                    </Badge>
-                  ) : (
-                    item.icon ?? <HomeIcon />
-                  )}
+                  <Tooltip
+                    title={item.label}
+                    placement="right"
+                    arrow
+                    disableInteractive={!collapsed}
+                  >
+                    <Box display="inline-flex">
+                      {item.badge ? (
+                        <Badge badgeContent={item.badge} color="primary">
+                          {item.icon ?? <HomeIcon />}
+                        </Badge>
+                      ) : (
+                        item.icon ?? <HomeIcon />
+                      )}
+                    </Box>
+                  </Tooltip>
                 </ListItemIcon>
-                {!collapsed && <ListItemText primary={item.label} />}
+                {!collapsed && (
+                  <ListItemText
+                    primary={item.label}
+                    sx={{
+                      opacity: collapsed ? 0 : 1,
+                      transition: "opacity 0.3s ease",
+                      whiteSpace: "nowrap",
+                    }}
+                  />
+                )}
                 {!collapsed &&
                   hasChildren &&
                   (open[item.id] ? <ExpandLess /> : <ExpandMore />)}
               </ListItemButton>
               {hasChildren && (
-                <Collapse in={open[item.id]} timeout="auto" unmountOnExit>
+                <Collapse in={open[item.id] && !collapsed} timeout="auto">
                   <List component="div" disablePadding>
                     {children.map((child) => (
                       <ListItemButton
@@ -147,7 +206,6 @@ export default function Sidebar({
         })}
       </List>
       {/* 관리자 메뉴 */}
-      {/* 관리자일경우만 보이게 */}
       {adminMenu && role === "ADMIN" && (
         <>
           <Divider />
@@ -178,9 +236,8 @@ export default function Sidebar({
                   </ListItemButton>
                   {adminChildren.length > 0 && (
                     <Collapse
-                      in={open[adminMenu.id]}
+                      in={open[adminMenu.id] && !collapsed}
                       timeout="auto"
-                      unmountOnExit
                     >
                       <List component="div" disablePadding>
                         {adminChildren.map((child) => (
@@ -221,7 +278,7 @@ export default function Sidebar({
           }}
           onClick={handleLogout}
         >
-          Logout
+          {!collapsed && "Logout"}
         </Button>
       </Box>
     </Drawer>

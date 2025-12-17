@@ -31,7 +31,7 @@ export default function Header({
       position="fixed"
       sx={{
         backgroundColor: "#fff",
-        boxShadow: "none", // 그림자 제거 (선택 사항)
+        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
       }}
     >
       <Toolbar sx={{ justifyContent: "flex-end", gap: 2 }}>
@@ -89,7 +89,7 @@ export default function Header({
             color="text.primary"
             sx={{ whiteSpace: "nowrap" }}
           >
-            | {jobPosition}
+            {jobPosition}
           </Typography>
         </Box>
 

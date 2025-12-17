@@ -183,13 +183,15 @@ export default function IssueDtl() {
         {/* 본문 */}
         <Box
           sx={{
-            p: 3,
+            p: 2,
             bgcolor: "#fafafa",
             borderRadius: 2,
             mb: 3,
             minHeight: 200,
             lineHeight: 1.7,
-            color: "text.secondary",
+            border: "1px solid",
+            borderColor: "divider",
+            whiteSpace: "pre-line",
           }}
         >
           {issue.content}
@@ -219,92 +221,123 @@ export default function IssueDtl() {
             <Typography></Typography>
           </Box>
 
-          {/* 파일 리스트 */}
-          {issue.fileList.map((file) => {
-            const { label, color } = getFileInfo(file.originalName);
+          <Box
+            sx={{
+              maxHeight: issue.fileList.length > 4 ? 260 : "auto",
+              overflowY: issue.fileList.length > 4 ? "auto" : "visible",
+              pr: issue.fileList.length > 4 ? 1 : 0,
+              "&::-webkit-scrollbar": {
+                width: 6,
+              },
+              "&::-webkit-scrollbar-thumb": {
+                backgroundColor: "#ccc",
+                borderRadius: 3,
+              },
+            }}
+          >
+            {/* 파일 리스트 */}
+            {issue.fileList.map((file) => {
+              const { label, color } = getFileInfo(file.originalName);
 
-            return (
-              <Box
-                key={file.fileId}
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 120px 150px 50px",
-                  alignItems: "center",
-                  px: 2,
-                  py: 1.5,
-                  bgcolor: "#fafafa",
-                  borderRadius: 1.5,
-                  mb: 1,
-                }}
-              >
-                {/* 파일 이름 + 아이콘 */}
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                  <Box
-                    sx={{
-                      width: 32,
-                      height: 32,
-                      bgcolor: color,
-                      borderRadius: 1,
-                      display: "flex",
-                      justifyContent: "center",
-                      alignItems: "center",
-                      color: "#fff",
-                      fontSize: "0.7rem",
-                      fontWeight: 700,
-                    }}
-                  >
-                    {label}
+              return (
+                <Box
+                  key={file.fileId}
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 120px 150px 50px",
+                    alignItems: "center",
+                    px: 2,
+                    py: 1.5,
+                    bgcolor: "#fafafa",
+                    borderRadius: 1.5,
+                    mb: 1,
+                  }}
+                >
+                  {/* 파일 이름 + 아이콘 */}
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <Box
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        bgcolor: color,
+                        borderRadius: 1,
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        color: "#fff",
+                        fontSize: "0.7rem",
+                        fontWeight: 700,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {label}
+                    </Box>
+                    <Typography
+                      component="a"
+                      href={`${BASE_URL}${file.path}`}
+                      download={file.originalName}
+                    >
+                      {file.originalName}
+                    </Typography>
                   </Box>
-                  <Typography
+
+                  {/* 크기 */}
+                  <Typography sx={{ color: "text.secondary" }}>
+                    {file.size}
+                  </Typography>
+
+                  {/* 생성 날짜 */}
+                  <Typography sx={{ color: "text.secondary" }}>
+                    {file.createdAt}
+                  </Typography>
+
+                  {/* 다운로드 버튼 */}
+                  <IconButton
+                    size="small"
                     component="a"
                     href={`${BASE_URL}${file.path}`}
                     download={file.originalName}
                   >
-                    {file.originalName}
-                  </Typography>
+                    <DownloadIcon fontSize="small" />
+                  </IconButton>
                 </Box>
-
-                {/* 크기 */}
-                <Typography sx={{ color: "text.secondary" }}>
-                  {file.size}
-                </Typography>
-
-                {/* 생성 날짜 */}
-                <Typography sx={{ color: "text.secondary" }}>
-                  {file.createdAt}
-                </Typography>
-
-                {/* 다운로드 버튼 */}
-                <IconButton
-                  size="small"
-                  component="a"
-                  href={`${BASE_URL}${file.path}`}
-                  download={file.originalName}
-                >
-                  <DownloadIcon fontSize="small" />
-                </IconButton>
-              </Box>
-            );
-          })}
+              );
+            })}
+          </Box>
         </Box>
 
-        {/* 댓글 섹션 */}
-        <Box>
-          <Tabs
-            value={tabValue}
-            onChange={(_, val) => setTabValue(val)}
-            sx={{ mb: 2 }}
-          >
+        {/* 탭 섹션 */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            mb: 2,
+          }}
+        >
+          <Tabs value={tabValue} onChange={(_, val) => setTabValue(val)}>
             <Tab label="댓글" />
             <Tab label="회의" />
             <Tab label="로그" />
           </Tabs>
 
-          <Box p={2}>
-            {tabValue === 0 && <TabComment />}
-            {tabValue === 1 && <TabMeeting />}
-            {tabValue === 2 && <TabLog />}
-          </Box>
+          {/* 회의 탭일 때만 오른쪽에 버튼 */}
+          {tabValue === 1 && role === "USER" && (
+            <Button
+              variant="outlined"
+              onClick={() => navigate(`/meeting/create?issueId=${issueId}`)}
+              sx={{ borderRadius: 1.5, mr: 2 }}
+            >
+              회의 등록
+            </Button>
+          )}
+        </Box>
+
+        {/* 탭 내용 */}
+        <Box p={2}>
+          {tabValue === 0 && <TabComment issueId={Number(issueId)} />}
+          {tabValue === 1 && <TabMeeting />}
+          {tabValue === 2 && <TabLog />}
         </Box>
       </Box>
 
@@ -475,7 +508,8 @@ export default function IssueDtl() {
         </Box>
 
         {/* 버튼 */}
-        {(issue.isEditPermitted || role === "ADMIN") &&
+        {((issue.isEditPermitted && issue.status !== "COMPLETED") ||
+          role === "ADMIN") &&
           issue.isDel === false && (
             <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
               <Button

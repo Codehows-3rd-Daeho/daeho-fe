@@ -1,15 +1,6 @@
 import type { IssueListItem } from "../../issue/type/type";
 
 export type KanbanIssue = IssueListItem;
-
-// export interface KanbanIssue {
-//   id: string | number;
-//   title: string;
-//   status?: string;
-//   statusColor?: string;
-//   [key: string]: any; // 확장 가능
-// }
-
 export interface KanbanColumnDef {
   key: string;
   title: string;
@@ -27,4 +18,5 @@ export type KanbanColumnProps = {
   hasMore: boolean;
   onLoadMore: () => void;
   onClickIssue?: (issue: KanbanIssue) => void;
+  isDone?: boolean;
 };
