@@ -20,7 +20,9 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 
 export interface CommentItemProps {
   comment: CommentDto;
-  currentUserId: number; // ✨ 로그인된 사용자 ID를 prop으로 받음
+  currentUserId: number;
+  maxFileSize: number | null;
+  allowedExtensions: string[] | null;
   onUpdateComment?: (
     commentId: number,
     content: string,
@@ -114,6 +116,21 @@ export const CommentItem = ({
     setRemoveFileIds([]);
   };
 
+  const formatDate = (date: string) => {
+    const d = new Date(date);
+    return d.toLocaleString("ko-KR", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+  const createdTime = new Date(comment.createdAt).getTime();
+  const updatedTime = new Date(comment.updatedAt).getTime();
+
+  const isUpdated = updatedTime > createdTime;
+
   // === 수정 모드 렌더링 ===
   if (isEditing) {
     const currentFiles = comment.fileList.filter(
@@ -128,9 +145,6 @@ export const CommentItem = ({
             <Typography fontWeight={600}>
               {comment.writerName} {comment.writerJPName}
             </Typography>
-            <Button size="small" onClick={handleCancelEdit}>
-              취소
-            </Button>
           </Box>
           <TextField
             fullWidth
@@ -156,6 +170,7 @@ export const CommentItem = ({
             >
               파일 추가
             </Button>
+
             <input
               type="file"
               multiple
@@ -193,6 +208,9 @@ export const CommentItem = ({
           </Box>
 
           <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1 }}>
+            <Button size="small" onClick={handleCancelEdit}>
+              취소
+            </Button>
             <Button
               size="small"
               variant="contained"
@@ -270,6 +288,25 @@ export const CommentItem = ({
 
         {/* 댓글 내용 */}
         <Typography sx={{ mt: 1 }}>{comment.content}</Typography>
+
+        {/* ===== 첨부 파일 (일반 보기) ===== */}
+        {comment.fileList && comment.fileList.length > 0 && (
+          <FileList files={comment.fileList} />
+        )}
+
+        {/* ===== 등록/수정일 ===== */}
+        <Typography
+          sx={{
+            mt: 0.5,
+            fontSize: "0.75rem",
+            color: "text.secondary",
+            textAlign: "left",
+          }}
+        >
+          {isUpdated
+            ? `${formatDate(comment.updatedAt)} (수정됨)`
+            : formatDate(comment.createdAt)}
+        </Typography>
       </Box>
     </Box>
   );

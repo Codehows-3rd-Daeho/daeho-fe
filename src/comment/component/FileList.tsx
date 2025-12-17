@@ -79,7 +79,13 @@ export default function FileList({ files, onRemoveFile }: Props) {
             </Box>
 
             {/* 크기 */}
-            <Typography sx={{ color: "text.secondary" }}>
+            <Typography
+              sx={{
+                p: 0.5,
+                justifySelf: "end",
+                color: "text.secondary",
+              }}
+            >
               {file.size}
             </Typography>
 
@@ -99,6 +105,10 @@ export default function FileList({ files, onRemoveFile }: Props) {
               size="small"
               component="a"
               href={`${BASE_URL}${file.path}`}
+              sx={{
+                p: 0.5,
+                justifySelf: "end",
+              }}
               download={file.originalName}
             >
               <DownloadIcon fontSize="small" />

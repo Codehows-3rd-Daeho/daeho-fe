@@ -29,7 +29,6 @@ export default function IssueKanban() {
         completed: IssueListItem[];
         delayed: IssueListItem[];
       }) => {
-        // pending에서 delay에 포함된 애 제거
         const delayIds = new Set(res.delayed.map((item) => item.id));
         const filteredPending = res.inProgress.filter(
           (item) => !delayIds.has(item.id)
