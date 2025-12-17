@@ -29,9 +29,9 @@ import {
 } from "../api/MeetingApi";
 
 import TabLog from "../../issue/page/component/TabLog";
-import TabMeeting from "../../issue/page/component/TabMeeting";
 import ParticipantListModal from "../../issue/page/component/ParticipantListModal";
 import FileUploadModal from "../component/FileUploadModal";
+import TabSTT from "../../stt/page/TabSTT";
 import TabComment from "../component/TabComment";
 
 export default function MeetingDtl() {
@@ -205,13 +205,15 @@ export default function MeetingDtl() {
         {/* 본문 */}
         <Box
           sx={{
-            p: 3,
+            p: 2,
             bgcolor: "#fafafa",
             borderRadius: 2,
             mb: 3,
             minHeight: 200,
             lineHeight: 1.7,
-            color: "text.secondary",
+            border: "1px solid",
+            borderColor: "divider",
+            whiteSpace: "pre-line",
           }}
         >
           {meeting.content}
@@ -273,6 +275,7 @@ export default function MeetingDtl() {
                       color: "#fff",
                       fontSize: "0.7rem",
                       fontWeight: 700,
+                      flexShrink: 0,
                     }}
                   >
                     {label}
@@ -324,7 +327,7 @@ export default function MeetingDtl() {
 
           <Box p={2}>
             {tabValue === 0 && <TabComment meetingId={Number(meetingId)} />}
-            {tabValue === 1 && <TabMeeting />}
+            {tabValue === 1 && <TabSTT />}
             {tabValue === 2 && <TabLog />}
           </Box>
         </Box>
@@ -584,7 +587,8 @@ export default function MeetingDtl() {
         </Box>
 
         {/* 버튼 */}
-        {(meeting.isEditPermitted || role === "ADMIN") &&
+        {((meeting.isEditPermitted && meeting.status !== "COMPLETED") ||
+          role === "ADMIN") &&
           meeting.isDel === false && (
             <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
               <Button

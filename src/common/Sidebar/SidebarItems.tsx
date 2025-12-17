@@ -12,7 +12,7 @@ export const sidebarItems: SidebarItem[] = [
     id: "issue",
     label: "이슈",
     icon: <AssignmentIcon />,
-    href: "/issue/list",
+    href: "/issue/kanban",
   },
   { id: "meeting", label: "회의", icon: <GroupsIcon />, href: "/meeting/list" },
   {

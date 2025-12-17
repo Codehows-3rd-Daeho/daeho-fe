@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import { useAuthStore } from "../../store/useAuthStore";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import MeetingForm from "./MeetingForm";
 import type {
   IssueInMeeting,
@@ -23,6 +23,7 @@ import axios from "axios";
 import { getIssueInMeeting, getSelectedINM } from "../../issue/api/issueApi";
 import type { IssueIdTitle } from "../../issue/type/type";
 import dayjs, { Dayjs } from "dayjs";
+import { Box, CircularProgress } from "@mui/material";
 
 export default function MeetingCreate() {
   const [formData, setFormData] = useState<MeetingFormValues>({
@@ -59,6 +60,10 @@ export default function MeetingCreate() {
 
   //partmember객체 받기(PartMember에서 전달받은 객체)
   const [meetingMembers, setMeetingMembers] = useState<MeetingMemberDto[]>([]);
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchParams] = useSearchParams();
+  const issueId = searchParams.get("issueId");
 
   const navigator = useNavigate();
 
@@ -99,11 +104,37 @@ export default function MeetingCreate() {
           console.log("memberId 없음:", memberId);
         }
       } catch (error) {
+        if (axios.isAxiosError(error) && error.response?.status === 401) {
+          return;
+        }
         console.log("데이터를 불러오는 중 오류 발생", error);
+      } finally {
+        setIsLoading(false);
       }
     }
     fetchData();
   }, []);
+
+  // 이슈상세에서 회의 등록으로 넘어온 경우
+  useEffect(() => {
+    if (!issueId) return;
+
+    const fetchIssue = async () => {
+      const issue = await getSelectedINM(Number(issueId));
+
+      setFormData((prev) => ({
+        ...prev,
+        issue: String(issue.id),
+        categoryId: issue.categoryId,
+        departmentIds: issue.departmentIds,
+        members: issue.members,
+      }));
+
+      setMeetingMembers(issue.members);
+    };
+
+    fetchIssue();
+  }, [issueId]);
 
   // ===============================================================================================
   //                            저장
@@ -111,6 +142,8 @@ export default function MeetingCreate() {
 
   //저장 상태
   const [isSaving, setIsSaving] = useState(false);
+  const normalizeDateTime = (value: string) =>
+    dayjs(value).format("YYYY-MM-DD HH:mm");
 
   const handleSubmit = async () => {
     //=================필수 입력값 체크=====================
@@ -124,6 +157,12 @@ export default function MeetingCreate() {
     }
     if (!formData.startDate) {
       alert("시작일을 선택해주세요.");
+      return;
+    }
+    const normalizedStartDate = normalizeDateTime(formData.startDate);
+
+    if (!dayjs(normalizedStartDate, "YYYY-MM-DD HH:mm", true).isValid()) {
+      alert("날짜 형식은 YYYY-MM-DD HH:mm 입니다.");
       return;
     }
     if (!formData.categoryId) {
@@ -141,13 +180,12 @@ export default function MeetingCreate() {
     // 1. DTO에 해당하는 데이터 객체 생성
     // 백엔드의 meetingDto에 매핑되어야 할 모든 필드(파일 제외)
     const meetingDto = {
-      title: formData.title, //속성(키): 넣을 값 | 백엔드 Dto 필드명: 프론트 필드명
+      title: formData.title,
       content: formData.content,
       status: formData.status,
       host: formData.host,
-      issueId: Number(formData.issue), //서버로 전송 시 string -> Number 변환
-      startDate: formData.startDate,
-      // endDate: formData.endDate ?? "",
+      issueId: Number(formData.issue),
+      startDate: normalizedStartDate,
       categoryId: Number(formData.categoryId),
       departmentIds: formData.departmentIds.map(Number),
       members: meetingMembers, //PartMember에서 전달받은 객체
@@ -275,7 +313,6 @@ export default function MeetingCreate() {
 
   // ===============================================================================================
   //                          이슈 선택시 카테고리,부서,멤버 자동선택
-  // ===============================================================================================
 
   const onIssueSelect = async (selectedId: string) => {
     console.log("onIssueSelect 실행");
@@ -313,6 +350,21 @@ export default function MeetingCreate() {
       alert("이슈 정보를 불러오지 못했습니다.");
     }
   };
+
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          height: "80vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   return (
     <>

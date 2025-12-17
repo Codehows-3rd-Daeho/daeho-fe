@@ -61,6 +61,35 @@ export default function PartMember({
   const { member } = useAuthStore();
   const memberId = member?.memberId;
 
+  // ===============================================================================================
+  //                      저장 로직(선택 로직에서 각각 추가)
+  // ===============================================================================================
+
+  function handleSave(updatedParticipants: ParticipantList) {
+    //최종 부모 컴포넌트로 전달할 배열 생성(중복 제거)
+    const selectedParticipants = [
+      ...new Map(
+        Object.values(updatedParticipants)
+          .flat() //평탄화: 중첩된 객체를 1차원으로 풀어내거나 단순하게 만드는 것
+          .filter((p) => p.selected || p.id === Number(memberId)) // 선택되었거나 host이면 포함
+          .map((p) => [p.id, p]) // key: id / value: participant
+      ).values(),
+    ];
+
+    //selectedParticipants를 IssueMemberDto 타입으로 변환
+    const result: IssueMemberDto[] = selectedParticipants.map((p) => ({
+      id: p.id,
+      name: p.name,
+      jobPositionName: "",
+      departmentName: "",
+      isHost: p.id === Number(memberId), // 로그인된 멤버면 true
+      isPermitted: p.isPermitted,
+      isRead: false,
+    }));
+
+    onChangeMembers(result); // 부모에게 전달
+  }
+
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -152,13 +181,14 @@ export default function PartMember({
         });
 
         setParticipants(categorized);
+        handleSave(categorized);
       } catch (error) {
         console.error("카테고리/참여자 로딩 실패:", error);
       }
     };
 
     loadData();
-  }, [memberId, initialMembers]);
+  }, [memberId, initialMembers, mode]);
 
   // ===============================================================================================
   //                       분류탭
@@ -184,9 +214,17 @@ export default function PartMember({
       => 분류 탭을 바꿔도 클릭 상태 유지
        */
       Object.keys(updated).forEach((key) => {
-        updated[key] = updated[key].map(
-          (p) => (p.id === id ? { ...p, selected: !p.selected } : p) //클릭한 참여자(id)라면: selected 값을 현재 상태의 반대로 토글 (true → false, false → true)
-        );
+        updated[key] = updated[key].map((p) => {
+          if (p.id !== id) return p;
+
+          const nextSelected = !p.selected;
+
+          return {
+            ...p,
+            selected: nextSelected,
+            isPermitted: nextSelected ? p.isPermitted : false,
+          };
+        });
       });
       handleSave(updated);
       return updated;
@@ -250,11 +288,21 @@ export default function PartMember({
       const updated = { ...prev };
 
       Object.keys(updated).forEach((key) => {
-        updated[key] = updated[key].map((p) => ({
-          ...p,
-          isPermitted: checked,
-          selected: checked || p.selected, // 권한 체크 시 참여자도 선택, 이미 선택된 참여자는 그대로 유지
-        }));
+        updated[key] = updated[key].map((p) => {
+          if (p.isHost) {
+            return {
+              ...p,
+              isPermitted: true, // host 고정
+              selected: true,
+            };
+          }
+
+          return {
+            ...p,
+            isPermitted: checked,
+            selected: checked || p.selected,
+          };
+        });
       });
       handleSave(updated);
       return updated;
@@ -275,35 +323,6 @@ export default function PartMember({
       handleSave(updated);
       return updated;
     });
-  };
-
-  // ===============================================================================================
-  //                      저장 로직(선택 로직에서 각각 추가)
-  // ===============================================================================================
-
-  const handleSave = (updatedParticipants: ParticipantList) => {
-    //최종 부모 컴포넌트로 전달할 배열 생성(중복 제거)
-    const selectedParticipants = [
-      ...new Map(
-        Object.values(updatedParticipants)
-          .flat() //평탄화: 중첩된 객체를 1차원으로 풀어내거나 단순하게 만드는 것
-          .filter((p) => p.selected || p.id === Number(memberId)) // 선택되었거나 host이면 포함
-          .map((p) => [p.id, p]) // key: id / value: participant
-      ).values(),
-    ];
-
-    //selectedParticipants를 IssueMemberDto 타입으로 변환
-    const result: IssueMemberDto[] = selectedParticipants.map((p) => ({
-      id: p.id,
-      name: p.name,
-      jobPositionName: "",
-      departmentName: "",
-      isHost: p.id === Number(memberId), // 로그인된 멤버면 true
-      isPermitted: p.isPermitted,
-      isRead: false,
-    }));
-
-    onChangeMembers(result); // 부모에게 전달
   };
 
   return (
@@ -327,9 +346,8 @@ export default function PartMember({
         open={open}
         onClose={handleClose}
         maxWidth="md"
-        fullWidth
         PaperProps={{
-          sx: { height: "600px", maxHeight: "90vh" },
+          sx: { height: "600px", maxHeight: "90vh", width: "750px" },
         }}
       >
         <DialogTitle
@@ -357,13 +375,19 @@ export default function PartMember({
             sx={{
               borderRight: 1,
               borderColor: "divider",
-              minWidth: 180,
+              minWidth: 200,
               "& .MuiTab-root": {
                 alignItems: "flex-start",
                 textAlign: "left",
-                px: 3,
-                py: 2,
-                minHeight: 48,
+                px: 2.5,
+                py: 1.5,
+                minHeight: 44,
+                textTransform: "none",
+              },
+              "& .Mui-selected": {
+                fontWeight: 600,
+                borderRadius: 1,
+                mx: 1,
               },
             }}
           >
@@ -373,14 +397,16 @@ export default function PartMember({
           </Tabs>
 
           {/* 오른쪽 컨텐츠 */}
-          <DialogContent sx={{ flex: 1, pt: 3 }}>
+          <DialogContent sx={{ flex: 1, overflow: "hidden" }}>
             {/* 전체 선택 */}
             <Box
               sx={{
-                display: "flex",
-                gap: 4,
+                display: "grid",
+                gridTemplateColumns: "1fr 200px",
+                gap: 2,
+                px: 1.5,
                 pb: 2,
-                mb: 3,
+                mb: 1,
                 borderBottom: 1,
                 borderColor: "divider",
               }}
@@ -394,6 +420,7 @@ export default function PartMember({
                   />
                 }
                 label="참여자 전체선택"
+                sx={{ minWidth: 200, maxWidth: 200 }}
               />
               <FormControlLabel
                 control={
@@ -408,14 +435,41 @@ export default function PartMember({
             </Box>
 
             {/* 참여자 목록 */}
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                maxHeight: 420,
+                overflowY: "auto",
+                pr: 2,
+                "&::-webkit-scrollbar": {
+                  width: 6,
+                },
+                "&::-webkit-scrollbar-thumb": {
+                  backgroundColor: "#ccc",
+                  borderRadius: 3,
+                },
+              }}
+            >
               {currentParticipants
                 .slice() // 원본 보호용
                 .sort((a, b) => (a.isHost ? -1 : b.isHost ? 1 : 0))
                 .map((participant) => (
                   <Box
                     key={participant.id}
-                    sx={{ display: "flex", gap: 4, alignItems: "center" }}
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 180px",
+                      alignItems: "center",
+                      p: 1.5,
+                      borderRadius: 1,
+                      bgcolor: participant.selected
+                        ? "primary.50"
+                        : "transparent",
+                      "&:hover": {
+                        bgcolor: "grey.50",
+                      },
+                    }}
                   >
                     <FormControlLabel
                       control={
@@ -428,8 +482,24 @@ export default function PartMember({
                           size="small"
                         />
                       }
-                      label={`${participant.name} ${participant.jobPositionName}`}
-                      sx={{ minWidth: 160 }}
+                      label={
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          <span>{`${participant.name} ${
+                            participant.jobPositionName || ""
+                          }`}</span>
+                          {participant.isHost && (
+                            <span
+                              className="ml-2 px-2 py-0.5 text-xs font-bold rounded-sm"
+                              style={{
+                                backgroundColor: "#FFE0B2",
+                                color: "#E65100",
+                              }}
+                            >
+                              주관자
+                            </span>
+                          )}
+                        </Box>
+                      }
                     />
                     <FormControlLabel
                       control={
