@@ -6,16 +6,17 @@ import MeetingCreate from "./meeting/page/MeetingCreate";
 import AppLayout from "./AppLayout";
 import MeetingScheduler from "./meeting/page/MeetingScheduler";
 
-const IssueList = lazy(() => import("./issue/page/IssueList"));
-const IssueCreate = lazy(() => import("./issue/page/IssueCreate"));
-const AdminSetting = lazy(() => import("./admin/setting/page/AdminSetting"));
-const MemberList = lazy(() => import("./admin/member/page/MemberList"));
-const MeetingList = lazy(() => import("./meeting/page/MeetingList"));
 const Login = lazy(() => import("./login/page/Login"));
+const IssueList = lazy(() => import("./issue/page/IssueList"));
+const IssueKanban = lazy(() => import("./issue/page/IssueKanban"));
+const IssueCreate = lazy(() => import("./issue/page/IssueCreate"));
 const IssueUpdate = lazy(() => import("./issue/page/IssueUpdate"));
 const IssueDtl = lazy(() => import("./issue/page/IssueDtl"));
+const MeetingList = lazy(() => import("./meeting/page/MeetingList"));
 const MeetingDtl = lazy(() => import("./meeting/page/MeetingDtl"));
-const IssueKanban = lazy(() => import("./issue/page/IssueKanban"));
+// const MeetingUpdate = lazy(() => import("./meeting/page/MeetingUpdate"));
+const AdminSetting = lazy(() => import("./admin/setting/page/AdminSetting"));
+const MemberList = lazy(() => import("./admin/member/page/MemberList"));
 
 /*===============================
   PrivateRoute 사용 안내
@@ -73,22 +74,26 @@ export default function App() {
             <PrivateRoute>
               <AppLayout>
                 <Routes>
-                  <Route path="/issue/create" element={<IssueCreate />} />
                   <Route path="/issue/list" element={<IssueList />} />
                   <Route path="/issue/kanban" element={<IssueKanban />} />
+                  <Route path="/issue/create" element={<IssueCreate />} />
                   <Route
                     path="/issue/:issueId/update"
                     element={<IssueUpdate />}
                   />
                   <Route path="/issue/:issueId" element={<IssueDtl />} />
 
-                  <Route path="/meeting/create" element={<MeetingCreate />} />
                   <Route path="/meeting/list" element={<MeetingList />} />
                   <Route
                     path="/meeting/schedule"
                     element={<MeetingScheduler />}
                   />
+                  <Route path="/meeting/create" element={<MeetingCreate />} />
                   <Route path="/meeting/:meetingId" element={<MeetingDtl />} />
+                  {/* <Route
+                    path="/meeting/:meetingId/update"
+                    element={<MeetingUpdate />}
+                  /> */}
 
                   {/* 관리자 */}
                   <Route
