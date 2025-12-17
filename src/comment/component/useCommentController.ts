@@ -63,10 +63,9 @@ export function useCommentController({
     const formData = new FormData();
     formData.append(
       "data",
-      new Blob(
-        [JSON.stringify({ content: commentText, mentionedMemberIds })],
-        { type: "application/json" }
-      )
+      new Blob([JSON.stringify({ content: commentText, mentionedMemberIds })], {
+        type: "application/json",
+      })
     );
     files.forEach((f) => formData.append("file", f));
 
@@ -108,10 +107,9 @@ export function useCommentController({
     const formData = new FormData();
     formData.append(
       "data",
-      new Blob(
-        [JSON.stringify({ content, removeFileIds })],
-        { type: "application/json" }
-      )
+      new Blob([JSON.stringify({ content, removeFileIds })], {
+        type: "application/json",
+      })
     );
     newFiles.forEach((f) => formData.append("file", f));
 

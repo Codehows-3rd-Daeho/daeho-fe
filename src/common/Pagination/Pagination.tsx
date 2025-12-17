@@ -6,7 +6,7 @@ export const CommonPagination = ({
   totalCount,
   onPageChange,
 }: Omit<PaginationProps, "size" | "onSizeChange">) => {
-  const totalPages = Math.max(1, Math.ceil(totalCount / 10)); // size 고정, 예: 10
+  const totalPages = Math.max(1, Math.ceil(totalCount / 10));
 
   const handlePageChange = (_: unknown, newPage: number) => {
     if (newPage > totalPages) return;
