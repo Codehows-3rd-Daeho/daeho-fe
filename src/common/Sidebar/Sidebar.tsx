@@ -84,12 +84,18 @@ export default function Sidebar({
       }}
     >
       {/* 로고 */}
-      <Toolbar>
+      <Toolbar
+        sx={{
+          px: 0,
+          minHeight: collapsed ? 64 : undefined,
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
         {!collapsed ? (
           <Box
             display="flex"
             alignItems="center"
-            gap={1}
             sx={{ cursor: "pointer", py: 3.7 }}
             onClick={() => navigate("/")}
           >
@@ -122,7 +128,6 @@ export default function Sidebar({
             border: "1px solid #ccc",
             "&:hover": { backgroundColor: "#f0f0f0" },
             zIndex: 10,
-            cursor: "ew-resize",
           }}
         >
           {collapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
@@ -147,6 +152,8 @@ export default function Sidebar({
                 }}
                 sx={{
                   minHeight: 48,
+                  py: 2,
+                  px: 3,
                 }}
               >
                 <ListItemIcon>
@@ -175,6 +182,16 @@ export default function Sidebar({
                       transition: "opacity 0.3s ease",
                       whiteSpace: "nowrap",
                     }}
+                    slotProps={{
+                      primary: {
+                        sx: {
+                          fontWeight:
+                            selectedId === item.id || isParentSelected
+                              ? 700
+                              : 500,
+                        },
+                      },
+                    }}
                   />
                 )}
                 {!collapsed &&
@@ -182,7 +199,10 @@ export default function Sidebar({
                   (open[item.id] ? <ExpandLess /> : <ExpandMore />)}
               </ListItemButton>
               {hasChildren && (
-                <Collapse in={open[item.id] && !collapsed} timeout="auto">
+                <Collapse
+                  in={open[item.id] && !collapsed}
+                  timeout={collapsed ? 0 : "auto"}
+                >
                   <List component="div" disablePadding>
                     {children.map((child) => (
                       <ListItemButton
@@ -195,7 +215,16 @@ export default function Sidebar({
                         }}
                       >
                         <ListItemIcon>{child.icon ?? null}</ListItemIcon>
-                        <ListItemText primary={child.label} />
+                        <ListItemText
+                          primary={child.label}
+                          slotProps={{
+                            primary: {
+                              sx: {
+                                fontWeight: child.id === selectedId ? 700 : 500,
+                              },
+                            },
+                          }}
+                        />
                       </ListItemButton>
                     ))}
                   </List>
@@ -225,11 +254,27 @@ export default function Sidebar({
                       if (adminChildren.length > 0) handleToggle(adminMenu.id);
                       else if (adminMenu.href) navigate(adminMenu.href);
                     }}
+                    sx={{ px: 3 }}
                   >
                     <ListItemIcon>
                       {adminMenu.icon ?? <HomeIcon />}
                     </ListItemIcon>
-                    {!collapsed && <ListItemText primary={adminMenu.label} />}
+                    {!collapsed && (
+                      <ListItemText
+                        primary={adminMenu.label}
+                        slotProps={{
+                          primary: {
+                            sx: {
+                              fontWeight:
+                                selectedId === adminMenu.id ||
+                                isAdminParentSelected
+                                  ? 700
+                                  : 500,
+                            },
+                          },
+                        }}
+                      />
+                    )}
                     {!collapsed &&
                       adminChildren.length > 0 &&
                       (open[adminMenu.id] ? <ExpandLess /> : <ExpandMore />)}
@@ -237,7 +282,8 @@ export default function Sidebar({
                   {adminChildren.length > 0 && (
                     <Collapse
                       in={open[adminMenu.id] && !collapsed}
-                      timeout="auto"
+                      timeout={collapsed ? 0 : "auto"}
+                      unmountOnExit
                     >
                       <List component="div" disablePadding>
                         {adminChildren.map((child) => (
@@ -251,7 +297,17 @@ export default function Sidebar({
                             }}
                           >
                             <ListItemIcon>{child.icon ?? null}</ListItemIcon>
-                            <ListItemText primary={child.label} />
+                            <ListItemText
+                              primary={child.label}
+                              slotProps={{
+                                primary: {
+                                  sx: {
+                                    fontWeight:
+                                      child.id === selectedId ? 700 : 500,
+                                  },
+                                },
+                              }}
+                            />
                           </ListItemButton>
                         ))}
                       </List>

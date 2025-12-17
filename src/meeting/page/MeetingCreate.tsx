@@ -207,10 +207,10 @@ export default function MeetingCreate() {
     try {
       setIsSaving(true); // 저장 시작 (중복 클릭 방지)
       console.log("보내는 데이터", meetingDto);
-      await meetingCreate(formDataObj);
+      const meetingId = await meetingCreate(formDataObj);
 
       alert("회의가 등록되었습니다!");
-      navigator("/meeting/list");
+      navigator(`/meeting/${meetingId}`);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 401) {
         return;
