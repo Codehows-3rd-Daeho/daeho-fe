@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 import { deleteSTT, getSTT, uploadContext, uploadSTT } from "../api/sttApi";
-import { Box, Button, Typography, TextField } from "@mui/material";
+import {
+  Box,
+  Button,
+  Typography,
+  TextField,
+  Tabs,
+  Tab,
+  IconButton,
+} from "@mui/material";
 
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 
@@ -15,8 +23,8 @@ export default function TabSTT() {
   // STT 내용을 상태로 관리
   const [stts, setStts] = useState<STT[]>([]);
   const [selectedSttId, setSelectedSttId] = useState<number | null>(null);
-  //등록 상태(등록 후 업로드란 안보이게)
-  const [isUploaded, setIsUploaded] = useState(false);
+  //등록 상태(등록 후 업로드란 안보이게, true: 업로드 화면, false: 결과화면)
+  const [isUploadMode, setIsUploadMode] = useState(false);
 
   //daglo 최대 업로드 용량, 허용 확장자
   const maxFileSizeMB = 2 * 1000; //2GB (MB)
@@ -59,8 +67,13 @@ export default function TabSTT() {
         const response = await getSTT(meetingId);
         setStts(response);
 
-        // ✅ STT가 있으면 업로드 완료 상태
-        setIsUploaded(response.length > 0);
+        //업로드 화면 or 결과 화면
+        if (response.length === 0) {
+          setIsUploadMode(true); // 처음이면 업로드 화면
+        } else {
+          setIsUploadMode(false); // STT 있으면 결과 화면
+          setSelectedSttId(response[0].id);
+        }
 
         //자동 선택
         setSelectedSttId((prev) => {
@@ -174,7 +187,22 @@ export default function TabSTT() {
     const ok = window.confirm("음성 파일을 등록하시겠습니까?");
     if (!ok) return;
 
-    setIsUploaded(true); //업로드란 안보이게
+    setIsUploadMode(false); //결과란 보이게
+
+    //새탭 생성시 임시 탭 생성
+    const TEMP_STT_ID = -1;
+
+    setStts((prev) => [
+      ...prev,
+      {
+        id: TEMP_STT_ID,
+        meetingId: meetingId,
+        content: "",
+        summary: "",
+      } as STT,
+    ]);
+
+    setSelectedSttId(TEMP_STT_ID);
 
     try {
       const formData = new FormData();
@@ -187,7 +215,8 @@ export default function TabSTT() {
       const response = await getSTT(meetingId);
 
       //변환된 STT를 화면에서 선택 상태로 만듦
-      const newStt = response[0];
+
+      const newStt = response[response.length - 1];
 
       setStts(response);
       setSelectedSttId(newStt.id);
@@ -195,6 +224,8 @@ export default function TabSTT() {
       alert("음성 파일이 변환 되었습니다!");
 
       //2. 요약
+      alert("요약을 시작합니다!");
+
       await uploadContext(newStt.id, newStt.content); //id넣어야됨
 
       alert("요약 완료!");
@@ -205,7 +236,8 @@ export default function TabSTT() {
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 401) return;
       alert("음성 파일 등록 중 오류가 발생했습니다.");
-      setIsUploaded(false); //업로드란 보이게
+      setStts((prev) => prev.filter((stt) => stt.id !== TEMP_STT_ID));
+      setIsUploadMode(true); //업로드란 보이게
     }
   };
 
@@ -213,7 +245,7 @@ export default function TabSTT() {
   //                               삭제
   // ========================================================================
 
-  const handleDelete = async () => {
+  const handleDelete = async (sttId: number) => {
     if (!selectedStt) {
       alert("삭제할 STT가 선택되지 않았습니다.");
       return;
@@ -223,16 +255,18 @@ export default function TabSTT() {
     if (!isConfirmed) return;
 
     try {
-      await deleteSTT(selectedStt.id);
-
+      await deleteSTT(sttId);
       // 상태에서 삭제
-      setStts((prev) => prev.filter((stt) => stt.id !== selectedStt.id));
+      setStts((prev) => {
+        const updated = prev.filter((stt) => stt.id !== sttId);
+        // 선택된 STT가 삭제되면 다음 STT 선택
+        setSelectedSttId((current) => {
+          if (current !== sttId) return current;
+          return updated[0]?.id ?? null;
+        });
 
-      // 선택된 STT가 삭제되면 다음 STT 선택
-      if (selectedSttId === selectedStt.id) {
-        const remaining = stts.filter((stt) => stt.id !== selectedStt.id);
-        setSelectedSttId(remaining[0]?.id ?? null);
-      }
+        return updated;
+      });
 
       alert("음성 파일이 삭제되었습니다.");
     } catch (error) {
@@ -252,8 +286,44 @@ export default function TabSTT() {
 
       {/* stt 헤더 바 */}
       <Box display="flex" alignItems="center" gap={1}>
-        {/* 첨부 파일 */}
-        {!isUploaded && (
+        {/* STT 버튼들 */}
+        <Tabs
+          value={selectedSttId}
+          onChange={(_, newValue) => setSelectedSttId(newValue)}
+        >
+          {stts.map((stt, index) => (
+            <Tab
+              key={stt.id}
+              value={stt.id}
+              label={
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  {index + 1}
+                  <IconButton
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(stt.id);
+                    }}
+                  >
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+              }
+            />
+          ))}
+        </Tabs>
+        <Button
+          variant="outlined"
+          onClick={() => setIsUploadMode(true)}
+          sx={{ minWidth: 40 }}
+        >
+          +
+        </Button>
+      </Box>
+
+      {/* 첨부 파일 */}
+      <Box>
+        {isUploadMode && (
           <Box sx={{ mb: 3 }}>
             <Typography sx={{ fontWeight: 600, fontSize: "0.875rem", mb: 1 }}>
               첨부 파일
@@ -303,42 +373,9 @@ export default function TabSTT() {
             </Box>
           </Box>
         )}
-
-        {/* STT 버튼들 */}
-        <Box display="flex" gap={1}>
-          {stts.map((stt, index) => (
-            <Button
-              key={stt.id}
-              variant={selectedSttId === stt.id ? "contained" : "outlined"}
-              onClick={() => setSelectedSttId(stt.id)}
-              sx={{
-                width: "100px",
-                display: "flex",
-                justifyContent: "space-between", // 좌우로 밀기
-                alignItems: "center",
-                padding: "4px 8px", // 적절한 여백
-              }}
-            >
-              {index + 1}
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDelete();
-                }}
-                sx={{
-                  minWidth: 0, // 버튼 최소 너비 제거
-                  padding: 0, // 안쪽 여백 제거
-                  width: "auto", // 자동 너비
-                }}
-              >
-                <CloseIcon fontSize="small" sx={{ color: "black" }} />
-              </Button>
-            </Button>
-          ))}
-        </Box>
       </Box>
 
-      {isUploaded && (
+      {!isUploadMode && (
         <Box>
           <Box sx={{ display: "flex", gap: 2, alignItems: "start", mt: 3 }}>
             <Box sx={{ flex: 1 }}>
