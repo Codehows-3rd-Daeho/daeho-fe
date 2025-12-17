@@ -120,7 +120,7 @@ export default function KanbanCard({
 
           {/* 오른쪽 하단: 주관자 이름 */}
           <span className="font-medium text-gray-600">
-            주관자 {issue.hostName}
+            {issue.hostName} {issue.hostJPName}
           </span>
         </div>
       </div>

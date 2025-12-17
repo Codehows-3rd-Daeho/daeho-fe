@@ -18,6 +18,7 @@ import type { MeetingFormValues, MeetingMemberDto } from "../type/type";
 import type { FileDto, IssueIdTitle } from "../../issue/type/type";
 import React, { useEffect, useRef, useState } from "react";
 import { formatFileSize, getFileInfo } from "../../common/commonFunction";
+import { useNavigate } from "react-router-dom";
 
 interface MeetingFormProps {
   formData: MeetingFormValues;
@@ -67,6 +68,8 @@ export default function MeetingForm({
   onSubmit,
   mode,
 }: MeetingFormProps) {
+  const navigate = useNavigate();
+
   // 파일 개수 변화를 감지해 새로 추가된 파일만 강조하고, 파일 목록은 항상 최신 항목이 보이도록 자동 스크롤 처리
   const listRef = useRef<HTMLDivElement>(null);
   const fileLength = formData.file?.length ?? 0;
@@ -168,6 +171,7 @@ export default function MeetingForm({
               id="fileUpload"
               style={{ display: "none" }}
               onChange={onFileUpload}
+              accept={allowedExtensions?.map((e) => `.${e}`).join(",") ?? ""}
             />
 
             <Box
@@ -657,8 +661,22 @@ export default function MeetingForm({
               display: "flex",
               justifyContent: "flex-end",
               width: 380,
+              gap: 1,
             }}
           >
+            <Button
+              variant="outlined"
+              onClick={() => navigate(-1)}
+              sx={{
+                mt: 3,
+                width: 100,
+                fontWeight: 600,
+                borderRadius: 1.5,
+                "&:hover": { boxShadow: 3 },
+              }}
+            >
+              취소
+            </Button>
             <Button
               variant="contained"
               onClick={onSubmit}

@@ -8,6 +8,7 @@ export type IssueListItem = {
   categoryName: string; // 주제
   departmentName: string[]; // 부서
   hostName: string; // 주관자
+  hostJPName: string;
   isDel?: boolean; // 삭제상태
 };
 

@@ -14,7 +14,7 @@ export interface FileItem {
 interface Props {
   files: FileItem[];
   // 파일 삭제 핸들러 추가: fileId를 받아서 처리
-  onRemoveFile?: (fileId: number) => void; 
+  onRemoveFile?: (fileId: number) => void;
 }
 
 export default function FileList({ files, onRemoveFile }: Props) {
@@ -68,10 +68,10 @@ export default function FileList({ files, onRemoveFile }: Props) {
                 component="a"
                 href={`${BASE_URL}${file.path}`}
                 download={file.originalName}
-                sx={{ 
-                  overflow: "hidden", 
-                  textOverflow: "ellipsis", 
-                  whiteSpace: "nowrap" 
+                sx={{
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
                 }}
               >
                 {file.originalName}
@@ -79,7 +79,13 @@ export default function FileList({ files, onRemoveFile }: Props) {
             </Box>
 
             {/* 크기 */}
-            <Typography sx={{ color: "text.secondary" }}>
+            <Typography
+              sx={{
+                p: 0.5,
+                justifySelf: "end",
+                color: "text.secondary",
+              }}
+            >
               {file.size}
             </Typography>
 
@@ -99,6 +105,10 @@ export default function FileList({ files, onRemoveFile }: Props) {
               size="small"
               component="a"
               href={`${BASE_URL}${file.path}`}
+              sx={{
+                p: 0.5,
+                justifySelf: "end",
+              }}
               download={file.originalName}
             >
               <DownloadIcon fontSize="small" />

@@ -23,11 +23,12 @@ export const getIssueList = async (
 
 //등록
 export const issueCreate = async (formData: FormData) => {
-  await httpClient.post(`/issue/create`, formData, {
+  const response = await httpClient.post(`/issue/create`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
   });
+  return response.data;
 };
 
 //이슈 리스트

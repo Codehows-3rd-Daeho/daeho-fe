@@ -112,7 +112,7 @@ export default function MeetingUpdate() {
           return;
         }
         alert("회의 데이터 로딩 중 오류가 발생했습니다.");
-        navigate("/meeting/list");
+        navigate(`/meeting/${meetingId}`);
       } finally {
         setIsLoading(false);
       }
@@ -301,6 +301,8 @@ export default function MeetingUpdate() {
       if (!isConfirmed) {
         return;
       }
+    } else {
+      if (!window.confirm("수정하시겠습니까?")) return;
     }
 
     const formDataObj = new FormData();

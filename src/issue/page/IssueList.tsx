@@ -74,7 +74,7 @@ export default function IssueList() {
       field: "period",
       headerName: "기간",
       flex: 1.2,
-      minWidth: 190,
+      minWidth: 250,
       headerAlign: "center",
       align: "center",
       renderCell: (params: GridRenderCellParams<IssueListItem>) => {
@@ -93,7 +93,7 @@ export default function IssueList() {
       field: "departmentName",
       headerName: "부서",
       flex: 1,
-      minWidth: 120,
+      minWidth: 200,
 
       headerAlign: "center",
       align: "center",
@@ -101,7 +101,7 @@ export default function IssueList() {
     },
     {
       field: "categoryName",
-      headerName: "주제",
+      headerName: "카테고리",
       flex: 1,
       minWidth: 120,
 

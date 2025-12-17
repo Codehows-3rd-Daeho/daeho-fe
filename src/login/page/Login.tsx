@@ -68,12 +68,17 @@ export default function Login() {
 
   return (
     <Paper sx={{ p: 4, width: 380, textAlign: "center" }}>
-      {/* Company Logo */}
-      <Box sx={{ mb: 5 }}>
+      <Box
+        sx={{
+          mb: 5,
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
         <img
           src="/daehologo.gif"
           alt="로고"
-          style={{ width: 244, height: 50 }}
+          style={{ width: 244, height: 50, display: "block" }}
         />
       </Box>
 

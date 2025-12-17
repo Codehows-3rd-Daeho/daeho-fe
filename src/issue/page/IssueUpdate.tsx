@@ -108,7 +108,7 @@ export default function IssueUpdate() {
         }
         console.error("이슈 데이터 로딩 중 오류 발생:", error);
         alert("이슈 데이터 로딩 중 오류가 발생했습니다.");
-        navigate("/issue/list");
+        navigate(`/issue/${issueId}`);
       } finally {
         setIsLoading(false);
       }
@@ -174,6 +174,8 @@ export default function IssueUpdate() {
       if (!isConfirmed) {
         return;
       }
+    } else {
+      if (!window.confirm("수정하시겠습니까?")) return;
     }
 
     const formDataObj = new FormData();
