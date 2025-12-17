@@ -3,7 +3,6 @@ import type { STT } from "../type/type";
 
 //stt 등록
 export const uploadSTT = async (id: string, formData: FormData) => {
-  console.log("id: ", id);
   await httpClient.post(`/stt/meeting/${id}`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
@@ -19,7 +18,6 @@ export const getSTT = async (id: string): Promise<STT[]> => {
 
 //summary 요청
 export const uploadContext = async (id: number, content: string) => {
-  console.log("id: ", id);
   await httpClient.post(`/stt/${id}/summary`, content);
 };
 
