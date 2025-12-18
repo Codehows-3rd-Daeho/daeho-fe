@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { CommentDto, MentionMemberDto } from "../type/type"; // type 경로 확인
+import type { CommentDto, MentionMemberDto, Mention } from "../type/type"; // type 경로 확인
 import { searchMembersForMention } from "../api/CommentApi"; // api 경로 확인
 import {
   Avatar,
@@ -65,6 +65,14 @@ export default function CommentSection({
   const [files, setFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  const textStyle = {
+    fontFamily: "Roboto, Helvetica, Arial, sans-serif",
+    fontSize: "0.875rem",
+    lineHeight: "1.4375em", // ⭐ MUI TextField 기본
+    letterSpacing: "0.01071em",
+    whiteSpace: "pre-wrap",
+    wordBreak: "break-word",
+  };
   /* =========================
      멘션 외부 클릭 닫기
   ========================= */
@@ -85,8 +93,44 @@ export default function CommentSection({
   /* =========================
     입력 변경 + 멘션 검색
   ========================= */
+  const [selectedMentions, setSelectedMentions] = useState<Mention[]>([]);
+  const renderMentionText = (text: string, mentions: Mention[]) => {
+    if (!mentions.length) return text;
+
+    const nodes: React.ReactNode[] = [];
+    let cursor = 0;
+
+    mentions.forEach((m, idx) => {
+      const mentionText = `@${m.name}`;
+      const index = text.indexOf(mentionText, cursor);
+
+      if (index === -1) return;
+
+      nodes.push(<span key={`text-${idx}`}>{text.slice(cursor, index)}</span>);
+
+      nodes.push(
+        <span
+          key={`mention-${m.memberId}-${idx}`}
+          style={{ color: "#1976d2", fontWeight: 500 }}
+        >
+          {mentionText}
+        </span>
+      );
+
+      cursor = index + mentionText.length;
+    });
+
+    nodes.push(<span key="last">{text.slice(cursor)}</span>);
+
+    return nodes;
+  };
+
   const handleChange = async (value: string) => {
     onChangeText?.(value);
+
+    setSelectedMentions((prev) =>
+      prev.filter((m) => value.includes(`@${m.name}`))
+    );
 
     if (!enableMention) return;
 
@@ -133,6 +177,32 @@ export default function CommentSection({
     fetchFileSetting();
   }, []);
 
+  // 드래그 오버 시 브라우저 기본 동작 막기
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+  };
+  // 드롭 시 파일 처리
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (!e.dataTransfer.files || e.dataTransfer.files.length === 0) return;
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    const validFiles = droppedFiles.filter((file) => {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "";
+      if (allowedExtensions && !allowedExtensions.includes(ext)) {
+        alert(`허용되지 않은 확장자입니다: ${file.name}`);
+        return false;
+      }
+      if (maxFileSize && file.size / 1024 / 1024 > maxFileSize) {
+        alert(
+          `${file.name} 파일의 크기가 최대 용량(${maxFileSize}MB)을 초과했습니다.`
+        );
+        return false;
+      }
+      return true;
+    });
+    setFiles((prev) => [...prev, ...validFiles]);
+  };
+
   return (
     <Box>
       {/* ================= 댓글 목록 ================= */}
@@ -154,6 +224,21 @@ export default function CommentSection({
           <Avatar sx={{ width: 40, height: 40 }}>👤</Avatar>
 
           <Box sx={{ flex: 1, position: "relative" }}>
+            <Box
+              sx={{
+                position: "absolute",
+                inset: 0,
+                padding: "16.5px 14px",
+                pointerEvents: "none",
+                boxSizing: "border-box",
+                overflow: "hidden",
+                color: "#000",
+                ...textStyle,
+              }}
+            >
+              {renderMentionText(commentText, selectedMentions)}
+            </Box>
+
             <TextField
               fullWidth
               multiline
@@ -162,6 +247,15 @@ export default function CommentSection({
               value={commentText}
               inputRef={inputRef}
               onChange={(e) => handleChange(e.target.value)}
+              sx={{
+                "& textarea": {
+                  color: "transparent",
+                  caretColor: "#000",
+                  boxSizing: "border-box",
+                  overflowY: "auto",
+                  ...textStyle,
+                },
+              }}
             />
 
             {/* 첨부파일 영역 */}
@@ -191,6 +285,8 @@ export default function CommentSection({
                   },
                 }}
                 onClick={() => fileInputRef.current?.click()}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
               >
                 <UploadFileIcon
                   sx={{ fontSize: 36, color: "#9e9e9e", mb: 0.5 }}
@@ -278,12 +374,17 @@ export default function CommentSection({
                     onClick={() => {
                       if (!mentionKeyword || !onChangeText) return;
 
-                      onChangeText(
-                        commentText.replace(
-                          new RegExp(`@${mentionKeyword}$`),
-                          `@${m.name} `
-                        )
+                      const nextText = commentText.replace(
+                        new RegExp(`@${mentionKeyword}$`),
+                        `@${m.name} `
                       );
+
+                      onChangeText(nextText);
+
+                      setSelectedMentions((prev) => [
+                        ...prev,
+                        { memberId: m.id, name: m.name },
+                      ]);
 
                       onAddMention?.(m.id);
                       setShowMentionBox(false);

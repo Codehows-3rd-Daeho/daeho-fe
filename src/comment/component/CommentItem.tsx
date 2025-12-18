@@ -13,6 +13,7 @@ import {
 import FileList from "./FileList"; // FileList 경로 확인
 import CloseIcon from "@mui/icons-material/Close";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import RenderMentionText from "./RenderMentionText";
 
 // =====================================================================
 // CommentItem Props 인터페이스
@@ -287,7 +288,9 @@ export const CommentItem = ({
         </Box>
 
         {/* 댓글 내용 */}
-        <Typography sx={{ mt: 1 }}>{comment.content}</Typography>
+        <Typography sx={{ mt: 1 }}>
+          {RenderMentionText(comment.content, comment.mentions ?? [])}
+        </Typography>
 
         {/* ===== 첨부 파일 (일반 보기) ===== */}
         {comment.fileList && comment.fileList.length > 0 && (
