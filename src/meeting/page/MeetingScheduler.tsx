@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { Box, Typography, IconButton } from "@mui/material";
+import { Box, Typography, IconButton, Card } from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { getMeetingMonth } from "../api/MeetingApi";
 import type { MeetingListItem } from "../type/type";
+import { useNavigate } from "react-router-dom";
 
 const days = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -30,6 +31,8 @@ function getMonthMatrix(year: number, month: number) {
 }
 
 export default function MeetingScheduler() {
+  const navigate = useNavigate();
+
   const today = new Date();
   const [current, setCurrent] = useState(new Date());
 
@@ -43,6 +46,7 @@ export default function MeetingScheduler() {
     month === today.getMonth() &&
     year === today.getFullYear();
 
+  //회의 조회용
   const [meetings, setMeetings] = useState<MeetingListItem[]>([]);
 
   //달이 바뀔 때마다 데이터 조회
@@ -50,6 +54,7 @@ export default function MeetingScheduler() {
     const fetchMeetings = async () => {
       const response = await getMeetingMonth(year, month + 1);
       setMeetings(response);
+      console.log("response: ", response);
     };
 
     fetchMeetings();
@@ -78,8 +83,29 @@ export default function MeetingScheduler() {
     return map;
   }, [meetings]);
 
+  //더보기시 확장
+  const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set());
+
+  const toggleExpand = (day: number) => {
+    setExpandedDays((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(day)) newSet.delete(day); // 이미 확장되었으면 접기
+      else newSet.add(day); // 확장
+      return newSet;
+    });
+  };
+
   return (
-    <Box sx={{ p: 3, backgroundColor: "#fff", borderRadius: 3 }}>
+    <Box
+      sx={{
+        p: 3,
+        backgroundColor: "#fff",
+        borderRadius: 3,
+        minWidth: 1500, // ✅ 최소 너비
+        maxWidth: 2000, // (선택) 너무 커지지 않게
+        mx: "auto", // 가운데 정렬
+      }}
+    >
       {/* Header */}
       <Box
         sx={{
@@ -93,7 +119,7 @@ export default function MeetingScheduler() {
         <IconButton onClick={() => setCurrent(new Date(year, month - 1, 1))}>
           <ChevronLeftIcon />
         </IconButton>
-        <Typography fontWeight={600}>
+        <Typography fontSize={20} fontWeight={600}>
           {year}년 {month + 1}월
         </Typography>
         <IconButton onClick={() => setCurrent(new Date(year, month + 1, 1))}>
@@ -109,7 +135,7 @@ export default function MeetingScheduler() {
           <Typography
             key={d}
             align="center"
-            fontSize={14}
+            fontSize={18}
             fontWeight={600}
             color="#6b7280"
           >
@@ -139,48 +165,114 @@ export default function MeetingScheduler() {
               <Box
                 key={di}
                 sx={{
-                  height: 110,
+                  // height: 250,
                   borderRadius: 2,
-                  border: "1px solid #eef2f7",
+                  border: "2px solid #eef2f7",
                   p: 1,
                   position: "relative",
                   backgroundColor: day && isToday(day) ? "#f0f6ff" : "#fff",
                 }}
               >
-                {/* {day && (
-                  <Typography
-                    fontSize={13}
-                    fontWeight={isToday(day) ? 700 : 500}
-                    color={isToday(day) ? "primary.main" : "#374151"}
-                  >
-                    {day}
-                  </Typography>
-                )} */}
                 {day && (
                   <>
                     <Typography
-                      fontSize={13}
+                      fontSize={15}
                       fontWeight={isToday(day) ? 700 : 500}
                       color={isToday(day) ? "primary.main" : "#374151"}
                     >
                       {day}
                     </Typography>
 
-                    <Box sx={{ mt: 0.5 }}>
-                      {meetingsByDay.get(day)?.map((meeting) => (
-                        <Typography
+                    <Box
+                      sx={{
+                        mt: 0.5,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 0.5,
+                        minWidth: 100,
+                      }}
+                    >
+                      {(expandedDays.has(day)
+                        ? meetingsByDay.get(day)
+                        : meetingsByDay.get(day)?.slice(0, 3)
+                      )?.map((meeting) => (
+                        <Card
                           key={meeting.id}
-                          fontSize={11}
+                          variant="outlined"
                           sx={{
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            color: "#2563eb",
+                            boxSizing: "border-box",
+                            px: 1,
+                            py: 0.75,
+                            cursor: "pointer",
+                            border: "2px solid #bb91ff",
+                            backgroundColor: "#f6f0ff",
+                            width: 180,
+                            "&:hover": {
+                              backgroundColor: "#e0e7ff",
+                              borderColor: "#2563eb",
+                            },
                           }}
+                          onClick={() => navigate(`/meeting/${meeting.id}`)}
                         >
-                          • {meeting.title}
-                        </Typography>
+                          {/* 일시 , 카테고리 */}
+                          <Box
+                            sx={{
+                              display: "flex",
+                              justifyContent: "space-between", // 좌우로 벌리기
+                              gridTemplateColumns: "auto 1fr",
+                              gap: 1,
+                              width: "100%",
+                            }}
+                          >
+                            {meeting.startDate && (
+                              <Box
+                                sx={{ fontSize: 10, color: "text.secondary" }}
+                              >
+                                {meeting.startDate?.split(" ")[1]}
+                              </Box>
+                            )}
+
+                            <Box
+                              sx={{
+                                fontSize: 10,
+                                color: "text.secondary",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {meeting.categoryName}
+                            </Box>
+                          </Box>
+                          <Box
+                            sx={{
+                              fontSize: 14,
+                              fontWeight: 500,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                              width: "100%", // 카드 폭에 맞춤
+                            }}
+                          >
+                            {meeting.title}
+                          </Box>
+                        </Card>
                       ))}
+
+                      {/* 더보기 / 접기 버튼 */}
+                      {meetingsByDay.get(day) &&
+                        meetingsByDay.get(day)!.length > 3 && (
+                          <Typography
+                            fontSize={12}
+                            color="text.secondary"
+                            sx={{ mt: 0.5, cursor: "pointer" }}
+                            onClick={() => toggleExpand(day)}
+                          >
+                            {expandedDays.has(day)
+                              ? "접기"
+                              : `+${meetingsByDay.get(day)!.length - 3} more`}
+                          </Typography>
+                        )}
                     </Box>
                   </>
                 )}

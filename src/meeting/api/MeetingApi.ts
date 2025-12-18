@@ -1,4 +1,8 @@
-import type { MeetingDto, MeetingListResponse } from "../type/type";
+import type {
+  MeetingDto,
+  MeetingListItem,
+  MeetingListResponse,
+} from "../type/type";
 import httpClient from "../../config/httpClient";
 
 // 회의 목록 조회(페이지)
@@ -16,7 +20,7 @@ export const getMeetingList = async (
 export const getMeetingMonth = async (
   year: number,
   month: number
-): Promise<MeetingListResponse> => {
+): Promise<MeetingListItem[]> => {
   console.log("getMeetingMonth실행확인1");
 
   const response = await httpClient.get(`/meeting/scheduler`, {
