@@ -26,7 +26,7 @@ export const sidebarItems: SidebarItem[] = [
     label: "나의 업무",
     icon: <QueryBuilderIcon />,
     children: [
-      { id: "mytask-issue", label: "이슈", href: "/mytask/issue" },
+      { id: "mytask-issue", label: "이슈", href: "/mytask/issue/kanban" },
       { id: "mytask-meeting", label: "회의", href: "/mytask/meeting" },
       { id: "mytask-schedule", label: "회의 일정표", href: "/mytask/schedule" },
     ],
