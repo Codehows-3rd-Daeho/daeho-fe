@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { deleteSTT, getSTT, uploadContext, uploadSTT } from "../api/sttApi";
+import { useEffect, useState, type SetStateAction } from "react";
+import { deleteSTT, getSTT, saveCurrentStt, uploadContext, uploadSTT } from "../api/sttApi";
 import {
   Box,
   Button,
@@ -8,11 +8,14 @@ import {
   Tabs,
   Tab,
   IconButton,
+  Tooltip,
 } from "@mui/material";
 
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 
 import CloseIcon from "@mui/icons-material/Close";
+import EditIcon from '@mui/icons-material/Edit';
+import SaveIcon from '@mui/icons-material/Save';
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import type { STT } from "../type/type";
@@ -23,13 +26,9 @@ export default function TabSTT() {
   // STT 내용을 상태로 관리
   const [stts, setStts] = useState<STT[]>([]);
   const [selectedSttId, setSelectedSttId] = useState<number | null>(null);
-  //등록 상태(등록 후 업로드란 안보이게, true: 업로드 화면, false: 결과화면)
-  const [isUploadMode, setIsUploadMode] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [loadingText, setLoadingText] = useState("로딩중. . .");
 
   //daglo 최대 업로드 용량, 허용 확장자
-  const maxFileSizeMB = 2 * 1000; //2GB (MB)
+  const maxFileSizeMB = 2 * 1024; //2GB (MB)
   const allowedExtensions = [
     // audio
     "3gp",
@@ -70,12 +69,8 @@ export default function TabSTT() {
         setStts(response);
 
         //업로드 화면 or 결과 화면
-        if (response.length === 0) {
-          setIsUploadMode(true); // 처음이면 업로드 화면
-        } else {
-          setIsUploadMode(false); // STT 있으면 결과 화면
+        if (response.length !== 0)
           setSelectedSttId(response[0].id);
-        }
 
         //자동 선택
         setSelectedSttId((prev) => {
@@ -87,7 +82,6 @@ export default function TabSTT() {
       } catch (error) {
         if (axios.isAxiosError(error) && error.response?.status === 404) {
           setStts([]);
-          setIsUploadMode(true)
         } else {
           console.error("STT 불러오기 실패:", error);
         }
@@ -156,6 +150,7 @@ export default function TabSTT() {
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
+    setIsDragOver(false);
 
     const file = e.dataTransfer.files?.[0];
     if (!file) return;
@@ -173,6 +168,19 @@ export default function TabSTT() {
     e.preventDefault();
   };
 
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (e.currentTarget.contains(e.relatedTarget as Node)) {
+      return;
+    }
+    setIsDragOver(false);
+  };
+
   // ========================================================================
   //                               등록
   // ========================================================================
@@ -188,24 +196,8 @@ export default function TabSTT() {
     const ok = window.confirm("음성 파일을 등록하시겠습니까?");
     if (!ok) return;
 
-    setIsLoading(true);
-    setLoadingText("음성 파일을 변환 중 입니다. . .")
-    setIsUploadMode(false); //결과란 보이게
-
-    //새탭 생성시 임시 탭 생성
-    const TEMP_STT_ID = -1;
-
-    setStts((prev) => [
-      ...prev,
-      {
-        id: TEMP_STT_ID,
-        meetingId: meetingId,
-        content: "",
-        summary: "",
-      } as STT,
-    ]);
-
-    setSelectedSttId(TEMP_STT_ID);
+    updateSttIsLoading(selectedSttId, true);
+    updateSttIsTemp(selectedSttId, false);
 
     try {
       const formData = new FormData();
@@ -216,32 +208,29 @@ export default function TabSTT() {
 
       //변환 결과 조회
       const response = await getSTT(meetingId);
-      setLoadingText("음성 파일이 변환 되었습니다!")
-
-      //변환된 STT를 화면에서 선택 상태로 만듦
-
       const newStt = response[response.length - 1];
-
-      setStts(response);
-      setSelectedSttId(newStt.id);
-
-      //2. 요약
-      setLoadingText("요약을 시작합니다. . .");
-
       await uploadContext(newStt.id, newStt.content); //id넣어야됨
+      const summaray = (await getSTT(meetingId))[response.length - 1].summary;
 
-      setLoadingText("요약 완료. . .");
-
-      //변환 결과 조회
-      const updated = await getSTT(meetingId!);
-      setStts(updated);
+      console.log(newStt);
+      setStts(prevStts => 
+        prevStts.map(stt => 
+          stt.id === selectedSttId 
+            ? { ...newStt,
+              summary: summaray,
+              isEditable: false,
+              isLoading: false,
+              isTemp: false
+            }
+            : stt
+        )
+      )
+      setSelectedSttId(newStt.id);
+      
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 401) return;
       alert("음성 파일 등록 중 오류가 발생했습니다.");
-      setStts((prev) => prev.filter((stt) => stt.id !== TEMP_STT_ID));
-      setIsUploadMode(true); //업로드란 보이게
-    } finally {
-      setIsLoading(false);
+      setStts((prev) => prev.filter((stt) => stt.id !== selectedSttId));
     }
   };
 
@@ -273,7 +262,6 @@ export default function TabSTT() {
       });
 
       alert("음성 파일이 삭제되었습니다.");
-      setIsUploadMode(true);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 401) {
         return;
@@ -282,31 +270,184 @@ export default function TabSTT() {
     }
   };
 
+  const handleTabChange = async (_event: unknown, newValue: SetStateAction<number | null>) => {
+    handleSummarySave();
+    setSelectedSttId(newValue);
+  };
+
+  const updateSttEditable = (selectedSttId: number | null, editable: boolean) => {
+    setStts(prevStts => 
+      prevStts.map(stt => 
+        stt.id === selectedSttId 
+          ? { ...stt, isEditable: editable }
+          : stt
+      )
+    ) 
+  }
+
+  const updateSttIsLoading = (selectedSttId: number | null, isLoading: boolean) => {
+    setStts(prevStts => 
+      prevStts.map(stt => 
+        stt.id === selectedSttId 
+          ? { ...stt, isLoading: isLoading }
+          : stt
+      )
+    ) 
+  }
+
+  const updateSttIsTemp = (selectedSttId: number | null, isTemp: boolean) => {
+    setStts(prevStts => 
+      prevStts.map(stt => 
+        stt.id === selectedSttId 
+          ? { ...stt, isTemp: isTemp }
+          : stt
+      )
+    ) 
+  }
+  
+  const handleSummaryChange = (event) => {
+    const newSummary = event.target.value;
+    setStts(prevStts => 
+      prevStts.map(stt => 
+        stt.id === selectedSttId 
+          ? { ...stt, summary: newSummary }
+          : stt
+      )
+    );
+  };
+
+  const handleSummarySave = async () => {
+    const currentStt = stts.find(s => s.id === selectedSttId);
+    
+    if (currentStt?.isEditable) {
+      const confirmed = window.confirm(
+        '변경된 내용을 저장하시겠습니까?'
+      );
+      
+      if (confirmed) {
+        // 저장 로직 호출 (예: saveCurrentStt())
+        await saveCurrentStt(currentStt.id, currentStt.summary);
+      }
+      
+      // 저장 여부와 상관없이 isEditable false로 변경
+      updateSttEditable(selectedSttId, false);
+      
+    }
+  }
+
+  const findSttById = (selectedSttId: number | null): STT | null => {
+    return stts.find(s => s.id === selectedSttId) ?? null;
+  }
+
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  const addTempSttTab = () => {
+    if(stts[stts.length-1]?.isTemp === true ||
+      stts[stts.length-1]?.isLoading === true
+    ) return;
+
+    //새탭 생성시 임시 탭 생성
+    const NEW_STT_ID = -1;
+
+    setStts((prev) => [
+      ...prev,
+      {
+        id: NEW_STT_ID,
+        meetingId: meetingId,
+        content: "",
+        summary: "",
+        isEditable: false,
+        isLoading: false,
+        isTemp: true,
+      } as STT,
+    ]);
+
+    setSelectedSttId(NEW_STT_ID);
+  }
+
   return (
     <>
       {/* STT 제목 */}
-      <Typography fontWeight={600} mb={2}>
+      <Typography fontWeight={600} mb={1}>
         음성 파일 변환
+        <Button
+          variant="outlined"
+          onClick={() => {
+            addTempSttTab();
+          }}
+          sx={{ 
+            minWidth: 40,
+            marginLeft: '10px'
+          }}
+        >
+          +
+        </Button>
       </Typography>
+      
 
       {/* stt 헤더 바 */}
-      <Box display="flex" alignItems="center" mb={3} gap={1}>
+      <Box display="flex" alignItems="center" mb={1} gap={1}>
         {/* STT 버튼들 */}
         <Tabs
+          key={`${selectedSttId}-${stts.length}`} 
           value={selectedSttId}
-          onChange={(_, newValue) => { 
-            setSelectedSttId(newValue)
-            setIsUploadMode(false)
+          onChange={handleTabChange}
+          variant="scrollable"           // 스크롤 가능하게 설정
+          scrollButtons         // 자동 스크롤 버튼 표시
+          sx={{
+            '& .MuiTab-root': {
+              transition: 'all 0.1s ease',
+              position: 'relative',
+              backgroundColor: 'rgba(0,0,0,0.05)',
+              borderRadius: '5px',
+              margin: '0 4px',
+              padding: '0 12px',
+              
+              // 모든 탭(첫번째 제외)에 동일한 위치의 구분선
+              '&:not(:first-of-type)::before': {
+                content: '""',
+                position: 'absolute',
+                left: '-2px',              // margin 절반만큼 왼쪽으로 이동
+                top: '20%',
+                height: '60%',
+                width: '1px',
+                backgroundColor: 'rgba(0,0,0,0.12)',
+                zIndex: 2,
+              },
+            },
+            '&.Mui-selected': {
+              backgroundColor: 'white',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              fontWeight: "bold",
+              color: 'primary.main',
+              // 선택탭에서도 구분선 유지 (제거하지 않음)
+            },
+            '& .MuiTabs-scroller': {
+              '&:not(.MuiTabs-scrollButtonsHide)': {
+                paddingRight: '48px',  // 버튼 공간 예약
+              }
+            },
+            maxWidth: '1000px',
+            '& .MuiTabs-flexContainer': {
+              justifyContent: 'flex-start',  // 왼쪽 정렬
+              gap: '4px',                    // 탭 간격
+            },
           }}
         >
           {stts.map((stt, index) => (
             <Tab
               key={stt.id}
               value={stt.id}
-              sx={{padding: '0px 2px'}}
+              sx={{
+                paddingRight: '8px',
+              }}
               label={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  {index + 1}
+                <Box sx={{ 
+                    display: "flex", 
+                    alignItems: "center", 
+                    textTransform: 'none',
+                  }}>
+                  {stt.isTemp ? "New Tab" : "Tab " + (index+1)}
                   <IconButton
                     size="small"
                     onClick={(e) => {
@@ -321,117 +462,146 @@ export default function TabSTT() {
             />
           ))}
         </Tabs>
-        <Button
-          variant="outlined"
-          onClick={() => {
-            setIsUploadMode(true)
-            setSelectedSttId(-1);
-          }}
-          sx={{ minWidth: 40 }}
-        >
-          +
-        </Button>
-      </Box>
-
-      {/* 첨부 파일 */}
-      <Box>
-        {isUploadMode && (
-          <Box sx={{ mb: 3 }}>
-            <Typography sx={{ fontWeight: 600, fontSize: "0.875rem", mb: 1 }}>
-              첨부 파일
-            </Typography>
-
-            <input
-              type="file"
-              multiple
-              id="fileUpload"
-              style={{ display: "none" }}
-              onChange={handleFileSelect}
-            />
-
-            <Box
-              sx={{
-                border: "2px dashed #d0d0d0",
-                borderRadius: 2,
-                p: 3,
-                textAlign: "center",
-                cursor: "pointer",
-                transition: "all 0.2s",
-                "&:hover": {
-                  bgcolor: "#fafafa",
-                  borderColor: "#999",
-                },
-              }}
-              onClick={openFileInput}
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-            >
-              <UploadFileIcon sx={{ fontSize: 48, color: "#9e9e9e", mb: 1 }} />
-              <Typography
-                sx={{ fontSize: "0.875rem", fontWeight: 500, mb: 0.5 }}
-              >
-                Choose files or Drag and Drop
-              </Typography>
-              <Typography
-                sx={{ fontSize: "0.875rem", fontWeight: 500, mb: 0.5 }}
-              >
-                최대 파일 크기: 2GB
-              </Typography>
-              <Typography
-                sx={{ fontSize: "0.875rem", fontWeight: 500, mb: 0.5 }}
-              >
-                허용 확장자: {allowedExtensions?.join(", ")}
-              </Typography>
-            </Box>
-          </Box>
-        )}
       </Box>
       
       <div className="relative">
-        {isLoading && (
+        {findSttById(selectedSttId)?.isLoading && !findSttById(selectedSttId)?.isTemp ? (
           <div className="absolute inset-0 bg-black/20 backdrop-blur-none z-40 flex items-center justify-center rounded-lg">
             <div className="bg-white/50 p-6 rounded-xl shadow-2xl flex flex-col items-center gap-3">
               <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin"></div>
-              <span className="text-sm font-medium text-gray-700">{loadingText}</span>
             </div>
           </div>
-        )}
-        {!isUploadMode && (
-          <Box>
-            <Box sx={{ display: "flex", gap: 2, alignItems: "start", mt: 3 }}>
-              <Box sx={{ flex: 1 }}>
-                <Typography>요약 결과</Typography>
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={10}
-                  value={stts.find((stt) => stt.id === selectedSttId)?.summary ?? "텍스트 없음"}
-                  disabled
-                  sx={{
-                    mb: 2,
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 1.5,
-                      bgcolor: "#fafafa",
-                    },
-                  }}
-                />
-                <Typography>회의 내용</Typography>
-                <TextField
-                  fullWidth
-                  multiline
-                  value={stts.find((stt) => stt.id === selectedSttId)?.content ?? "텍스트 없음"}
-                  rows={15}
-                  sx={{
-                    mb: 2,
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 1.5,
-                      bgcolor: "#fafafa",
-                    },
-                  }}
-                />
-              </Box>
+        ) : <></>}
+        {findSttById(selectedSttId)?.isTemp ? (
+        <Box sx={{ mb: 3 }}>
+          <Typography sx={{ fontWeight: 600, fontSize: "0.875rem", mb: 1 }}>
+            첨부 파일
+          </Typography>
+
+          <input
+            type="file"
+            multiple
+            id="fileUpload"
+            style={{ display: "none" }}
+            onChange={handleFileSelect}
+          />
+
+          <Box
+            sx={{
+              border: isDragOver ? "3px dashed #007bff" : "2px dashed #d0d0d0",
+              borderRadius: 2,
+              p: 3,
+              textAlign: "center",
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+              bgcolor: isDragOver ? "#e3f2fd" : "transparent",
+              "&:hover": {
+                bgcolor: "#fafafa",
+                borderColor: "#999",
+              },
+            }}
+            onClick={openFileInput}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+          >
+            <UploadFileIcon sx={{ fontSize: 48, color: "#9e9e9e", mb: 1 }} />
+            <Typography
+              sx={{ fontSize: "0.875rem", fontWeight: 500, mb: 0.5 }}
+            >
+              Choose files or Drag and Drop
+            </Typography>
+            <Typography
+              sx={{ fontSize: "0.875rem", fontWeight: 500, mb: 0.5 }}
+            >
+              최대 파일 크기: 2GB
+            </Typography>
+            <Typography
+              sx={{ fontSize: "0.875rem", fontWeight: 500, mb: 0.5 }}
+            >
+              허용 확장자: {allowedExtensions?.join(", ")}
+            </Typography>
+          </Box>
+        </Box>
+        ):
+        (stts.length !== 0 &&
+        <Box>
+          <Box sx={{ display: "flex", gap: 2, alignItems: "start", mt: 3 }}>
+            <Box sx={{ flex: 1 }}>
+              <Typography>
+                요약 결과
+                <Tooltip title={findSttById(selectedSttId)?.isEditable ? "저장" : "수정"} placement="top">
+                  <IconButton 
+                    size="small" 
+                    sx={{ color: 'primary.main' }}
+                    disabled={findSttById(selectedSttId)?.isLoading}
+                  >
+                    {findSttById(selectedSttId)?.isEditable ? 
+                    <SaveIcon 
+                      onClick = {() => {
+                        handleSummarySave();
+                      }}
+                    /> 
+                    : <EditIcon 
+                      onClick = {() => {
+                        updateSttEditable(selectedSttId, true);
+                      }}
+                    />}
+                  </IconButton>
+                </Tooltip>
+              </Typography>
+              <TextField
+                fullWidth
+                multiline
+                rows={10}
+                value={
+                  (findSttById(selectedSttId)?.isLoading)
+                    ? "요약 생성 중..."
+                    : findSttById(selectedSttId)?.summary ?? "텍스트 없음"
+                }
+                onChange={handleSummaryChange}
+                sx={{
+                  mt: 1,
+                  mb: 2,
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 1.5,
+                    bgcolor: findSttById(selectedSttId)?.isLoading ? "#f0f0f0" : "#fafafa",
+                  },
+                  "& .MuiInputBase-input.Mui-disabled": {
+                    WebkitTextFillColor: "#000000",
+                    color: "#000000",
+                  },
+                }}
+                disabled={!findSttById(selectedSttId)?.isEditable}
+              />
+              <Typography>회의 내용</Typography>
+              <TextField
+                fullWidth
+                multiline
+                value={
+                  (findSttById(selectedSttId)?.isLoading) 
+                    ? "음성 파일 변환 중..." 
+                    : findSttById(selectedSttId)?.content ?? "텍스트 없음"
+                }
+                rows={15}
+                sx={{
+                  mt: 1,
+                  mb: 2,
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 1.5,
+                    bgcolor: "#fafafa",
+                  },
+                  "& .MuiInputBase-input.Mui-disabled": {
+                    WebkitTextFillColor: "#000000",
+                    color: "#000000",
+                  },
+                }}
+                disabled
+              />
             </Box>
           </Box>
+        </Box>
         )}
       </div>
     </>

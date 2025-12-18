@@ -4,4 +4,7 @@ export interface STT {
   content: string;
   summary: string;
   meetingId: string;
+  isEditable: boolean;
+  isLoading: boolean;
+  isTemp: boolean;
 }
