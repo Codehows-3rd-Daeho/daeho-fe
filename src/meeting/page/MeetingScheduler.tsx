@@ -1,7 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Box, Typography, IconButton } from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import { getMeetingMonth } from "../api/MeetingApi";
+import type { MeetingListItem } from "../type/type";
 
 const days = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -41,6 +43,41 @@ export default function MeetingScheduler() {
     month === today.getMonth() &&
     year === today.getFullYear();
 
+  const [meetings, setMeetings] = useState<MeetingListItem[]>([]);
+
+  //달이 바뀔 때마다 데이터 조회
+  useEffect(() => {
+    const fetchMeetings = async () => {
+      const response = await getMeetingMonth(year, month + 1);
+      setMeetings(response);
+    };
+
+    fetchMeetings();
+  }, [year, month]);
+
+  //날짜별로 회의 묶음
+  const meetingsByDay = useMemo(() => {
+    //useMemo: 메모리에 저장되어있는 계산된 값을 가져와 재사용
+    const map = new Map<number, MeetingListItem[]>(); // 1 -> [회의1, 회의2, 회의4], 6 -> [...]
+
+    //서버에서 받아온 응답(meetings)을 순회
+    meetings.forEach((meeting) => {
+      // JavaScript가 지원하는 날짜 문자열 형식으로 변경
+      const date = new Date(meeting.startDate.replace(" ", "T")); //시작일 추출 2025-12-25T12:00
+      if (isNaN(date.getTime())) return;
+      const day = date.getDate(); //일자만 추출 25
+
+      //시작일 없으면 빈배열 추가
+      if (!map.has(day)) {
+        map.set(day, []);
+      }
+      //해당 날짜에 배열 넣고 회의 추가
+      map.get(day)!.push(meeting);
+    });
+
+    return map;
+  }, [meetings]);
+
   return (
     <Box sx={{ p: 3, backgroundColor: "#fff", borderRadius: 3 }}>
       {/* Header */}
@@ -64,7 +101,7 @@ export default function MeetingScheduler() {
         </IconButton>
       </Box>
 
-      {/* Week header */}
+      {/* 요일 표시 */}
       <Box
         sx={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", mb: 1 }}
       >
@@ -81,7 +118,7 @@ export default function MeetingScheduler() {
         ))}
       </Box>
 
-      {/* Calendar grid */}
+      {/* 날짜 칸 */}
       <Box
         sx={{
           display: "grid",
@@ -110,7 +147,7 @@ export default function MeetingScheduler() {
                   backgroundColor: day && isToday(day) ? "#f0f6ff" : "#fff",
                 }}
               >
-                {day && (
+                {/* {day && (
                   <Typography
                     fontSize={13}
                     fontWeight={isToday(day) ? 700 : 500}
@@ -118,6 +155,34 @@ export default function MeetingScheduler() {
                   >
                     {day}
                   </Typography>
+                )} */}
+                {day && (
+                  <>
+                    <Typography
+                      fontSize={13}
+                      fontWeight={isToday(day) ? 700 : 500}
+                      color={isToday(day) ? "primary.main" : "#374151"}
+                    >
+                      {day}
+                    </Typography>
+
+                    <Box sx={{ mt: 0.5 }}>
+                      {meetingsByDay.get(day)?.map((meeting) => (
+                        <Typography
+                          key={meeting.id}
+                          fontSize={11}
+                          sx={{
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            color: "#2563eb",
+                          }}
+                        >
+                          • {meeting.title}
+                        </Typography>
+                      ))}
+                    </Box>
+                  </>
                 )}
               </Box>
             ))}
