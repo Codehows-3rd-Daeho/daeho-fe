@@ -1,4 +1,4 @@
-import { useEffect, useState, type SetStateAction } from "react";
+import { useEffect, useState, type SetStateAction, useRef } from "react";
 import { deleteSTT, getSTT, saveCurrentStt, uploadContext, uploadSTT } from "../api/sttApi";
 import {
   Box,
@@ -12,6 +12,10 @@ import {
 } from "@mui/material";
 
 import UploadFileIcon from "@mui/icons-material/UploadFile";
+import MicIcon from "@mui/icons-material/Mic";
+import StopCircleIcon from "@mui/icons-material/StopCircle";
+import PauseCircleIcon from "@mui/icons-material/PauseCircle";
+import PlayCircleIcon from "@mui/icons-material/PlayCircle";
 
 import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from '@mui/icons-material/Edit';
@@ -20,12 +24,26 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import type { STT } from "../type/type";
 
+type RecordingStatus = "idle" | "recording" | "paused";
+
+interface STTWithRecording extends STT {
+  recordingStatus?: RecordingStatus;
+  recordingTime?: number;
+}
+
+
 export default function TabSTT() {
   const { meetingId } = useParams();
 
   // STT 내용을 상태로 관리
-  const [stts, setStts] = useState<STT[]>([]);
+  const [stts, setStts] = useState<STTWithRecording[]>([]);
   const [selectedSttId, setSelectedSttId] = useState<number | null>(null);
+
+  // refs for recording
+  const mediaRecorderRef = useRef<{ [key: number]: MediaRecorder }>({});
+  const audioChunksRef = useRef<{ [key: number]: Blob[] }>({});
+  const timerIntervalRef = useRef<{ [key: number]: NodeJS.Timeout }>({});
+  const mediaStreamRef = useRef<{ [key: number]: MediaStream }>({});
 
   //daglo 최대 업로드 용량, 허용 확장자
   const maxFileSizeMB = 2 * 1024; //2GB (MB)
@@ -66,7 +84,12 @@ export default function TabSTT() {
     const fetch = async () => {
       try {
         const response = await getSTT(meetingId);
-        setStts(response);
+        const sttsWithRecordingState = response.map(stt => ({
+          ...stt,
+          recordingStatus: 'idle' as RecordingStatus,
+          recordingTime: 0,
+        }));
+        setStts(sttsWithRecordingState);
 
         //업로드 화면 or 결과 화면
         if (response.length !== 0)
@@ -220,7 +243,9 @@ export default function TabSTT() {
               summary: summaray,
               isEditable: false,
               isLoading: false,
-              isTemp: false
+              isTemp: false,
+              recordingStatus: 'idle' as RecordingStatus,
+              recordingTime: 0
             }
             : stt
         )
@@ -304,6 +329,14 @@ export default function TabSTT() {
       )
     ) 
   }
+
+  const updateSttState = (sttId: number, newProps: Partial<STTWithRecording>) => {
+    setStts(prevStts =>
+      prevStts.map(stt =>
+        stt.id === sttId ? { ...stt, ...newProps } : stt
+      )
+    );
+  };
   
   const handleSummaryChange = (event) => {
     const newSummary = event.target.value;
@@ -335,7 +368,7 @@ export default function TabSTT() {
     }
   }
 
-  const findSttById = (selectedSttId: number | null): STT | null => {
+  const findSttById = (selectedSttId: number | null): STTWithRecording | null => {
     return stts.find(s => s.id === selectedSttId) ?? null;
   }
 
@@ -359,12 +392,102 @@ export default function TabSTT() {
         isEditable: false,
         isLoading: false,
         isTemp: true,
-      } as STT,
+        recordingStatus: 'idle',
+        recordingTime: 0,
+      } as STTWithRecording,
     ]);
 
     setSelectedSttId(NEW_STT_ID);
   }
 
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+  };
+
+  const handleStartRecording = async (sttId: number | null) => {
+    if (sttId === null) return;
+  
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current[sttId] = stream;
+  
+      const recorder = new MediaRecorder(stream);
+      mediaRecorderRef.current[sttId] = recorder;
+      audioChunksRef.current[sttId] = [];
+  
+      recorder.ondataavailable = (event) => {
+        audioChunksRef.current[sttId].push(event.data);
+      };
+  
+      recorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current[sttId], { type: 'audio/wav' });
+        const audioFile = new File([audioBlob], 'recording.wav', { type: 'audio/wav' });
+        handleUploadFile(audioFile);
+  
+        // Clean up stream and refs
+        mediaStreamRef.current[sttId]?.getTracks().forEach(track => track.stop());
+        delete mediaRecorderRef.current[sttId];
+        delete audioChunksRef.current[sttId];
+        delete mediaStreamRef.current[sttId];
+        if (timerIntervalRef.current[sttId]) {
+          clearInterval(timerIntervalRef.current[sttId]);
+          delete timerIntervalRef.current[sttId];
+        }
+      };
+      
+      recorder.start();
+      updateSttState(sttId, { recordingStatus: 'recording', recordingTime: 0 });
+  
+      const timer = setInterval(() => {
+        setStts(prevStts =>
+          prevStts.map(stt =>
+            stt.id === sttId ? { ...stt, recordingTime: (stt.recordingTime || 0) + 1 } : stt
+          )
+        );
+      }, 1000);
+      timerIntervalRef.current[sttId] = timer;
+  
+    } catch (error) {
+      console.error("Microphone permission error:", error);
+      alert("Microphone access is required. Please check your browser settings.");
+    }
+  };
+
+  const handlePauseRecording = (sttId: number | null) => {
+    if (sttId === null || !mediaRecorderRef.current[sttId]) return;
+    mediaRecorderRef.current[sttId].pause();
+    if (timerIntervalRef.current[sttId]) {
+      clearInterval(timerIntervalRef.current[sttId]);
+    }
+    updateSttState(sttId, { recordingStatus: 'paused' });
+  };
+  
+  const handleResumeRecording = (sttId: number | null) => {
+    if (sttId === null || !mediaRecorderRef.current[sttId]) return;
+    mediaRecorderRef.current[sttId].resume();
+  
+    const timer = setInterval(() => {
+      setStts(prevStts =>
+        prevStts.map(stt =>
+          stt.id === sttId ? { ...stt, recordingTime: (stt.recordingTime || 0) + 1 } : stt
+        )
+      );
+    }, 1000);
+    timerIntervalRef.current[sttId] = timer;
+    updateSttState(sttId, { recordingStatus: 'recording' });
+  };
+  
+  const handleStopRecording = (sttId: number | null) => {
+    if (sttId === null || !mediaRecorderRef.current[sttId]) return;
+    mediaRecorderRef.current[sttId].stop(); // This triggers 'onstop' handler
+    if (timerIntervalRef.current[sttId]) {
+      clearInterval(timerIntervalRef.current[sttId]);
+    }
+    updateSttState(sttId, { recordingStatus: 'idle', recordingTime: 0 });
+  };
+  
   return (
     <>
       {/* STT 제목 */}
@@ -447,9 +570,32 @@ export default function TabSTT() {
                     alignItems: "center", 
                     textTransform: 'none',
                   }}>
+                  {stt.recordingStatus === 'recording' && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', mr: 1 }}>
+                      <Box 
+                        component="span"
+                        sx={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: '50%',
+                          bgcolor: 'red',
+                          mr: 0.8,
+                          '@keyframes heartbeat': {
+                            '0%': { transform: 'scale(0.8)', boxShadow: '0 0 0 0 rgba(255, 82, 82, 0.7)' },
+                            '70%': { transform: 'scale(1)', boxShadow: '0 0 0 8px rgba(255, 82, 82, 0)' },
+                            '100%': { transform: 'scale(0.8)', boxShadow: '0 0 0 0 rgba(255, 82, 82, 0)' }
+                          },
+                          animation: 'heartbeat 1.5s infinite'
+                        }}
+                      />
+                      <Typography variant="caption" sx={{ color: 'red', fontWeight: 'bold' }}>Live</Typography>
+                    </Box>
+                  )}
                   {stt.isTemp ? "New Tab" : "Tab " + (index+1)}
                   <IconButton
                     size="small"
+                    // Prevent closing tab while recording
+                    disabled={stt.recordingStatus === 'recording' || stt.recordingStatus === 'paused'}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDelete(stt.id);
@@ -473,57 +619,109 @@ export default function TabSTT() {
           </div>
         ) : <></>}
         {findSttById(selectedSttId)?.isTemp ? (
-        <Box sx={{ mb: 3 }}>
-          <Typography sx={{ fontWeight: 600, fontSize: "0.875rem", mb: 1 }}>
-            첨부 파일
-          </Typography>
+          (() => {
+            const currentStt = findSttById(selectedSttId);
+            if (currentStt?.recordingStatus === 'recording' || currentStt?.recordingStatus === 'paused') {
+              return (
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', p: 3, border: '2px dashed #d0d0d0', borderRadius: 2, minHeight: 300 }}>
+                  <Typography variant="h4" sx={{ mb: 2, fontFamily: 'monospace' }}>
+                    {formatTime(currentStt.recordingTime || 0)}
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 2 }}>
+                    {currentStt.recordingStatus === 'recording' ? (
+                      <Tooltip title="일시정지">
+                        <IconButton size="large" onClick={() => handlePauseRecording(selectedSttId)}>
+                          <PauseCircleIcon sx={{ fontSize: 40 }} />
+                        </IconButton>
+                      </Tooltip>
+                    ) : (
+                      <Tooltip title="다시 시작">
+                        <IconButton size="large" onClick={() => handleResumeRecording(selectedSttId)}>
+                          <PlayCircleIcon sx={{ fontSize: 40 }} />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                    <Tooltip title="종료 및 저장">
+                      <IconButton size="large" color="error" onClick={() => handleStopRecording(selectedSttId)}>
+                        <StopCircleIcon sx={{ fontSize: 40 }} />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                </Box>
+              );
+            } else {
+              return (
+                <Box sx={{ mb: 3 }}>
+                  <Typography sx={{ fontWeight: 600, fontSize: "0.875rem", mb: 1 }}>
+                    첨부 파일
+                  </Typography>
+        
+                  <input
+                    type="file"
+                    multiple
+                    id="fileUpload"
+                    style={{ display: "none" }}
+                    onChange={handleFileSelect}
+                  />
+        
+                  <Box
+                    sx={{
+                      border: isDragOver ? "3px dashed #007bff" : "2px dashed #d0d0d0",
+                      borderRadius: 2,
+                      p: 3,
+                      textAlign: "center",
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                      bgcolor: isDragOver ? "#e3f2fd" : "transparent",
+                      "&:hover": {
+                        bgcolor: "#fafafa",
+                        borderColor: "#999",
+                      },
+                    }}
+                    onClick={openFileInput}
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    onDragEnter={handleDragEnter}
+                    onDragLeave={handleDragLeave}
+                  >
+                    <UploadFileIcon sx={{ fontSize: 48, color: "#9e9e9e", mb: 1 }} />
+                    <Typography
+                      sx={{ fontSize: "0.875rem", fontWeight: 500, mb: 0.5 }}
+                    >
+                      Choose files or Drag and Drop
+                    </Typography>
+                    <Typography
+                      sx={{ fontSize: "0.875rem", fontWeight: 500, mb: 0.5 }}
+                    >
+                      최대 파일 크기: 2GB
+                    </Typography>
+                    <Typography
+                      sx={{ fontSize: "0.875rem", fontWeight: 500, mb: 0.5 }}
+                    >
+                      허용 확장자: {allowedExtensions?.join(", ")}
+                    </Typography>
+                  </Box>
 
-          <input
-            type="file"
-            multiple
-            id="fileUpload"
-            style={{ display: "none" }}
-            onChange={handleFileSelect}
-          />
+                  <Box sx={{ display: 'flex', alignItems: 'center', my: 2 }}>
+                    <Box sx={{ flexGrow: 1, height: '1px', bgcolor: 'divider' }} />
+                    <Typography sx={{ mx: 2, color: 'text.secondary' }}>OR</Typography>
+                    <Box sx={{ flexGrow: 1, height: '1px', bgcolor: 'divider' }} />
+                  </Box>
 
-          <Box
-            sx={{
-              border: isDragOver ? "3px dashed #007bff" : "2px dashed #d0d0d0",
-              borderRadius: 2,
-              p: 3,
-              textAlign: "center",
-              cursor: "pointer",
-              transition: "all 0.2s ease",
-              bgcolor: isDragOver ? "#e3f2fd" : "transparent",
-              "&:hover": {
-                bgcolor: "#fafafa",
-                borderColor: "#999",
-              },
-            }}
-            onClick={openFileInput}
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onDragEnter={handleDragEnter}
-            onDragLeave={handleDragLeave}
-          >
-            <UploadFileIcon sx={{ fontSize: 48, color: "#9e9e9e", mb: 1 }} />
-            <Typography
-              sx={{ fontSize: "0.875rem", fontWeight: 500, mb: 0.5 }}
-            >
-              Choose files or Drag and Drop
-            </Typography>
-            <Typography
-              sx={{ fontSize: "0.875rem", fontWeight: 500, mb: 0.5 }}
-            >
-              최대 파일 크기: 2GB
-            </Typography>
-            <Typography
-              sx={{ fontSize: "0.875rem", fontWeight: 500, mb: 0.5 }}
-            >
-              허용 확장자: {allowedExtensions?.join(", ")}
-            </Typography>
-          </Box>
-        </Box>
+                  <Box sx={{ textAlign: 'center' }}>
+                    <Tooltip title="즉시 녹음 시작">
+                      <IconButton color="primary" sx={{ border: '1px solid', p: 2 }} onClick={() => handleStartRecording(selectedSttId)}>
+                        <MicIcon sx={{ fontSize: 40 }} />
+                      </IconButton>
+                    </Tooltip>
+                    <Typography sx={{ mt: 1, fontSize: '0.875rem', fontWeight: 500 }}>
+                      Start Recording
+                    </Typography>
+                  </Box>
+                </Box>
+              )
+            }
+          })()
         ):
         (stts.length !== 0 &&
         <Box>
