@@ -33,13 +33,23 @@ export const getMeetingMonth = async (
   year: number,
   month: number
 ): Promise<MeetingListItem[]> => {
-  console.log("getMeetingMonth실행확인1");
-
   const response = await httpClient.get(`/meeting/scheduler`, {
     params: { year, month },
   });
-  console.log("getMeetingMonth실행확인2");
-  console.log(response.data);
+  return response.data; // { content, totalElements }
+};
+
+//나의 업무 회의 캘린더
+//회의 캘린더 조회
+export const getMeetingMonthMT = async (
+  id: number,
+  year: number,
+  month: number
+): Promise<MeetingListItem[]> => {
+  console.log("getMeetingMonthMT id: ", id);
+  const response = await httpClient.get(`/meeting/scheduler/mytask/${id}`, {
+    params: { year, month },
+  });
   return response.data; // { content, totalElements }
 };
 

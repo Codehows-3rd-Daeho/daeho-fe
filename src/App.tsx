@@ -8,6 +8,7 @@ import MeetingScheduler from "./meeting/page/MeetingScheduler";
 import MTIssueKanban from "./mytask/page/MTIssueKanban";
 import MTIssueList from "./mytask/page/MTIssueList";
 import MTMeetingList from "./mytask/page/MTMeetingList";
+import MTMeetingScheduler from "./mytask/page/MTMeetingScheduler";
 
 const Login = lazy(() => import("./login/page/Login"));
 const IssueList = lazy(() => import("./issue/page/IssueList"));
@@ -101,6 +102,10 @@ export default function App() {
                   />
                   <Route path="/mytask/issue/list" element={<MTIssueList />} />
                   <Route path="/mytask/meeting" element={<MTMeetingList />} />
+                  <Route
+                    path="/mytask/schedule"
+                    element={<MTMeetingScheduler />}
+                  />
 
                   {/* 관리자 */}
                   <Route
