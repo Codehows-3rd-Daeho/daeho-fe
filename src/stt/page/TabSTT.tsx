@@ -692,17 +692,17 @@ export default function TabSTT() {
               return (
                 <Box sx={{ p: 3, border: '2px dashed #d0d0d0', borderRadius: 2, minHeight: 300, textAlign: 'center' }}>
                     <Typography variant="h6" sx={{ mb: 2 }}>
-                        Recording Complete
+                        녹음 완료
                     </Typography>
                     <audio controls src={currentStt.recordedBlobUrl!} style={{ width: '100%' }}>
                         Your browser does not support the audio element.
                     </audio>
                     <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>
                         <Button variant="contained" color="primary" onClick={() => handleConfirmUpload(selectedSttId)}>
-                            Upload
+                            업로드 하기
                         </Button>
                         <Button variant="outlined" color="secondary" onClick={() => handleRecordAgain(selectedSttId)}>
-                            Record Again
+                            다시 녹음하기
                         </Button>
                     </Box>
                 </Box>
@@ -773,7 +773,7 @@ export default function TabSTT() {
                       </IconButton>
                     </Tooltip>
                     <Typography sx={{ mt: 1, fontSize: '0.875rem', fontWeight: 500 }}>
-                      Start Recording
+                      녹음 시작
                     </Typography>
                   </Box>
                 </Box>
