@@ -8,13 +8,10 @@ import { PageHeader } from "../../common/PageHeader/PageHeader";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { useNavigate } from "react-router-dom";
 import { getMeetingList } from "../api/MeetingApi";
-import { useAuthStore } from "../../store/useAuthStore";
 import { getStatusLabel } from "../../common/commonFunction";
 
 export default function MeetingList() {
   const navigate = useNavigate();
-  const { member } = useAuthStore();
-  const role = member?.role;
 
   const [page, setPage] = useState(1);
   const [data, setData] = useState<MeetingListItem[]>([]);
@@ -115,9 +112,7 @@ export default function MeetingList() {
 
       <PageHeader>
         <Box />
-        {role === "USER" && (
-          <AddButton onClick={() => navigate("/meeting/create")} />
-        )}
+        <AddButton onClick={() => navigate("/meeting/create")} />
       </PageHeader>
       {/* 리스트 */}
       <ListDataGrid<MeetingListItem>

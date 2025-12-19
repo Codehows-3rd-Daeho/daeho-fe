@@ -9,14 +9,11 @@ import { PageHeader } from "../../common/PageHeader/PageHeader";
 import { Toggle } from "../../common/PageHeader/Toggle/Toggle";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { Box, Typography } from "@mui/material";
-import { useAuthStore } from "../../store/useAuthStore";
 import { getIssueList } from "../api/issueApi";
 import { getStatusLabel } from "../../common/commonFunction";
 
 export default function IssueList() {
   const navigate = useNavigate();
-  const { member } = useAuthStore();
-  const role = member?.role;
 
   // 페이징
   const [page, setPage] = useState(1);
@@ -25,15 +22,22 @@ export default function IssueList() {
 
   // 데이터 가져오기
   useEffect(() => {
-    getIssueList(page - 1, 10).then((data) => {
-      const list = (data.content ?? data).map((item: IssueListItem) => ({
-        ...item,
-        status: getStatusLabel(item.status),
-      }));
+    const fetchData = async () => {
+      try {
+        const data = await getIssueList(page - 1, 10);
+        const list = (data.content ?? data).map((item: IssueListItem) => ({
+          ...item,
+          status: getStatusLabel(item.status),
+        }));
 
-      setData(list);
-      setTotalCount(data.totalElements); // 전체 개수
-    });
+        setData(list);
+        setTotalCount(data.totalElements);
+      } catch (error) {
+        console.error("이슈 조회 실패", error);
+      }
+    };
+
+    fetchData();
   }, [page]);
 
   // 리스트 컬럼
@@ -140,10 +144,7 @@ export default function IssueList() {
             { label: "칸반", value: "kanban", path: "/issue/kanban" },
           ]}
         />
-
-        {role === "USER" && (
-          <AddButton onClick={() => navigate("/issue/create")} />
-        )}
+        <AddButton onClick={() => navigate("/issue/create")} />
       </PageHeader>
 
       <ListDataGrid<IssueListItem>

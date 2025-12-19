@@ -28,8 +28,10 @@ export default function KanbanCard({
   const { dDay, isImminent } = calculateDDay(issue.endDate);
   const dDayText = isDone
     ? "완료"
-    : dDay >= 0
+    : dDay > 0
     ? `D-${dDay}`
+    : dDay === 0
+    ? "D-DAY"
     : `D+${Math.abs(dDay)}`;
 
   // 부서(Department) 표시 처리 (최대 2개 표시, 3개 이상은 ...)
@@ -66,7 +68,7 @@ export default function KanbanCard({
         <div className="flex items-center space-x-2">
           {/* D-Day */}
           <span
-            className={`text-sm font-medium px-2 py-0.5 rounded-full ${
+            className={`text-sm font-medium px-2 py-1 rounded-full ${
               isDone
                 ? "bg-gray-200 text-gray-600"
                 : dDay <= 0

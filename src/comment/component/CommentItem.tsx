@@ -287,7 +287,9 @@ export const CommentItem = ({
         </Box>
 
         {/* 댓글 내용 */}
-        <Typography sx={{ mt: 1 }}>{comment.content}</Typography>
+        <Typography sx={{ mt: 1, whiteSpace: "pre-line" }}>
+          {comment.content}
+        </Typography>
 
         {/* ===== 첨부 파일 (일반 보기) ===== */}
         {comment.fileList && comment.fileList.length > 0 && (

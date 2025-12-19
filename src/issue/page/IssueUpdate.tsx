@@ -66,12 +66,12 @@ export default function IssueUpdate() {
         );
         const categoryId = selectedCategory ? String(selectedCategory.id) : "";
         // 부서 이름 배열로 ID 배열 찾기
-        const departmentIds = issue.departmentName
+        const departmentIds: string[] = issue.departmentName
           .map((name) => {
             const dept = dpt.find((d) => d.name === name);
-            return dept ? dept.id + "" : null;
+            return dept ? String(dept.id) : undefined;
           })
-          .filter((id) => id !== null); // null 제거 및 타입 정리
+          .filter((id): id is string => Boolean(id));
 
         // formData 초기화
         setFormData({
@@ -245,11 +245,7 @@ export default function IssueUpdate() {
       // 1) 확장자 체크
       const isAllowed = ext != null && allowedExtensions.includes(ext);
       if (!isAllowed) {
-        alert(
-          `허용되지 않은 파일입니다: ${
-            file.name
-          }\n허용 확장자: ${allowedExtensions.join(", ")}`
-        );
+        alert(`허용되지 않은 확장자입니다: ${file.name}`);
         return;
       }
 
@@ -260,8 +256,11 @@ export default function IssueUpdate() {
 
       if (sizeMB > maxFileSize) {
         alert(
-          `${file.name} 파일의 크기가 ${maxFileSize}MB를 초과했습니다.
-             (현재: ${sizeMB.toFixed(2)}MB)`
+          `${
+            file.name
+          } 파일의 크기가 ${maxFileSize}MB를 초과했습니다.\n(현재: ${sizeMB.toFixed(
+            2
+          )}MB)`
         );
         return;
       }

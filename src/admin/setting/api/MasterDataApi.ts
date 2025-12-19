@@ -1,5 +1,5 @@
 //** 기준정보 (부서, 직급, 카테고리) API */
-import type { MasterDataType } from "../type/SettingType";
+import type { Group, GroupDto, MasterDataType } from "../type/SettingType";
 import httpClient from "../../../config/httpClient";
 
 // GET
@@ -24,6 +24,13 @@ export const getCategory = async (): Promise<MasterDataType[]> => {
   return response.data;
 };
 
+//그룹 리스트
+export const getGroupList = async (): Promise<Group[]> => {
+  const response = await httpClient.get(`/masterData/group`);
+  console.log("그룹 :", response.data);
+  return response.data;
+};
+
 // POST
 export const createDepartment = async (data: MasterDataType) => {
   const response = await httpClient.post(`/admin/department`, data);
@@ -40,6 +47,17 @@ export const createCategory = async (data: MasterDataType) => {
   return response.data;
 };
 
+export const createGroup = async (data: GroupDto) => {
+  const response = await httpClient.post(`/admin/group`, data);
+  return response.data;
+};
+
+// 그룹 수정
+export const updateGroup = async (id: number, data: GroupDto) => {
+  const response = await httpClient.put(`/admin/group/${id}`, data);
+  return response.data;
+};
+
 // DELETE
 export const deleteDepartment = async (id: number): Promise<void> => {
   await httpClient.delete(`/admin/department/${id}`);
@@ -51,4 +69,8 @@ export const deleteJobPosition = async (id: number): Promise<void> => {
 
 export const deleteCategory = async (id: number): Promise<void> => {
   await httpClient.delete(`/admin/category/${id}`);
+};
+
+export const deleteGroup = async (id: number): Promise<void> => {
+  await httpClient.delete(`/admin/group/${id}`);
 };

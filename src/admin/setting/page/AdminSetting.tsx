@@ -1,4 +1,4 @@
-import { Box, Chip } from "@mui/material";
+import { Box, Chip, CircularProgress } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import React, { useEffect, useState } from "react";
 import type {
@@ -18,6 +18,7 @@ import MasterData from "../component/MasterData";
 import FileSetting from "../component/FileSetting";
 import NotificationSetting from "../component/NotificationSetting";
 import { deleteExtension, getExtensions } from "../api/FileSettingApi";
+import GroupManagement from "../component/Group";
 
 export interface TagItem {
   id: number;
@@ -38,10 +39,12 @@ export default function AdminSetting() {
   const [jobPositions, setJobPositions] = useState<TagItem[]>([]);
   const [categories, setCategories] = useState<TagItem[]>([]);
   const [fileExtensions, setFileExtensions] = useState<TagItem[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const fetchMasterData = async () => {
       try {
+        setIsLoading(true);
         // 부서 목록
         const deptResponse = await getDepartment();
         setDepartments(mapApiDataToTagItem(deptResponse));
@@ -57,6 +60,7 @@ export default function AdminSetting() {
         // 파일 확장자 목록
         const extResponse = await getExtensions();
         setFileExtensions(mapApiDataToTagItem(extResponse));
+        setIsLoading(false);
       } catch (error) {
         if (axios.isAxiosError(error) && error.response?.status === 401) {
           return;
@@ -189,6 +193,23 @@ export default function AdminSetting() {
     alert("알림 설정이 저장되었습니다.");
   };
 
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "80vh",
+          width: "100%",
+          minWidth: "1000px",
+        }}
+      >
+        <CircularProgress color="primary" />
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ p: 4, margin: "auto", width: 600 }}>
       <Box sx={{ mb: 6 }}>
@@ -215,14 +236,14 @@ export default function AdminSetting() {
         />
       </Box>
       <Box sx={{ mb: 6 }}>
+        <GroupManagement />
+      </Box>
+      <Box sx={{ mb: 6 }}>
         <FileSetting
           fileExtensions={fileExtensions}
           setFileExtensions={setFileExtensions}
           RenderChips={(props) => (
-            <RenderChips
-              {...props} // FileManager는 삭제 API가 아직 없음.
-              deleteApiFunction={deleteExtension}
-            />
+            <RenderChips {...props} deleteApiFunction={deleteExtension} />
           )}
         />
       </Box>

@@ -1,3 +1,5 @@
+import type { PartMemberList } from "../../../issue/type/type";
+
 // 기준정보
 export interface MasterDataType {
   id?: number;
@@ -24,4 +26,16 @@ export interface NotificationSettingType {
   commentCreated: boolean;
   commentUpdated: boolean;
   commentMention: boolean;
+}
+
+// 그룹 등록시 사용
+export interface GroupDto {
+  groupName: string;
+  memberIds: number[];
+}
+
+export interface Group {
+  id: number;
+  groupName: string;
+  members: PartMemberList[];
 }
