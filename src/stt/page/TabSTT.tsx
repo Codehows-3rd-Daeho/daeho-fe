@@ -24,11 +24,12 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import type { STT } from "../type/type";
 
-type RecordingStatus = "idle" | "recording" | "paused";
+type RecordingStatus = "idle" | "recording" | "paused" | "finished";
 
 interface STTWithRecording extends STT {
   recordingStatus?: RecordingStatus;
   recordingTime?: number;
+  recordedBlobUrl?: string | null;
 }
 
 
@@ -44,6 +45,7 @@ export default function TabSTT() {
   const audioChunksRef = useRef<{ [key: number]: Blob[] }>({});
   const timerIntervalRef = useRef<{ [key: number]: NodeJS.Timeout }>({});
   const mediaStreamRef = useRef<{ [key: number]: MediaStream }>({});
+  const recordedBlobRef = useRef<{ [key: number]: Blob }>({});
 
   //daglo 최대 업로드 용량, 허용 확장자
   const maxFileSizeMB = 2 * 1024; //2GB (MB)
@@ -264,6 +266,13 @@ export default function TabSTT() {
   // ========================================================================
 
   const handleDelete = async (sttId: number) => {
+    // Prevent memory leaks by revoking the blob URL if it exists
+    const sttToDelete = findSttById(sttId);
+    if (sttToDelete?.recordingStatus === 'finished' && sttToDelete.recordedBlobUrl) {
+      URL.revokeObjectURL(sttToDelete.recordedBlobUrl);
+      delete recordedBlobRef.current[sttId];
+    }
+
     if (!selectedSttId) {
       alert("삭제할 STT가 선택되지 않았습니다.");
       return;
@@ -394,6 +403,7 @@ export default function TabSTT() {
         isTemp: true,
         recordingStatus: 'idle',
         recordingTime: 0,
+        recordedBlobUrl: null,
       } as STTWithRecording,
     ]);
 
@@ -423,14 +433,16 @@ export default function TabSTT() {
   
       recorder.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current[sttId], { type: 'audio/wav' });
-        const audioFile = new File([audioBlob], 'recording.wav', { type: 'audio/wav' });
-        handleUploadFile(audioFile);
+        recordedBlobRef.current[sttId] = audioBlob;
+        const audioUrl = URL.createObjectURL(audioBlob);
   
-        // Clean up stream and refs
+        updateSttState(sttId, { recordingStatus: 'finished', recordedBlobUrl: audioUrl });
+  
+        // Clean up stream and recorder refs
         mediaStreamRef.current[sttId]?.getTracks().forEach(track => track.stop());
+        delete mediaStreamRef.current[sttId];
         delete mediaRecorderRef.current[sttId];
         delete audioChunksRef.current[sttId];
-        delete mediaStreamRef.current[sttId];
         if (timerIntervalRef.current[sttId]) {
           clearInterval(timerIntervalRef.current[sttId]);
           delete timerIntervalRef.current[sttId];
@@ -481,11 +493,38 @@ export default function TabSTT() {
   
   const handleStopRecording = (sttId: number | null) => {
     if (sttId === null || !mediaRecorderRef.current[sttId]) return;
-    mediaRecorderRef.current[sttId].stop(); // This triggers 'onstop' handler
-    if (timerIntervalRef.current[sttId]) {
-      clearInterval(timerIntervalRef.current[sttId]);
+    // This triggers the 'onstop' handler where state changes and cleanup will occur.
+    mediaRecorderRef.current[sttId].stop();
+  };
+  
+  const handleConfirmUpload = (sttId: number | null) => {
+    if (sttId === null) return;
+    const audioBlob = recordedBlobRef.current[sttId];
+    if (audioBlob) {
+        const audioFile = new File([audioBlob], 'recording.wav', { type: 'audio/wav' });
+        handleUploadFile(audioFile);
+        
+        // Cleanup after starting upload
+        const stt = findSttById(sttId);
+        if (stt?.recordedBlobUrl) {
+            URL.revokeObjectURL(stt.recordedBlobUrl);
+        }
+        delete recordedBlobRef.current[sttId];
     }
-    updateSttState(sttId, { recordingStatus: 'idle', recordingTime: 0 });
+  };
+
+  const handleRecordAgain = (sttId: number | null) => {
+      if (sttId === null) return;
+      const stt = findSttById(sttId);
+      if (stt?.recordedBlobUrl) {
+          URL.revokeObjectURL(stt.recordedBlobUrl);
+      }
+      delete recordedBlobRef.current[sttId];
+      updateSttState(sttId, {
+          recordingStatus: 'idle',
+          recordingTime: 0,
+          recordedBlobUrl: null,
+      });
   };
   
   return (
@@ -641,12 +680,31 @@ export default function TabSTT() {
                         </IconButton>
                       </Tooltip>
                     )}
-                    <Tooltip title="종료 및 저장">
+                    <Tooltip title="종료">
                       <IconButton size="large" color="error" onClick={() => handleStopRecording(selectedSttId)}>
                         <StopCircleIcon sx={{ fontSize: 40 }} />
                       </IconButton>
                     </Tooltip>
                   </Box>
+                </Box>
+              );
+            } else if (currentStt?.recordingStatus === 'finished') {
+              return (
+                <Box sx={{ p: 3, border: '2px dashed #d0d0d0', borderRadius: 2, minHeight: 300, textAlign: 'center' }}>
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                        Recording Complete
+                    </Typography>
+                    <audio controls src={currentStt.recordedBlobUrl!} style={{ width: '100%' }}>
+                        Your browser does not support the audio element.
+                    </audio>
+                    <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>
+                        <Button variant="contained" color="primary" onClick={() => handleConfirmUpload(selectedSttId)}>
+                            Upload
+                        </Button>
+                        <Button variant="outlined" color="secondary" onClick={() => handleRecordAgain(selectedSttId)}>
+                            Record Again
+                        </Button>
+                    </Box>
                 </Box>
               );
             } else {
