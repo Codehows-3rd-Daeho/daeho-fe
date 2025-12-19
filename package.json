@@ -7,7 +7,13 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "setup:https": "node scripts/generate-certs-simple.js",
+    "setup:https:mkcert": "node scripts/generate-certs-mkcert.js",
+    "setup:https:mkcert:win": "scripts\\generate-certs-mkcert.bat",
+    "setup:https:openssl": "node scripts/generate-certs.js",
+    "setup:https:win": "scripts\\generate-certs.bat",
+    "setup:https:letsencrypt": "node scripts/generate-certs-letsencrypt.js"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
