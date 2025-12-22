@@ -1,4 +1,4 @@
-import type { Mention } from "../type/type";
+import type { Mention } from "../../type/type";
 
 export default function RenderMentionText(
   content: string,
