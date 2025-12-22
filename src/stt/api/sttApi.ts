@@ -31,3 +31,21 @@ export const saveCurrentStt = async (id: number, content: string): Promise<void>
   const response = await httpClient.patch(`/stt/${id}/summary`, content);
   return response.data;
 };
+
+export const startRecording = async (meetingId: string): Promise<{ sttId: number }> => {
+  const response = await httpClient.post(`/stt/recording/start`, { meetingId });
+  return response.data;
+};
+
+export const uploadAudioChunk = async (sttId: number, chunk: FormData): Promise<void> => {
+  await httpClient.post(`/stt/${sttId}/chunk`, chunk, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
+
+export const finishRecording = async (sttId: number): Promise<STT> => {
+  const response = await httpClient.post(`/stt/${sttId}/recording/finish`);
+  return response.data;
+};

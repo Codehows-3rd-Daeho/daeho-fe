@@ -1,5 +1,5 @@
 import { useEffect, useState, type SetStateAction, useRef } from "react";
-import { deleteSTT, getSTT, saveCurrentStt, uploadContext, uploadSTT } from "../api/sttApi";
+import { deleteSTT, finishRecording, getSTT, saveCurrentStt, startRecording, uploadAudioChunk, uploadContext, uploadSTT } from "../api/sttApi";
 import {
   Box,
   Button,
@@ -29,7 +29,7 @@ type RecordingStatus = "idle" | "recording" | "paused" | "finished";
 interface STTWithRecording extends STT {
   recordingStatus?: RecordingStatus;
   recordingTime?: number;
-  recordedBlobUrl?: string | null;
+  liveSttId?: number;
 }
 
 
@@ -43,7 +43,8 @@ export default function TabSTT() {
   // refs for recording
   const mediaRecorderRef = useRef<{ [key: number]: MediaRecorder }>({});
   const audioChunksRef = useRef<{ [key: number]: Blob[] }>({});
-  const timerIntervalRef = useRef<{ [key: number]: NodeJS.Timeout }>({});
+  const recordTimeTimerRef = useRef<{ [key: number]: number }>({});
+  const chunkTimerRef = useRef<{ [key: number]: number }>({});
   const mediaStreamRef = useRef<{ [key: number]: MediaStream }>({});
   const recordedBlobRef = useRef<{ [key: number]: Blob }>({});
 
@@ -79,6 +80,19 @@ export default function TabSTT() {
     "mpg",
     "wmv",
   ];
+
+  const findSttById = (sttId: number | null): STTWithRecording | null => {
+    return stts.find(s => s.id === sttId) ?? null;
+  }
+
+  const updateSttState = (sttId: number | null, newProps: Partial<STTWithRecording>) => {
+    if (sttId === null) return;
+    setStts(prevStts =>
+      prevStts.map(stt =>
+        stt.id === sttId ? { ...stt, ...newProps } : stt
+      )
+    );
+  };
 
   useEffect(() => {
     if (!meetingId) return;
@@ -124,48 +138,27 @@ export default function TabSTT() {
   // ========================================================================
   //                               파일 검증
   // ========================================================================
-
   const validateFile = (file: File): boolean => {
     const ext = file.name.split(".").pop()?.toLowerCase();
     if (!ext || !allowedExtensions.includes(ext)) {
-      alert(
-        `허용되지 않은 파일: ${
-          file.name
-        }\n허용 확장자: ${allowedExtensions.join(", ")}`
-      );
+      alert(`허용되지 않은 파일 형식입니다: ${file.name}`);
       return false;
     }
-
     const sizeMB = file.size / 1024 / 1024;
     if (sizeMB > maxFileSizeMB) {
-      alert(
-        `${
-          file.name
-        } 파일의 크기가 ${maxFileSizeMB}MB를 초과했습니다. (현재: ${sizeMB.toFixed(
-          2
-        )}MB)`
-      );
+      alert(`파일 크기가 ${maxFileSizeMB}MB를 초과했습니다. (현재: ${sizeMB.toFixed(2)}MB)`);
       return false;
     }
-
     return true;
   };
-
   // ========================================================================
   //                               파일 선택
   // ========================================================================
-
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!meetingId) {
-      alert("해당 회의의 id를 찾을 수 없습니다.");
-      return;
-    }
+    if (!meetingId) return;
     const file = e.target.files?.[0];
     if (!file) return;
-
     handleUploadFile(file);
-
-    // 같은 파일 다시 선택 가능하도록 초기화
     e.target.value = "";
   };
 
@@ -173,6 +166,8 @@ export default function TabSTT() {
   //                               드래그 앤 드롭
   // ========================================================================
 
+
+  const [isDragOver, setIsDragOver] = useState(false);
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragOver(false);
@@ -188,22 +183,16 @@ export default function TabSTT() {
     handleUploadFile(file);
   };
 
-  //겹침 방지
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-  };
-
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
   const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragOver(true);
   };
-
   const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    if (e.currentTarget.contains(e.relatedTarget as Node)) {
-      return;
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragOver(false);
     }
-    setIsDragOver(false);
   };
 
   // ========================================================================
@@ -211,18 +200,11 @@ export default function TabSTT() {
   // ========================================================================
 
   const handleUploadFile = async (file: File) => {
-    if (!meetingId) {
-      alert("해당 회의의 id를 찾을 수 없습니다.");
-      return;
-    }
+    if (!meetingId || !validateFile(file)) return;
+    if (!window.confirm("음성 파일을 등록하시겠습니까?")) return;
 
-    if (!validateFile(file)) return;
-
-    const ok = window.confirm("음성 파일을 등록하시겠습니까?");
-    if (!ok) return;
-
-    updateSttIsLoading(selectedSttId, true);
-    updateSttIsTemp(selectedSttId, false);
+    const tempSttId = selectedSttId;
+    updateSttState(tempSttId, { isLoading: true, isTemp: false });
 
     try {
       const formData = new FormData();
@@ -237,7 +219,6 @@ export default function TabSTT() {
       await uploadContext(newStt.id, newStt.content); //id넣어야됨
       const summaray = (await getSTT(meetingId))[response.length - 1].summary;
 
-      console.log(newStt);
       setStts(prevStts => 
         prevStts.map(stt => 
           stt.id === selectedSttId 
@@ -308,92 +289,28 @@ export default function TabSTT() {
     handleSummarySave();
     setSelectedSttId(newValue);
   };
-
-  const updateSttEditable = (selectedSttId: number | null, editable: boolean) => {
-    setStts(prevStts => 
-      prevStts.map(stt => 
-        stt.id === selectedSttId 
-          ? { ...stt, isEditable: editable }
-          : stt
-      )
-    ) 
-  }
-
-  const updateSttIsLoading = (selectedSttId: number | null, isLoading: boolean) => {
-    setStts(prevStts => 
-      prevStts.map(stt => 
-        stt.id === selectedSttId 
-          ? { ...stt, isLoading: isLoading }
-          : stt
-      )
-    ) 
-  }
-
-  const updateSttIsTemp = (selectedSttId: number | null, isTemp: boolean) => {
-    setStts(prevStts => 
-      prevStts.map(stt => 
-        stt.id === selectedSttId 
-          ? { ...stt, isTemp: isTemp }
-          : stt
-      )
-    ) 
-  }
-
-  const updateSttState = (sttId: number, newProps: Partial<STTWithRecording>) => {
-    setStts(prevStts =>
-      prevStts.map(stt =>
-        stt.id === sttId ? { ...stt, ...newProps } : stt
-      )
-    );
-  };
   
-  const handleSummaryChange = (event) => {
+  const handleSummaryChange = (event: { target: { value: string; }; }) => {
     const newSummary = event.target.value;
-    setStts(prevStts => 
-      prevStts.map(stt => 
-        stt.id === selectedSttId 
-          ? { ...stt, summary: newSummary }
-          : stt
-      )
-    );
+    updateSttState(selectedSttId, { summary: newSummary });
   };
 
   const handleSummarySave = async () => {
-    const currentStt = stts.find(s => s.id === selectedSttId);
-    
+    const currentStt = findSttById(selectedSttId);
     if (currentStt?.isEditable) {
-      const confirmed = window.confirm(
-        '변경된 내용을 저장하시겠습니까?'
-      );
-      
-      if (confirmed) {
-        // 저장 로직 호출 (예: saveCurrentStt())
+      if (window.confirm('변경된 내용을 저장하시겠습니까?')) {
         await saveCurrentStt(currentStt.id, currentStt.summary);
       }
-      
-      // 저장 여부와 상관없이 isEditable false로 변경
-      updateSttEditable(selectedSttId, false);
-      
+      updateSttState(selectedSttId, { isEditable: false });
     }
   }
 
-  const findSttById = (selectedSttId: number | null): STTWithRecording | null => {
-    return stts.find(s => s.id === selectedSttId) ?? null;
-  }
-
-  const [isDragOver, setIsDragOver] = useState(false);
-
   const addTempSttTab = () => {
-    if(stts[stts.length-1]?.isTemp === true ||
-      stts[stts.length-1]?.isLoading === true
-    ) return;
-
-    //새탭 생성시 임시 탭 생성
-    const NEW_STT_ID = -1;
-
-    setStts((prev) => [
-      ...prev,
-      {
+    if(stts.some(stt => stt.isTemp || stt.isLoading)) return;
+    if(!meetingId) return;
+    
+    const NEW_STT_ID = Date.now();
+    const newTempStt: STTWithRecording = {
         id: NEW_STT_ID,
         meetingId: meetingId,
         content: "",
@@ -403,10 +320,9 @@ export default function TabSTT() {
         isTemp: true,
         recordingStatus: 'idle',
         recordingTime: 0,
-        recordedBlobUrl: null,
-      } as STTWithRecording,
-    ]);
-
+        // liveSttId: null,
+      };
+    setStts(prev => [...prev, newTempStt]);
     setSelectedSttId(NEW_STT_ID);
   }
 
@@ -417,49 +333,87 @@ export default function TabSTT() {
   };
 
   const handleStartRecording = async (sttId: number | null) => {
-    if (sttId === null) return;
-  
+    if (sttId === null || !meetingId) return;
+
     try {
+      const { sttId: liveSttId } = await startRecording(meetingId);
+      updateSttState(sttId, { liveSttId });
+
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaStreamRef.current[sttId] = stream;
   
       const recorder = new MediaRecorder(stream);
       mediaRecorderRef.current[sttId] = recorder;
-      audioChunksRef.current[sttId] = [];
-  
-      recorder.ondataavailable = (event) => {
-        audioChunksRef.current[sttId].push(event.data);
+
+      recorder.ondataavailable = async (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current[sttId].push(event.data);
+        }
       };
-  
+
+      const startChunkTimer = () => {
+        recordTimeTimerRef.current[sttId] = setInterval(() => {
+          setStts(prevStts =>
+            prevStts.map(stt =>
+              stt.id === sttId ? { ...stt, recordingTime: (stt.recordingTime || 0) + 1 } : stt
+            )
+          );
+        }, 1000);
+        chunkTimerRef.current[sttId] = setInterval(async () => {
+          const chunks = audioChunksRef.current[sttId];
+          if (chunks.length > 0) {
+            const chunk = new Blob(chunks, { type: 'audio/wav' });
+            const formData = new FormData();
+            formData.append("file", chunk, "chunk.wav");
+            
+            try {
+              await uploadAudioChunk(liveSttId, formData);
+              console.log(`10초 청크 ${liveSttId} 전송 성공`);
+            } catch (e) {
+              console.error("청크 전송 실패:", e);
+              // 재시도 로직 추가 가능
+            } finally {
+              // 메모리 정리: 청크 배열 초기화
+              audioChunksRef.current[sttId] = [];
+            }
+          }
+        }, 10000); // 10초
+      };
+        
       recorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current[sttId], { type: 'audio/wav' });
-        recordedBlobRef.current[sttId] = audioBlob;
-        const audioUrl = URL.createObjectURL(audioBlob);
-  
-        updateSttState(sttId, { recordingStatus: 'finished', recordedBlobUrl: audioUrl });
-  
+        const remainingChunks = audioChunksRef.current[sttId];
+        if (remainingChunks.length > 0) {
+          const finalChunk = new Blob(remainingChunks, { type: 'audio/wav' });
+          const formData = new FormData();
+          formData.append("file", finalChunk, "final.wav");
+          try{
+            uploadAudioChunk(liveSttId, formData)
+            console.log(`남은 청크 ${liveSttId} 전송 성공`);
+          }catch (e) {
+            console.error("청크 전송 실패:", e);
+          } finally {
+            audioChunksRef.current[sttId] = [];
+          }
+        }
+        updateSttState(sttId, { recordingStatus: 'finished' });
         // Clean up stream and recorder refs
         mediaStreamRef.current[sttId]?.getTracks().forEach(track => track.stop());
         delete mediaStreamRef.current[sttId];
         delete mediaRecorderRef.current[sttId];
         delete audioChunksRef.current[sttId];
-        if (timerIntervalRef.current[sttId]) {
-          clearInterval(timerIntervalRef.current[sttId]);
-          delete timerIntervalRef.current[sttId];
+        if (recordTimeTimerRef.current[sttId]) {
+          clearInterval(recordTimeTimerRef.current[sttId]);
+          delete recordTimeTimerRef.current[sttId];
+        }
+        if (chunkTimerRef.current[sttId]) {
+          clearInterval(chunkTimerRef.current[sttId]);
+          delete chunkTimerRef.current[sttId];
         }
       };
       
-      recorder.start();
+      recorder.start(1000);
+      startChunkTimer();
       updateSttState(sttId, { recordingStatus: 'recording', recordingTime: 0 });
-  
-      const timer = setInterval(() => {
-        setStts(prevStts =>
-          prevStts.map(stt =>
-            stt.id === sttId ? { ...stt, recordingTime: (stt.recordingTime || 0) + 1 } : stt
-          )
-        );
-      }, 1000);
-      timerIntervalRef.current[sttId] = timer;
   
     } catch (error) {
       console.error("Microphone permission error:", error);
@@ -470,60 +424,68 @@ export default function TabSTT() {
   const handlePauseRecording = (sttId: number | null) => {
     if (sttId === null || !mediaRecorderRef.current[sttId]) return;
     mediaRecorderRef.current[sttId].pause();
-    if (timerIntervalRef.current[sttId]) {
-      clearInterval(timerIntervalRef.current[sttId]);
+    if (recordTimeTimerRef.current[sttId]) {
+      clearInterval(recordTimeTimerRef.current[sttId]);
+    }
+    if (chunkTimerRef.current[sttId]) {
+      clearInterval(chunkTimerRef.current[sttId]);
     }
     updateSttState(sttId, { recordingStatus: 'paused' });
   };
   
   const handleResumeRecording = (sttId: number | null) => {
     if (sttId === null || !mediaRecorderRef.current[sttId]) return;
+    const liveSttId = findSttById(sttId)?.liveSttId ?? null;
+    if(liveSttId === null) return;
+
     mediaRecorderRef.current[sttId].resume();
-  
-    const timer = setInterval(() => {
+    recordTimeTimerRef.current[sttId] = setInterval(() => {
       setStts(prevStts =>
         prevStts.map(stt =>
           stt.id === sttId ? { ...stt, recordingTime: (stt.recordingTime || 0) + 1 } : stt
         )
       );
     }, 1000);
-    timerIntervalRef.current[sttId] = timer;
+    chunkTimerRef.current[sttId] = setInterval(async () => {
+      const chunks = audioChunksRef.current[sttId];
+      if (chunks.length > 0) {
+        const chunk = new Blob(chunks, { type: 'audio/wav' });
+        const formData = new FormData();
+        formData.append("file", chunk, "chunk.wav");
+        try {
+          await uploadAudioChunk(liveSttId, formData);
+          console.log(`10초 청크 ${liveSttId} 전송 성공`);
+        } catch (e) {
+          console.error("청크 전송 실패:", e);
+        } finally {
+          audioChunksRef.current[sttId] = [];
+        }
+      }
+    }, 10000); // 10초
     updateSttState(sttId, { recordingStatus: 'recording' });
   };
   
   const handleStopRecording = (sttId: number | null) => {
     if (sttId === null || !mediaRecorderRef.current[sttId]) return;
-    // This triggers the 'onstop' handler where state changes and cleanup will occur.
     mediaRecorderRef.current[sttId].stop();
   };
   
-  const handleConfirmUpload = (sttId: number | null) => {
-    if (sttId === null) return;
-    const audioBlob = recordedBlobRef.current[sttId];
-    if (audioBlob) {
-        const audioFile = new File([audioBlob], 'recording.wav', { type: 'audio/wav' });
-        handleUploadFile(audioFile);
-        
-        // Cleanup after starting upload
-        const stt = findSttById(sttId);
-        if (stt?.recordedBlobUrl) {
-            URL.revokeObjectURL(stt.recordedBlobUrl);
-        }
-        delete recordedBlobRef.current[sttId];
+  const handleConfirmUpload = async (sttId: number | null) => {
+    if (sttId === null || !audioChunksRef.current[sttId]) return;
+    const liveSttId = findSttById(sttId)?.liveSttId ?? null;
+    if(liveSttId === null) return;
+    try {
+      await finishRecording(liveSttId);
+    } catch (e) {
+      console.error("변환 요청 실패 :", e);
     }
   };
 
   const handleRecordAgain = (sttId: number | null) => {
       if (sttId === null) return;
-      const stt = findSttById(sttId);
-      if (stt?.recordedBlobUrl) {
-          URL.revokeObjectURL(stt.recordedBlobUrl);
-      }
-      delete recordedBlobRef.current[sttId];
       updateSttState(sttId, {
           recordingStatus: 'idle',
           recordingTime: 0,
-          recordedBlobUrl: null,
       });
   };
   
@@ -699,7 +661,7 @@ export default function TabSTT() {
                     </audio>
                     <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>
                         <Button variant="contained" color="primary" onClick={() => handleConfirmUpload(selectedSttId)}>
-                            업로드 하기
+                            변환 하기
                         </Button>
                         <Button variant="outlined" color="secondary" onClick={() => handleRecordAgain(selectedSttId)}>
                             다시 녹음하기
@@ -801,7 +763,7 @@ export default function TabSTT() {
                     /> 
                     : <EditIcon 
                       onClick = {() => {
-                        updateSttEditable(selectedSttId, true);
+                        updateSttState(selectedSttId, { isEditable: true });
                       }}
                     />}
                   </IconButton>
