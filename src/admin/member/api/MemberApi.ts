@@ -68,9 +68,9 @@ export const getMemberProfile = async (id: number): Promise<MemberProfile> => {
   return response.data;
 };
 
-//비밀번호 제설정(로그인 기반 api 사용으로 id 필요 x)
+//비밀번호 제설정(로그인 기반으로 사용자정보 꺼낼 예정(for 보안) => id 필요 x )
 export const changePassword = async (newPassword: string) => {
-  const response = await httpClient.post("/mypage/password", {
+  const response = await httpClient.patch("/mypage/password", {
     newPassword,
   });
   return response.data;

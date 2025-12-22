@@ -6,6 +6,8 @@ import {
   Avatar,
   TextField,
   Button,
+  InputAdornment,
+  IconButton,
 } from "@mui/material";
 import {
   changePassword,
@@ -13,6 +15,8 @@ import {
 } from "../admin/member/api/MemberApi";
 import { useAuthStore } from "../store/useAuthStore";
 import type { MemberProfile } from "../admin/member/type/MemberType";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 
 interface InfoRowProps {
   label: string;
@@ -22,6 +26,8 @@ interface InfoRowProps {
   onChange?: (value: string) => void;
   error?: boolean;
   helperText?: string;
+  showPassword?: boolean;
+  onToggleShowPassword?: () => void;
 }
 
 export default function MyPage() {
@@ -32,6 +38,8 @@ export default function MyPage() {
   //비밀번호 재설정
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  //비밀번호 보기 아이
+  const [showPassword, setShowPassword] = useState(false);
 
   //비밀번호 일치 확인
   const isPasswordMismatch =
@@ -97,24 +105,28 @@ export default function MyPage() {
         {/* 비밀번호 변경 영역 */}
         <InfoRow
           label="새 비밀번호"
-          type="password"
+          type={showPassword ? "text" : "password"}
           value={newPassword}
           onChange={setNewPassword}
           error={isPasswordTooShort}
           helperText={
             isPasswordTooShort ? "비밀번호는 8자 이상이어야 합니다." : undefined
           }
+          showPassword={showPassword}
+          onToggleShowPassword={() => setShowPassword((prev) => !prev)}
         />
 
         <InfoRow
           label="비밀번호 확인"
-          type="password"
+          type={showPassword ? "text" : "password"}
           value={confirmPassword}
           onChange={setConfirmPassword}
           error={isPasswordMismatch}
           helperText={
             isPasswordMismatch ? "비밀번호가 일치하지 않습니다." : undefined
           }
+          showPassword={showPassword}
+          onToggleShowPassword={() => setShowPassword((prev) => !prev)}
         />
 
         <InfoRow label="이름" value={profile.name} isText />
@@ -148,6 +160,8 @@ const InfoRow: React.FC<InfoRowProps> = ({
   onChange,
   error,
   helperText,
+  showPassword,
+  onToggleShowPassword,
 }) => {
   return (
     <Box sx={{ display: "flex", alignItems: "center", m: 5 }}>
@@ -172,6 +186,23 @@ const InfoRow: React.FC<InfoRowProps> = ({
             error={error}
             helperText={helperText}
             onChange={(e) => onChange?.(e.target.value)}
+            InputProps={
+              type === "password" || type === "text"
+                ? {
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton onClick={onToggleShowPassword}>
+                          {showPassword ? (
+                            <VisibilityOffIcon fontSize="small" />
+                          ) : (
+                            <VisibilityIcon fontSize="small" />
+                          )}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }
+                : undefined
+            }
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: "15px",
