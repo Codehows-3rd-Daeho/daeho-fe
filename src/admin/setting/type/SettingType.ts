@@ -14,17 +14,13 @@ export interface NotificationSettingType {
 
   // 이슈 설정
   issueCreated: boolean;
-  issueUpdated: boolean;
   issueStatus: boolean;
 
   // 회의 설정
   meetingCreated: boolean;
-  meetingUpdated: boolean;
   meetingStatus: boolean;
 
   // 댓글 설정
-  commentCreated: boolean;
-  commentUpdated: boolean;
   commentMention: boolean;
 }
 

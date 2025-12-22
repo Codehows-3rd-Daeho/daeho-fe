@@ -12,6 +12,8 @@ import {
   deleteDepartment,
   deleteJobPosition,
   deleteCategory,
+  getNotiSetting,
+  saveNotiSetting,
 } from "../api/MasterDataApi";
 import axios from "axios";
 import MasterData from "../component/MasterData";
@@ -39,6 +41,17 @@ export default function AdminSetting() {
   const [jobPositions, setJobPositions] = useState<TagItem[]>([]);
   const [categories, setCategories] = useState<TagItem[]>([]);
   const [fileExtensions, setFileExtensions] = useState<TagItem[]>([]);
+  const [notificationSetting, setNotificationSetting] =
+    useState<NotificationSettingType>({
+      allIssue: true,
+      allMeeting: true,
+      allComment: true,
+      issueCreated: true,
+      issueStatus: true,
+      meetingCreated: true,
+      meetingStatus: true,
+      commentMention: true,
+    });
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -60,6 +73,23 @@ export default function AdminSetting() {
         // 파일 확장자 목록
         const extResponse = await getExtensions();
         setFileExtensions(mapApiDataToTagItem(extResponse));
+
+        // 알림 설정
+        const notificationSetting = await getNotiSetting();
+        setNotificationSetting((prev) => ({
+          ...prev,
+          issueCreated: notificationSetting.issueCreated,
+          issueStatus: notificationSetting.issueStatus,
+          meetingCreated: notificationSetting.meetingCreated,
+          meetingStatus: notificationSetting.meetingStatus,
+          commentMention: notificationSetting.commentMention,
+          allIssue:
+            notificationSetting.issueCreated && notificationSetting.issueStatus,
+          allMeeting:
+            notificationSetting.meetingCreated &&
+            notificationSetting.meetingStatus,
+          allComment: notificationSetting.commentMention,
+        }));
         setIsLoading(false);
       } catch (error) {
         if (axios.isAxiosError(error) && error.response?.status === 401) {
@@ -72,22 +102,6 @@ export default function AdminSetting() {
 
     fetchMasterData();
   }, []);
-
-  const [notificationSetting, setNotificationSetting] =
-    useState<NotificationSettingType>({
-      allIssue: true,
-      allMeeting: true,
-      allComment: true,
-      issueCreated: true,
-      issueUpdated: true,
-      issueStatus: true,
-      meetingCreated: true,
-      meetingUpdated: true,
-      meetingStatus: true,
-      commentCreated: true,
-      commentUpdated: true,
-      commentMention: true,
-    });
 
   const RenderChips = ({
     list,
@@ -127,7 +141,6 @@ export default function AdminSetting() {
 
   // Chip 삭제 핸들러
   const handleDelete = async (
-    // list: TagItem[],
     setList: SetTagList,
     chipToDelete: TagItem,
     deleteApiFunction: (id: number) => Promise<void>
@@ -159,38 +172,56 @@ export default function AdminSetting() {
   // 알림 스위치 핸들러
   const handleSwitchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, checked } = event.target;
-    setNotificationSetting((prev) => ({
-      ...prev,
-      [name]: checked,
-    }));
 
-    if (name === "allIssue") {
-      setNotificationSetting((prev) => ({
-        ...prev,
-        issueCreated: checked,
-        issueUpdated: checked,
-        issueStatus: checked,
-      }));
-    } else if (name === "allMeeting") {
-      setNotificationSetting((prev) => ({
-        ...prev,
-        meetingCreated: checked,
-        meetingUpdated: checked,
-        meetingStatus: checked,
-      }));
-    } else if (name === "allComment") {
-      setNotificationSetting((prev) => ({
-        ...prev,
-        commentCreated: checked,
-        commentUpdated: checked,
-        commentMention: checked,
-      }));
-    }
+    setNotificationSetting((prev) => {
+      const updated = { ...prev, [name]: checked };
+
+      // 전체 스위치 연동
+      if (name === "allIssue") {
+        updated.issueCreated = checked;
+        updated.issueStatus = checked;
+      } else if (name === "allMeeting") {
+        updated.meetingCreated = checked;
+        updated.meetingStatus = checked;
+      } else if (name === "allComment") {
+        updated.commentMention = checked;
+      } else if (name === "issueCreated" || name === "issueStatus") {
+        updated.allIssue = updated.issueCreated && updated.issueStatus;
+      } else if (name === "meetingCreated" || name === "meetingStatus") {
+        updated.allMeeting = updated.meetingCreated && updated.meetingStatus;
+      } else if (name === "commentMention") {
+        updated.allComment = updated.commentMention;
+      }
+
+      return updated;
+    });
   };
 
-  const handleSaveSettings = () => {
-    console.log("알림 설정 저장됨:", notificationSetting);
-    alert("알림 설정이 저장되었습니다.");
+  const handleSaveSettings = async () => {
+    try {
+      await saveNotiSetting({
+        issueCreated: notificationSetting.issueCreated,
+        issueStatus: notificationSetting.issueStatus,
+        meetingCreated: notificationSetting.meetingCreated,
+        meetingStatus: notificationSetting.meetingStatus,
+        commentMention: notificationSetting.commentMention,
+      } as NotificationSettingType);
+
+      // 저장 후 다시 로드
+      const updatedSetting = await getNotiSetting();
+      setNotificationSetting({
+        ...updatedSetting,
+        allIssue: updatedSetting.issueCreated && updatedSetting.issueStatus,
+        allMeeting:
+          updatedSetting.meetingCreated && updatedSetting.meetingStatus,
+        allComment: updatedSetting.commentMention,
+      });
+
+      alert("알림 설정 저장 완료");
+    } catch (error) {
+      console.error("알림 설정 저장 실패:", error);
+      alert("저장 실패");
+    }
   };
 
   if (isLoading) {

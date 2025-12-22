@@ -31,6 +31,7 @@ export const useAuthStore = create<AuthStore>((set) => {
     logout: () => {
       localStorage.removeItem("jwt");
       localStorage.removeItem("member");
+      localStorage.removeItem("pushRegistered");
       set({
         isAuthenticated: false,
         token: null,

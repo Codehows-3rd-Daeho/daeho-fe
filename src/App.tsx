@@ -18,14 +18,6 @@ const MeetingUpdate = lazy(() => import("./meeting/page/MeetingUpdate"));
 const AdminSetting = lazy(() => import("./admin/setting/page/AdminSetting"));
 const MemberList = lazy(() => import("./admin/member/page/MemberList"));
 
-/*===============================
-  PrivateRoute 사용 안내
-  ===============================
-  1. 로그인만 필요하면:
-    <PrivateRoute>컴포넌트</PrivateRoute>
-  2. 관리자 전용 페이지면:
-    <PrivateRoute isAdmin>컴포넌트</PrivateRoute>
-  ===============================*/
 type PrivateRouteProps = {
   children: JSX.Element;
   isAdmin?: boolean;

@@ -1,31 +1,9 @@
-import React, { useState } from "react";
-import {
-  AppBar,
-  Toolbar,
-  IconButton,
-  Typography,
-  Box,
-  Badge,
-  Menu,
-  MenuItem,
-} from "@mui/material";
-import NotificationsIcon from "@mui/icons-material/Notifications";
+import { AppBar, Toolbar, IconButton, Typography, Box } from "@mui/material";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import type { HeaderProps } from "./type";
+import NotificationDropdown from "../../webpush/page/NotificationDropdown";
 
-export default function Header({
-  name,
-  jobPosition,
-  notifications,
-}: HeaderProps) {
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const open = Boolean(anchorEl);
-
-  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-  const handleClose = () => setAnchorEl(null);
-
+export default function Header({ name, jobPosition }: HeaderProps) {
   return (
     <AppBar
       position="fixed"
@@ -35,32 +13,7 @@ export default function Header({
       }}
     >
       <Toolbar sx={{ justifyContent: "flex-end", gap: 2 }}>
-        {/* 1️⃣ 알림 */}
-        <IconButton sx={{ color: "#333" }} onClick={handleClick}>
-          {/* 알림 있으면 빨간불 표시 */}
-          <Badge
-            variant="dot"
-            color="error"
-            invisible={notifications.length === 0}
-          >
-            <NotificationsIcon />
-          </Badge>
-        </IconButton>
-        <Menu
-          anchorEl={anchorEl}
-          open={open}
-          onClose={handleClose}
-          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-          transformOrigin={{ vertical: "top", horizontal: "right" }}
-        >
-          {notifications.length === 0 ? (
-            <MenuItem>알림이 없습니다.</MenuItem>
-          ) : (
-            notifications.map((msg, idx) => (
-              <MenuItem key={idx}>{msg}</MenuItem>
-            ))
-          )}
-        </Menu>
+        <NotificationDropdown />
 
         {/* 2️⃣ 이름 + 직책 */}
         <Box

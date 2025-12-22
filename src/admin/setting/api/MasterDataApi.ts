@@ -1,5 +1,10 @@
 //** 기준정보 (부서, 직급, 카테고리) API */
-import type { Group, GroupDto, MasterDataType } from "../type/SettingType";
+import type {
+  Group,
+  GroupDto,
+  MasterDataType,
+  NotificationSettingType,
+} from "../type/SettingType";
 import httpClient from "../../../config/httpClient";
 
 // GET
@@ -31,6 +36,13 @@ export const getGroupList = async (): Promise<Group[]> => {
   return response.data;
 };
 
+// 알림 설정
+export const getNotiSetting = async (): Promise<NotificationSettingType> => {
+  const response = await httpClient.get(`/admin/notificationSetting`);
+  console.log("알림 : ", response.data);
+  return response.data;
+};
+
 // POST
 export const createDepartment = async (data: MasterDataType) => {
   const response = await httpClient.post(`/admin/department`, data);
@@ -49,6 +61,11 @@ export const createCategory = async (data: MasterDataType) => {
 
 export const createGroup = async (data: GroupDto) => {
   const response = await httpClient.post(`/admin/group`, data);
+  return response.data;
+};
+
+export const saveNotiSetting = async (data: NotificationSettingType) => {
+  const response = await httpClient.post(`/admin/notificationSetting`, data);
   return response.data;
 };
 
