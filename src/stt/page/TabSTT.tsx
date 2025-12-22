@@ -471,7 +471,7 @@ export default function TabSTT() {
     const liveSttId = findSttById(sttId)?.liveSttId ?? null;
     if(liveSttId === null) return;
     try {
-      updateSttState(sttId, { isTemp: false })
+      updateSttState(sttId, { isTemp: false, isLoading: true })
       await finishRecording(liveSttId);
     } catch (e) {
       console.error("변환 요청 실패 :", e);
