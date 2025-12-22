@@ -340,6 +340,7 @@ export default function TabSTT() {
       const recorder = new MediaRecorder(stream);
       mediaRecorderRef.current[sttId] = recorder;
 
+      audioChunksRef.current[sttId] = [];
       recorder.ondataavailable = async (event) => {
         if (event.data.size > 0) {
           audioChunksRef.current[sttId].push(event.data);
