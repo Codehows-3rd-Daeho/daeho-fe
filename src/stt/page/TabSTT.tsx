@@ -24,7 +24,7 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import type { STT } from "../type/type";
 
-type RecordingStatus = "idle" | "recording" | "paused";
+type RecordingStatus = "idle" | "recording" | "paused" | "finished";
 
 interface STTWithRecording extends STT {
   recordingStatus?: RecordingStatus;
@@ -281,13 +281,9 @@ export default function TabSTT() {
       };
   
       recorder.onstop = async () => {
-        updateSttState(sttId, { isLoading: true, recordingStatus: 'idle' });
+        updateSttState(sttId, { isLoading: true, recordingStatus: 'finished' });
         try {
           const finalStt = await finishRecording(liveSttId);
-          setStts(prev => {
-            const otherStts = prev.filter(s => s.id !== sttId);
-            return [...otherStts, {...finalStt, recordingStatus: 'idle', recordingTime: 0, liveSttId: null}];
-          });
           setSelectedSttId(finalStt.id);
         } catch(e) {
           console.error(e);
