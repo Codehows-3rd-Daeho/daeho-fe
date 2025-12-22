@@ -467,7 +467,7 @@ export default function TabSTT() {
   };
   
   const handleConfirmUpload = async (sttId: number | null) => {
-    if (sttId === null || !audioChunksRef.current[sttId]) return;
+    if (sttId === null) return;
     const liveSttId = findSttById(sttId)?.liveSttId ?? null;
     if(liveSttId === null) return;
     try {
