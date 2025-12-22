@@ -46,7 +46,6 @@ export default function TabSTT() {
   const recordTimeTimerRef = useRef<{ [key: number]: number }>({});
   const chunkTimerRef = useRef<{ [key: number]: number }>({});
   const mediaStreamRef = useRef<{ [key: number]: MediaStream }>({});
-  const recordedBlobRef = useRef<{ [key: number]: Blob }>({});
 
   //daglo 최대 업로드 용량, 허용 확장자
   const maxFileSizeMB = 2 * 1024; //2GB (MB)
@@ -248,11 +247,7 @@ export default function TabSTT() {
 
   const handleDelete = async (sttId: number) => {
     // Prevent memory leaks by revoking the blob URL if it exists
-    const sttToDelete = findSttById(sttId);
-    if (sttToDelete?.recordingStatus === 'finished' && sttToDelete.recordedBlobUrl) {
-      URL.revokeObjectURL(sttToDelete.recordedBlobUrl);
-      delete recordedBlobRef.current[sttId];
-    }
+    const sttIdToDelete = findSttById(sttId)?.liveSttId ?? sttId;
 
     if (!selectedSttId) {
       alert("삭제할 STT가 선택되지 않았습니다.");
@@ -263,7 +258,7 @@ export default function TabSTT() {
     if (!isConfirmed) return;
 
     try {
-      await deleteSTT(sttId);
+      await deleteSTT(sttIdToDelete);
       // 상태에서 삭제
       setStts((prev) => {
         const updated = prev.filter((stt) => stt.id !== sttId);
@@ -656,9 +651,9 @@ export default function TabSTT() {
                     <Typography variant="h6" sx={{ mb: 2 }}>
                         녹음 완료
                     </Typography>
-                    <audio controls src={currentStt.recordedBlobUrl!} style={{ width: '100%' }}>
+                    {/* <audio controls src={currentStt.recordedBlobUrl!} style={{ width: '100%' }}>
                         Your browser does not support the audio element.
-                    </audio>
+                    </audio> */}
                     <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>
                         <Button variant="contained" color="primary" onClick={() => handleConfirmUpload(selectedSttId)}>
                             변환 하기
