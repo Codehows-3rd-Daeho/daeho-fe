@@ -29,7 +29,7 @@ type RecordingStatus = "idle" | "recording" | "paused" | "finished";
 interface STTWithRecording extends STT {
   recordingStatus?: RecordingStatus;
   recordingTime?: number;
-  liveSttId?: number;
+  liveSttId?: number | null;
 }
 
 
@@ -472,7 +472,20 @@ export default function TabSTT() {
     if(liveSttId === null) return;
     try {
       updateSttState(sttId, { isTemp: false, isLoading: true })
-      await finishRecording(liveSttId);
+      const resStt: STTWithRecording = await finishRecording(liveSttId);
+      updateSttState(sttId, {
+        content: resStt.content,
+        id: resStt.id,
+        meetingId: resStt.meetingId,
+        summary: resStt.summary,
+        isEditable: false,
+        isLoading: false,
+        isTemp: false,
+        recordingStatus: 'idle',
+        recordingTime: 0,
+        liveSttId: null,
+      })
+      setSelectedSttId(resStt.id);
     } catch (e) {
       console.error("변환 요청 실패 :", e);
     }
