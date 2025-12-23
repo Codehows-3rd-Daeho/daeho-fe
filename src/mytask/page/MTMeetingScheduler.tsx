@@ -210,12 +210,12 @@ export default function MTMeetingScheduler() {
                             px: 1,
                             py: 0.75,
                             cursor: "pointer",
-                            border: "2px solid #bb91ff",
-                            backgroundColor: "#f6f0ff",
+                            // border: "2px solid #bb91ff",
+                            backgroundColor: "#4b6485",
                             width: 180,
                             "&:hover": {
-                              backgroundColor: "#e0e7ff",
-                              borderColor: "#2563eb",
+                              backgroundColor: "#1a3260",
+                              // borderColor: "#2563eb",
                             },
                           }}
                           onClick={() => navigate(`/meeting/${meeting.id}`)}
@@ -231,9 +231,7 @@ export default function MTMeetingScheduler() {
                             }}
                           >
                             {meeting.startDate && (
-                              <Box
-                                sx={{ fontSize: 10, color: "text.secondary" }}
-                              >
+                              <Box sx={{ fontSize: 10, color: "white" }}>
                                 {meeting.startDate?.split(" ")[1]}
                               </Box>
                             )}
@@ -241,7 +239,7 @@ export default function MTMeetingScheduler() {
                             <Box
                               sx={{
                                 fontSize: 10,
-                                color: "text.secondary",
+                                color: "white",
                                 overflow: "hidden",
                                 textOverflow: "ellipsis",
                                 whiteSpace: "nowrap",
@@ -254,6 +252,7 @@ export default function MTMeetingScheduler() {
                             sx={{
                               fontSize: 14,
                               fontWeight: 500,
+                              color: "white",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "nowrap",

@@ -54,7 +54,7 @@ export default function Breadcrumb() {
 
   return (
     <nav aria-label="breadcrumb" className="mb-4">
-      <ol className="flex items-center space-x-6 text-sm text-gray-500">
+      <ol className="flex items-center space-x-2 text-sm text-gray-500">
         {pathnames.map((value, index) => {
           const to = `/${pathnames.slice(0, index + 1).join("/")}`;
           const isLast = index === pathnames.length - 1;

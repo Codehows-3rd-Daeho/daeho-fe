@@ -165,7 +165,6 @@ export default function MeetingScheduler() {
               <Box
                 key={di}
                 sx={{
-                  // height: 250,
                   borderRadius: 2,
                   border: "2px solid #eef2f7",
                   p: 1,
@@ -204,12 +203,12 @@ export default function MeetingScheduler() {
                             px: 1,
                             py: 0.75,
                             cursor: "pointer",
-                            border: "2px solid #bb91ff",
-                            backgroundColor: "#f6f0ff",
+                            // border: "2px solid #bb91ff",
+                            backgroundColor: "#4b6485",
                             width: 180,
                             "&:hover": {
-                              backgroundColor: "#e0e7ff",
-                              borderColor: "#2563eb",
+                              backgroundColor: "#1a3260",
+                              // borderColor: "#2563eb",
                             },
                           }}
                           onClick={() => navigate(`/meeting/${meeting.id}`)}
@@ -225,9 +224,7 @@ export default function MeetingScheduler() {
                             }}
                           >
                             {meeting.startDate && (
-                              <Box
-                                sx={{ fontSize: 10, color: "text.secondary" }}
-                              >
+                              <Box sx={{ fontSize: 10, color: "white" }}>
                                 {meeting.startDate?.split(" ")[1]}
                               </Box>
                             )}
@@ -235,7 +232,7 @@ export default function MeetingScheduler() {
                             <Box
                               sx={{
                                 fontSize: 10,
-                                color: "text.secondary",
+                                color: "white",
                                 overflow: "hidden",
                                 textOverflow: "ellipsis",
                                 whiteSpace: "nowrap",
@@ -248,6 +245,7 @@ export default function MeetingScheduler() {
                             sx={{
                               fontSize: 14,
                               fontWeight: 500,
+                              color: "white",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "nowrap",
