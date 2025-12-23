@@ -66,11 +66,14 @@ export default function Breadcrumb() {
   const getResourceInfo = (pathname: string) => {
     const parts = pathname.split("/").filter(Boolean);
 
-    if (parts[0] === "issue" && parts[1]) {
+    //^ : 문자열 시작(")
+    // \d+ : 숫자 1개 이상
+    // $ : 문자열 끝(")
+    if (parts[0] === "issue" && /^\d+$/.test(parts[1])) {
       return { type: "issue", id: parts[1] };
     }
 
-    if (parts[0] === "meeting" && parts[1]) {
+    if (parts[0] === "meeting" && /^\d+$/.test(parts[1])) {
       return { type: "meeting", id: parts[1] };
     }
 
