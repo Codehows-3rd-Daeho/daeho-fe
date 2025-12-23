@@ -4,11 +4,11 @@ import {
   getMeetingComments,
   updateComment as updateCommentApi,
   deleteComment as deleteCommentApi,
-} from "../../comment/api/CommentApi";
-import { useCommentController } from "../../comment/component/useCommentController";
-import { useAuthStore } from "../../store/useAuthStore";
-import CommentSection from "../../comment/component/CommentSection";
-import { CommonPagination } from "../../common/Pagination/Pagination";
+} from "../../../comment/api/CommentApi";
+import { useCommentController } from "../../../comment/component/useCommentController";
+import { useAuthStore } from "../../../store/useAuthStore";
+import CommentSection from "../../../comment/component/CommentSection";
+import { CommonPagination } from "../../../common/Pagination/Pagination";
 
 interface Props {
   meetingId: number;
