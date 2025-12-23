@@ -1,5 +1,6 @@
 // theme.ts
 import { createTheme } from "@mui/material/styles";
+import "@mui/x-data-grid/themeAugmentation";
 
 const theme = createTheme({
   palette: {
@@ -9,18 +10,12 @@ const theme = createTheme({
     secondary: {
       main: "#dc004e",
     },
+    action: {
+      hover: "#edf0f6", // hover 기본 색
+      selected: "#dce4f2", // 선택된 메뉴 색
+    },
   },
-  // typography: {
-  //   fontFamily: "Roboto, Arial, sans-serif",
-  //   fontSize: 20, // 전체 기본 폰트 크기
-  //   // body1, body2 등 세부 조절도 가능
-  //   // body1: {
-  //   //   fontSize: '1rem',
-  //   // },
-  //   // body2: {
-  //   //   fontSize: '0.875rem',
-  //   // },
-  // },
+
   components: {
     MuiOutlinedInput: {
       styleOverrides: {
@@ -35,20 +30,30 @@ const theme = createTheme({
           },
           // 마우스 hover 시 테두리
           "&:hover .MuiOutlinedInput-notchedOutline": {
-            border: "2px solid #1976d2",
+            border: "2px solid #4b6485",
+          },
+          // 마우스 hover 시 배경색
+          "&:hover": {
+            backgroundColor: "#edf0f6",
           },
         },
       },
     },
-    // MuiButton: {
-    //   styleOverrides: {
-    //     root: {
-    //       fontSize: "20px", // 버튼 폰트 크기
-    //       fontWeight: 500, // 폰트 두께 (선택)
-    //       textTransform: "none", // 대문자 변환 비활성화
-    //     },
-    //   },
-    // },
+    MuiDataGrid: {
+      styleOverrides: {
+        root: {
+          "& .MuiDataGrid-row:hover": {
+            backgroundColor: "#edf0f6",
+          },
+          "& .MuiDataGrid-row.Mui-selected": {
+            backgroundColor: "#dce4f2",
+          },
+          "& .MuiDataGrid-row.Mui-selected:hover": {
+            backgroundColor: "#cfd9ec",
+          },
+        },
+      },
+    },
   },
 });
 
