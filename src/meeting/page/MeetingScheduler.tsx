@@ -166,10 +166,13 @@ export default function MeetingScheduler() {
                 key={di}
                 sx={{
                   borderRadius: 2,
-                  border: "2px solid #eef2f7",
+                  border:
+                    day && isToday(day)
+                      ? "3px solid #2563EB"
+                      : "2px solid #eef2f7",
                   p: 1,
                   position: "relative",
-                  backgroundColor: day && isToday(day) ? "#f0f6ff" : "#fff",
+                  backgroundColor: "#fff",
                 }}
               >
                 {day && (
@@ -177,7 +180,7 @@ export default function MeetingScheduler() {
                     <Typography
                       fontSize={15}
                       fontWeight={isToday(day) ? 700 : 500}
-                      color={isToday(day) ? "primary.main" : "#374151"}
+                      color={isToday(day) ? "#2563EB" : "#374151"}
                     >
                       {day}
                     </Typography>

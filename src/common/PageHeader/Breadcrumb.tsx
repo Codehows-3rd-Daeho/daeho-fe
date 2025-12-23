@@ -1,10 +1,15 @@
+import { useEffect, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
+import { getIssueDtl } from "../../issue/api/issueApi";
+import { getMeetingDtl } from "../../meeting/api/MeetingApi";
 
 export default function Breadcrumb() {
+  //url 정보 가져오는 훅
   const location = useLocation();
-  // 현재의 URL 경로 -> 문자열
+  // 현재의 URL 경로 -> 문자 배열 + 빈문자열 제거
   const pathnames = location.pathname.split("/").filter((x) => x);
 
+  //이름 매핑
   const breadcrumbNameMap: Record<string, string> = {
     // dashboard: "대시보드",
     mypage: "마이페이지",
@@ -52,13 +57,63 @@ export default function Breadcrumb() {
     "/admin/setting",
   ];
 
+  //이슈,회의 제목 매핑
+  const [dynamicNameMap, setDynamicNameMap] = useState<Record<string, string>>(
+    {}
+  );
+
+  //이슈 or 회의 + id추출
+  const getResourceInfo = (pathname: string) => {
+    const parts = pathname.split("/").filter(Boolean);
+
+    if (parts[0] === "issue" && parts[1]) {
+      return { type: "issue", id: parts[1] };
+    }
+
+    if (parts[0] === "meeting" && parts[1]) {
+      return { type: "meeting", id: parts[1] };
+    }
+
+    return null;
+  };
+
+  useEffect(() => {
+    const info = getResourceInfo(location.pathname);
+    if (!info) return;
+
+    // 이미 있으면 다시 호출하지 않음
+    if (dynamicNameMap[info.id]) return;
+
+    //이슈 제목 매핑
+    if (info.type === "issue") {
+      getIssueDtl(info.id).then((res) => {
+        setDynamicNameMap((prev) => ({
+          ...prev,
+          [info.id]: res.title,
+        }));
+      });
+    }
+
+    //회의 제목 매핑
+    if (info.type === "meeting") {
+      getMeetingDtl(info.id).then((res) => {
+        setDynamicNameMap((prev) => ({
+          ...prev,
+          [info.id]: res.title, // 또는 res.subject
+        }));
+      });
+    }
+  }, [location.pathname]);
+
   return (
     <nav aria-label="breadcrumb" className="mb-4">
       <ol className="flex items-center space-x-2 text-sm text-gray-500">
         {pathnames.map((value, index) => {
           const to = `/${pathnames.slice(0, index + 1).join("/")}`;
           const isLast = index === pathnames.length - 1;
-          const name = breadcrumbNameMap[value] || value;
+          //표시할 이름 (id -> 제목, 고정 경로 -> 문자열, nothing -> value)
+          const name =
+            dynamicNameMap[value] || breadcrumbNameMap[value] || value;
 
           // 링크로 만들 경로인지 확인
           const isValidLink = validPaths.some((path) => {
@@ -67,6 +122,7 @@ export default function Breadcrumb() {
               const regexPath = new RegExp(
                 "^" + path.replace(/:\w+/g, "\\w+") + "$"
               );
+              //breadcrumb 경로가 해당 패턴과 일치하는지 확인
               return regexPath.test(to);
             }
             return path === to;
