@@ -153,10 +153,16 @@ export default function Sidebar({
                 sx={{
                   minHeight: 48,
                   py: 2,
-                  px: 3,
+                  px: 2,
                 }}
               >
-                <ListItemIcon>
+                <ListItemIcon
+                  sx={{
+                    minWidth: 40,
+                    mr: 1.5,
+                    justifyContent: "center",
+                  }}
+                >
                   <Tooltip
                     title={item.label}
                     placement="right"
@@ -174,28 +180,43 @@ export default function Sidebar({
                     </Box>
                   </Tooltip>
                 </ListItemIcon>
-                {!collapsed && (
-                  <ListItemText
-                    primary={item.label}
-                    sx={{
-                      opacity: collapsed ? 0 : 1,
-                      transition: "opacity 0.3s ease",
-                      whiteSpace: "nowrap",
-                    }}
-                    slotProps={{
-                      primary: {
-                        sx: {
-                          fontWeight:
-                            selectedId === item.id || isParentSelected
-                              ? 700
-                              : 500,
-                        },
+
+                <ListItemText
+                  primary={item.label}
+                  sx={{
+                    opacity: collapsed ? 0 : 1,
+                    pointerEvents: collapsed ? "none" : "auto",
+                    width: collapsed ? 0 : "auto",
+                    transition: "opacity 0.2s ease",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                  }}
+                  slotProps={{
+                    primary: {
+                      sx: {
+                        fontWeight:
+                          selectedId === item.id || isParentSelected
+                            ? 700
+                            : 500,
                       },
-                    }}
-                  />
-                )}
-                {!collapsed &&
-                  (open[item.id] ? <ExpandLess /> : <ExpandMore />)}
+                    },
+                  }}
+                />
+
+                <Box
+                  sx={{
+                    width: 24,
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    opacity: collapsed ? 0 : 1,
+                    pointerEvents: collapsed ? "none" : "auto",
+                    transition: "opacity 0.2s ease",
+                  }}
+                >
+                  {hasChildren &&
+                    (open[item.id] ? <ExpandLess /> : <ExpandMore />)}
+                </Box>
               </ListItemButton>
               {hasChildren && (
                 <Collapse in={open[item.id]} timeout="auto">
@@ -210,20 +231,34 @@ export default function Sidebar({
                           if (child.href) navigate(child.href);
                         }}
                       >
-                        <ListItemIcon>{child.icon ?? null}</ListItemIcon>
-                        {!collapsed && (
-                          <ListItemText
-                            primary={child.label}
-                            slotProps={{
-                              primary: {
-                                sx: {
-                                  fontWeight:
-                                    child.id === selectedId ? 700 : 500,
-                                },
+                        <ListItemIcon
+                          sx={{
+                            minWidth: 40,
+                            mr: 1.5,
+                            justifyContent: "center",
+                          }}
+                        >
+                          {child.icon ?? null}
+                        </ListItemIcon>
+
+                        <ListItemText
+                          primary={child.label}
+                          sx={{
+                            opacity: collapsed ? 0 : 1,
+                            pointerEvents: collapsed ? "none" : "auto",
+                            width: collapsed ? 0 : "auto",
+                            transition: "opacity 0.2s ease",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                          }}
+                          slotProps={{
+                            primary: {
+                              sx: {
+                                fontWeight: child.id === selectedId ? 700 : 500,
                               },
-                            }}
-                          />
-                        )}
+                            },
+                          }}
+                        />
                       </ListItemButton>
                     ))}
                   </List>
@@ -253,27 +288,41 @@ export default function Sidebar({
                       if (adminChildren.length > 0) handleToggle(adminMenu.id);
                       else if (adminMenu.href) navigate(adminMenu.href);
                     }}
-                    sx={{ px: 3 }}
+                    sx={{ px: 2 }}
                   >
-                    <ListItemIcon>
+                    <ListItemIcon
+                      sx={{
+                        minWidth: 40,
+                        mr: 1.5,
+                        justifyContent: "center",
+                      }}
+                    >
                       {adminMenu.icon ?? <HomeIcon />}
                     </ListItemIcon>
-                    {!collapsed && (
-                      <ListItemText
-                        primary={adminMenu.label}
-                        slotProps={{
-                          primary: {
-                            sx: {
-                              fontWeight:
-                                selectedId === adminMenu.id ||
-                                isAdminParentSelected
-                                  ? 700
-                                  : 500,
-                            },
+
+                    <ListItemText
+                      primary={adminMenu.label}
+                      sx={{
+                        opacity: collapsed ? 0 : 1,
+                        pointerEvents: collapsed ? "none" : "auto",
+                        width: collapsed ? 0 : "auto",
+                        transition: "opacity 0.2s ease",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                      }}
+                      slotProps={{
+                        primary: {
+                          sx: {
+                            fontWeight:
+                              selectedId === adminMenu.id ||
+                              isAdminParentSelected
+                                ? 700
+                                : 500,
                           },
-                        }}
-                      />
-                    )}
+                        },
+                      }}
+                    />
+
                     {!collapsed &&
                       adminChildren.length > 0 &&
                       (open[adminMenu.id] ? <ExpandLess /> : <ExpandMore />)}
@@ -291,20 +340,35 @@ export default function Sidebar({
                               if (child.href) navigate(child.href);
                             }}
                           >
-                            <ListItemIcon>{child.icon ?? null}</ListItemIcon>
-                            {!collapsed && (
-                              <ListItemText
-                                primary={child.label}
-                                slotProps={{
-                                  primary: {
-                                    sx: {
-                                      fontWeight:
-                                        child.id === selectedId ? 700 : 500,
-                                    },
+                            <ListItemIcon
+                              sx={{
+                                minWidth: 40,
+                                mr: 1.5,
+                                justifyContent: "center",
+                              }}
+                            >
+                              {child.icon ?? null}
+                            </ListItemIcon>
+
+                            <ListItemText
+                              primary={child.label}
+                              sx={{
+                                opacity: collapsed ? 0 : 1,
+                                pointerEvents: collapsed ? "none" : "auto",
+                                width: collapsed ? 0 : "auto",
+                                transition: "opacity 0.2s ease",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                              }}
+                              slotProps={{
+                                primary: {
+                                  sx: {
+                                    fontWeight:
+                                      child.id === selectedId ? 700 : 500,
                                   },
-                                }}
-                              />
-                            )}
+                                },
+                              }}
+                            />
                           </ListItemButton>
                         ))}
                       </List>
