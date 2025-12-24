@@ -1,11 +1,11 @@
 import { CommonPagination } from "../../../common/Pagination/Pagination";
 import type { GridColDef, GridValueGetter } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
-import { getIssueLog } from "../../api/issueLogApi";
-import { useParams } from "react-router-dom";
-import { ListDataGrid } from "../../../common/List/ListDataGrid";
 
-export type IssueLoglist = {
+import { ListDataGrid } from "../../../common/List/ListDataGrid";
+import { getMeetingLog } from "../../api/MeetingLogApi";
+
+export type MeetingLoglist = {
   id: number;
   targetId: number;
   targetType: string;
@@ -17,11 +17,15 @@ export type IssueLoglist = {
   no?: number;
 };
 
-export default function TabLog() {
+type TabLogProps = {
+  meetingId: string;
+};
+
+export default function TabLog({ meetingId }: TabLogProps) {
   const [page, setPage] = useState(1);
-  const [data, setData] = useState<IssueLoglist[]>([]);
+  const [data, setData] = useState<MeetingLoglist[]>([]);
   const [totalCount, setTotalCount] = useState(0);
-  const { issueId } = useParams();
+
   const changeTypeMap: Record<string, string> = {
     CREATE: "생성",
     UPDATE: "수정",
@@ -31,18 +35,26 @@ export default function TabLog() {
   const pageSize = 5;
 
   useEffect(() => {
-    getIssueLog(issueId as string, page - 1, pageSize).then((data) => {
-      const list = (data.content ?? data).map(
-        (item: IssueLoglist, index: number) => ({
-          ...item,
-          no: data.totalElements - ((page - 1) * pageSize + index),
-        })
-      );
+    if (!meetingId) return;
 
-      setData(list);
-      setTotalCount(data.totalElements);
-    });
-  }, [issueId, page]);
+    getMeetingLog(meetingId, page - 1, pageSize)
+      .then((res) => {
+        const content = res.content || [];
+        const total = res.totalElements || 0;
+
+        const list = content.map((item: MeetingLoglist, index: number) => ({
+          ...item,
+          // 역순 번호 계산
+          no: total - ((page - 1) * pageSize + index),
+        }));
+
+        setData(list);
+        setTotalCount(total);
+      })
+      .catch((err) => {
+        console.error("로그 로딩 실패:", err);
+      });
+  }, [meetingId, page]);
 
   const allColumns: GridColDef[] = [
     {
@@ -116,7 +128,7 @@ export default function TabLog() {
   return (
     <>
       {/* 리스트 */}
-      <ListDataGrid<IssueLoglist>
+      <ListDataGrid<MeetingLoglist>
         rows={data}
         columns={allColumns}
         rowIdField="id"

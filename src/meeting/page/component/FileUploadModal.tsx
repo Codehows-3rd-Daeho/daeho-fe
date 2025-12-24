@@ -11,13 +11,13 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import FileUploadOutlinedIcon from "@mui/icons-material/FileUploadOutlined";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { formatFileSize, getFileInfo } from "../../common/commonFunction";
+import { formatFileSize, getFileInfo } from "../../../common/commonFunction";
 import {
   getExtensions,
   getFileSize,
-} from "../../admin/setting/api/FileSettingApi";
+} from "../../../admin/setting/api/FileSettingApi";
 import axios from "axios";
-import { saveMeetingMinutes } from "../api/MeetingApi";
+import { saveMeetingMinutes } from "../../api/MeetingApi";
 
 interface UploadedFile {
   file: File;
