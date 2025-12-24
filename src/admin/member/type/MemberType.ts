@@ -8,6 +8,7 @@ export interface Member {
   phone: string;
   email: string;
   isEmployed: boolean;
+  role: "ADMIN" | "USER";
   profileUrl?: string;
   profileFileId?: number;
 }
@@ -20,4 +21,5 @@ export interface MemberList {
   phone: string;
   email: string;
   isEmployed: string;
+  isAdmin: boolean;
 }

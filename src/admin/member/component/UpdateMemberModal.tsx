@@ -43,6 +43,7 @@ export default function UpdateMemberModal({
     departmentId: "",
     jobPositionId: "",
     isEmployed: true,
+    role: "USER",
   });
 
   const [department, setDepartment] = useState<MasterDataType[]>([]);
@@ -262,6 +263,7 @@ export default function UpdateMemberModal({
       departmentId: "",
       jobPositionId: "",
       isEmployed: true,
+      role: "USER",
     });
     setErrors({});
     onClose();

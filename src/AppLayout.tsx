@@ -1,9 +1,9 @@
-// AppLayout.tsx
 import Sidebar from "./common/Sidebar/Sidebar";
 import Header from "./common/Header/Header";
 import { sidebarItems } from "./common/Sidebar/SidebarItems";
 import { useState, type ReactNode } from "react";
 import { useAuthStore } from "./store/useAuthStore";
+import { usePushNotification } from "./webpush/usePushNotification";
 
 type AppLayoutProps = {
   children: ReactNode;
@@ -14,6 +14,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const [collapsed, setCollapsed] = useState(false); // 사이드바 접기 상태
 
   const handleToggleSidebar = () => setCollapsed((prev) => !prev);
+
+  usePushNotification(member?.memberId ? String(member.memberId) : "");
+
   return (
     <div className="flex h-screen">
       <Sidebar

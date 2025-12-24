@@ -94,7 +94,7 @@ export default function MeetingCreate() {
 
         //======================주관자 자동 입력==================
         if (memberId) {
-          const hostString = `${name}  ${jobPosition}`;
+          const hostString = `${name} ${jobPosition}`;
 
           setFormData((prev) => ({
             ...prev,
@@ -253,11 +253,7 @@ export default function MeetingCreate() {
       const isAllowed = ext != null && allowedExtensions.includes(ext);
 
       if (!isAllowed) {
-        alert(
-          `허용되지 않은 파일입니다: ${
-            file.name
-          }\n허용 확장자: ${allowedExtensions.join(", ")}`
-        );
+        alert(`허용되지 않은 확장자입니다: ${file.name}`);
         return;
       }
 
@@ -266,8 +262,11 @@ export default function MeetingCreate() {
 
       if (sizeMB > maxFileSize) {
         alert(
-          `${file.name} 파일의 크기가 ${maxFileSize}MB를 초과했습니다.
-           (현재: ${sizeMB.toFixed(2)}MB)`
+          `${
+            file.name
+          } 파일의 크기가 ${maxFileSize}MB를 초과했습니다.\n(현재: ${sizeMB.toFixed(
+            2
+          )}MB)`
         );
         return; // 이 파일만 제외
       }
@@ -332,7 +331,7 @@ export default function MeetingCreate() {
           issue: String(issue.id),
           categoryId: issue.categoryId,
           departmentIds: Array.isArray(issue.departmentIds)
-            ? issue.departmentIds
+            ? issue.departmentIds.map(String)
             : [],
           members: issue.members, // IssueMemberDto[]
         };

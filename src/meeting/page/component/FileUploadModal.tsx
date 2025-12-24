@@ -109,9 +109,6 @@ export default function FileUploadModal({
       return;
     }
 
-    const ok = confirm("회의록 등록 시 회의가 종결됩니다. 등록하시겠습니까?");
-    if (!ok) return;
-
     try {
       const formData = new FormData();
       formData.append("file", uploadedFile[0].file);
@@ -126,6 +123,44 @@ export default function FileUploadModal({
       }
       alert("회의록 등록 중 오류가 발생했습니다.");
     }
+  };
+
+  // 드래그 오버 시 브라우저 기본 동작 막기
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+  };
+
+  // 드롭 시 파일 처리
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (!e.dataTransfer.files || e.dataTransfer.files.length === 0) return;
+
+    const file = e.dataTransfer.files[0];
+
+    // 파일 하나만 허용
+    if (uploadedFile.length >= 1) {
+      alert("회의록은 하나만 등록할 수 있습니다.");
+      return;
+    }
+
+    // 확장자 체크
+    const ext = file.name.split(".").pop()?.toLowerCase() || "";
+    if (!allowedExtensions.includes(ext)) {
+      alert(`허용되지 않은 확장자입니다. ${file.name}`);
+      return;
+    }
+
+    // 파일 크기 체크
+    if (file.size > maxFileSizeBytes) {
+      alert(
+        `파일 용량은 최대 ${formatFileSize(
+          maxFileSizeBytes
+        )}까지 업로드할 수 있습니다.`
+      );
+      return;
+    }
+
+    setUploadedFile([{ file, name: file.name, size: file.size }]);
   };
 
   return (
@@ -172,6 +207,8 @@ export default function FileUploadModal({
               transition: "0.3s",
               "&:hover": { bgcolor: "#f1f5f9" },
             }}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
           >
             <input
               type="file"
@@ -189,9 +226,8 @@ export default function FileUploadModal({
               <Typography
                 sx={{ color: "#64748b", fontSize: "0.8rem", mt: 2, mb: 2 }}
               >
-                등록 가능 : {allowedExtensions.join(", ").toUpperCase()}
-                <br />
-                최대 용량 : {formatFileSize(maxFileSizeBytes)}
+                최대 용량 : {formatFileSize(maxFileSizeBytes)} <br />
+                등록 가능 확장자: {allowedExtensions.join(", ").toUpperCase()}
               </Typography>
 
               <Button

@@ -113,12 +113,6 @@ export default function NotificationSetting({
             onChange={handleSwitchChange}
           />
           <SwitchItem
-            label="내용 수정 시 알림 받기"
-            name="issueUpdated"
-            checked={notificationSetting.issueUpdated}
-            onChange={handleSwitchChange}
-          />
-          <SwitchItem
             label="상태 변경 시 알림 받기"
             name="issueStatus"
             checked={notificationSetting.issueStatus}
@@ -144,12 +138,6 @@ export default function NotificationSetting({
             onChange={handleSwitchChange}
           />
           <SwitchItem
-            label="내용 수정 시 알림 받기"
-            name="meetingUpdated"
-            checked={notificationSetting.meetingUpdated}
-            onChange={handleSwitchChange}
-          />
-          <SwitchItem
             label="상태 변경 시 알림 받기"
             name="meetingStatus"
             checked={notificationSetting.meetingStatus}
@@ -169,18 +157,6 @@ export default function NotificationSetting({
           댓글
         </Typography>
         <Box sx={{ display: "flex", flexDirection: "column" }}>
-          <SwitchItem
-            label="등록 시 알림 받기"
-            name="commentCreated"
-            checked={notificationSetting.commentCreated}
-            onChange={handleSwitchChange}
-          />
-          <SwitchItem
-            label="내용 수정 시 알림 받기"
-            name="commentUpdated"
-            checked={notificationSetting.commentUpdated}
-            onChange={handleSwitchChange}
-          />
           <SwitchItem
             label="나를 멘션했을 때 알림 받기"
             name="commentMention"

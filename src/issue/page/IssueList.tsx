@@ -9,15 +9,12 @@ import { PageHeader } from "../../common/PageHeader/PageHeader";
 import { Toggle } from "../../common/PageHeader/Toggle/Toggle";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { Box, Typography } from "@mui/material";
-import { useAuthStore } from "../../store/useAuthStore";
 import { getIssueList } from "../api/issueApi";
 import { getStatusLabel } from "../../common/commonFunction";
 import { SearchBar } from "../../common/SearchBar/SearchBar";
 
 export default function IssueList() {
   const navigate = useNavigate();
-  const { member } = useAuthStore();
-  const role = member?.role;
 
   // 페이징
   const [page, setPage] = useState(1);
@@ -26,15 +23,22 @@ export default function IssueList() {
 
   // 데이터 가져오기
   useEffect(() => {
-    getIssueList(page - 1, 10).then((data) => {
-      const list = (data.content ?? data).map((item: IssueListItem) => ({
-        ...item,
-        status: getStatusLabel(item.status),
-      }));
+    const fetchData = async () => {
+      try {
+        const data = await getIssueList(page - 1, 10);
+        const list = (data.content ?? data).map((item: IssueListItem) => ({
+          ...item,
+          status: getStatusLabel(item.status),
+        }));
 
-      setData(list);
-      setTotalCount(data.totalElements); // 전체 개수
-    });
+        setData(list);
+        setTotalCount(data.totalElements);
+      } catch (error) {
+        console.error("이슈 조회 실패", error);
+      }
+    };
+
+    fetchData();
   }, [page]);
 
   // 리스트 컬럼
@@ -51,7 +55,7 @@ export default function IssueList() {
       field: "title",
       headerName: "제목",
       flex: 2,
-      minWidth: 600,
+      minWidth: 500,
       headerAlign: "center",
       align: "left",
       renderCell: (params) => (
@@ -67,9 +71,30 @@ export default function IssueList() {
       field: "status",
       headerName: "상태",
       flex: 2,
-      minWidth: 80,
+      minWidth: 100,
       headerAlign: "center",
       align: "center",
+      renderCell: (params) => {
+        const status = params.value;
+        let bgColor = "";
+        let textColor = "";
+
+        if (status === "진행중") {
+          bgColor = "bg-blue-100";
+          textColor = "text-blue-700";
+        } else {
+          bgColor = "bg-red-100";
+          textColor = "text-red-700";
+        }
+
+        return (
+          <span
+            className={`px-3 py-1 text-sm font-semibold rounded-sm ${bgColor} ${textColor}`}
+          >
+            {status}
+          </span>
+        );
+      },
     },
     {
       field: "period",
@@ -156,9 +181,6 @@ export default function IssueList() {
         >
           이슈
         </Typography>
-        {role === "USER" && (
-          <AddButton onClick={() => navigate("/issue/create")} />
-        )}
       </Box>
       <PageHeader>
         <Toggle
@@ -167,6 +189,7 @@ export default function IssueList() {
             { label: "칸반", value: "kanban", path: "/issue/kanban" },
           ]}
         />
+        <AddButton onClick={() => navigate("/issue/create")} />
         <Box display="flex" alignItems="center" gap={1.5}>
           <SearchBar onSearch={setSearchQuery} placeholder="검색" />
         </Box>

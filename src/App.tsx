@@ -19,14 +19,6 @@ const AdminSetting = lazy(() => import("./admin/setting/page/AdminSetting"));
 const MemberList = lazy(() => import("./admin/member/page/MemberList"));
 const AdminLog = lazy(() => import("./admin/log/page/LogList"));
 
-/*===============================
-  PrivateRoute 사용 안내
-  ===============================
-  1. 로그인만 필요하면:
-    <PrivateRoute>컴포넌트</PrivateRoute>
-  2. 관리자 전용 페이지면:
-    <PrivateRoute isAdmin>컴포넌트</PrivateRoute>
-  ===============================*/
 type PrivateRouteProps = {
   children: JSX.Element;
   isAdmin?: boolean;
@@ -55,7 +47,7 @@ export default function App() {
           path="/login"
           element={
             isAuthenticated ? (
-              <Navigate to="/issue/list" replace />
+              <Navigate to="/" replace />
             ) : (
               <div className="flex justify-center items-center min-h-screen">
                 <Login />

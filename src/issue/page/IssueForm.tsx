@@ -87,6 +87,48 @@ export default function IssueForm({
     prevLengthRef.current = fileLength;
   }, [fileLength]);
 
+  // 드래그 오버 시 브라우저 기본 동작 막기
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+  };
+
+  // 드롭 시 파일 처리
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (!e.dataTransfer.files || e.dataTransfer.files.length === 0) return;
+    const filesArray = Array.from(e.dataTransfer.files);
+
+    // 각 파일 검증 후 부모로 전달
+    filesArray.forEach((file) => {
+      if (
+        allowedExtensions &&
+        !allowedExtensions.includes(
+          file.name.split(".").pop()?.toLowerCase() || ""
+        )
+      ) {
+        alert(`허용되지 않은 확장자입니다: ${file.name}`);
+        return;
+      }
+      const sizeMB = file.size / 1024 / 1024;
+      if (maxFileSize && file.size / 1024 / 1024 > maxFileSize) {
+        alert(
+          `${
+            file.name
+          } 파일의 크기가 ${maxFileSize}MB를 초과했습니다.\n(현재: ${sizeMB.toFixed(
+            2
+          )}MB)`
+        );
+        return;
+      }
+
+      // 부모의 onFileUpload 호출
+      const event = {
+        target: { files: [file] },
+      } as unknown as React.ChangeEvent<HTMLInputElement>;
+      onFileUpload(event);
+    });
+  };
+
   return (
     <Box>
       <Box
@@ -168,6 +210,8 @@ export default function IssueForm({
                 },
               }}
               onClick={onOpenFileInput}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
             >
               <UploadFileIcon sx={{ fontSize: 48, color: "#9e9e9e", mb: 1 }} />
               <Typography
@@ -572,7 +616,7 @@ export default function IssueForm({
                   sx={{ borderRadius: 1.5 }}
                 >
                   {departments.map((dep) => (
-                    <MenuItem key={dep.id} value={dep.id}>
+                    <MenuItem key={dep.id} value={String(dep.id)}>
                       {dep.name}
                     </MenuItem>
                   ))}
