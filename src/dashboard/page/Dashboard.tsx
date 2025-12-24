@@ -142,6 +142,8 @@ export default function Dashboard() {
 
   const { member } = useAuthStore();
   const navigate = useNavigate();
+  //날짜 칸
+  const calendarColumns = "repeat(7, minmax(180px, 1fr))";
 
   //오늘
   const today = new Date();
@@ -240,16 +242,23 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex flex-col gap-6 pb-6 pt-6">
+    <Box
+      sx={{
+        // minWidth: 1000, // ✅ 전체 최소 너비
+        mx: "auto", // 가운데 정렬
+        px: 2, // 양쪽 여백
+        overflowX: "auto", // 화면 작을 때 가로 스크롤
+      }}
+    >
       {/* 헤더 */}
-      <div className="flex gap-6 mb-6 text-sm">
+      <Box className="flex gap-6 mb-6 text-sm">
         <Box>
           전체 진행중인 이슈 <strong>{issueCount}</strong>개
         </Box>
         <Box>
           전체 마감임박 이슈 <strong>{imminentCount}</strong>개
         </Box>
-      </div>
+      </Box>
 
       {/* 나의 이슈 목록(칸반) */}
       {/* 헤더 */}
@@ -331,8 +340,6 @@ export default function Dashboard() {
         sx={{
           backgroundColor: "#fff",
           borderRadius: 3,
-          minWidth: 1500, // ✅ 최소 너비
-          maxWidth: 2000, // (선택) 너무 커지지 않게
           mx: "auto", // 가운데 정렬
         }}
       >
@@ -353,7 +360,7 @@ export default function Dashboard() {
 
         {/* 요일 표시 */}
         <Box
-          sx={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", mb: 1 }}
+          sx={{ display: "grid", gridTemplateColumns: calendarColumns, mb: 1 }}
         >
           {days.map((d) => (
             <Typography
@@ -372,7 +379,7 @@ export default function Dashboard() {
         <Box
           sx={{
             display: "grid",
-            gridTemplateRows: `repeat(${matrix.length}, 1fr)`,
+            gridTemplateRows: calendarColumns,
             gap: 1,
           }}
         >
@@ -381,7 +388,7 @@ export default function Dashboard() {
               key={wi}
               sx={{
                 display: "grid",
-                gridTemplateColumns: "repeat(7, 1fr)",
+                gridTemplateColumns: calendarColumns,
                 gap: 1,
               }}
             >
@@ -430,13 +437,9 @@ export default function Dashboard() {
                               px: 1,
                               py: 0.75,
                               cursor: "pointer",
-                              // border: "2px solid #bb91ff",
                               backgroundColor: "#4b6485",
-
-                              width: 180,
                               "&:hover": {
                                 backgroundColor: "#1a3260",
-                                // borderColor: "#2563eb",
                               },
                             }}
                             onClick={() => navigate(`/meeting/${meeting.id}`)}
@@ -515,6 +518,6 @@ export default function Dashboard() {
           ))}
         </Box>
       </Box>
-    </div>
+    </Box>
   );
 }

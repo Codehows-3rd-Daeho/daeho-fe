@@ -5,6 +5,8 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { getMeetingMonth } from "../api/MeetingApi";
 import type { MeetingListItem } from "../type/type";
 import { useNavigate } from "react-router-dom";
+import { PageHeader } from "../../common/PageHeader/PageHeader";
+import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 
 const days = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -126,6 +128,12 @@ export default function MeetingScheduler() {
           <ChevronRightIcon />
         </IconButton>
       </Box>
+
+      {/* 등록 버튼 */}
+      <PageHeader>
+        <Box />
+        <AddButton onClick={() => navigate("/meeting/create")} />
+      </PageHeader>
 
       {/* 요일 표시 */}
       <Box

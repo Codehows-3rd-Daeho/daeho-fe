@@ -195,14 +195,10 @@ export default function Sidebar({
                   />
                 )}
                 {!collapsed &&
-                  hasChildren &&
                   (open[item.id] ? <ExpandLess /> : <ExpandMore />)}
               </ListItemButton>
               {hasChildren && (
-                <Collapse
-                  in={open[item.id] && !collapsed}
-                  timeout={collapsed ? 0 : "auto"}
-                >
+                <Collapse in={open[item.id]} timeout="auto">
                   <List component="div" disablePadding>
                     {children.map((child) => (
                       <ListItemButton
@@ -215,16 +211,19 @@ export default function Sidebar({
                         }}
                       >
                         <ListItemIcon>{child.icon ?? null}</ListItemIcon>
-                        <ListItemText
-                          primary={child.label}
-                          slotProps={{
-                            primary: {
-                              sx: {
-                                fontWeight: child.id === selectedId ? 700 : 500,
+                        {!collapsed && (
+                          <ListItemText
+                            primary={child.label}
+                            slotProps={{
+                              primary: {
+                                sx: {
+                                  fontWeight:
+                                    child.id === selectedId ? 700 : 500,
+                                },
                               },
-                            },
-                          }}
-                        />
+                            }}
+                          />
+                        )}
                       </ListItemButton>
                     ))}
                   </List>
@@ -280,11 +279,7 @@ export default function Sidebar({
                       (open[adminMenu.id] ? <ExpandLess /> : <ExpandMore />)}
                   </ListItemButton>
                   {adminChildren.length > 0 && (
-                    <Collapse
-                      in={open[adminMenu.id] && !collapsed}
-                      timeout={collapsed ? 0 : "auto"}
-                      unmountOnExit
-                    >
+                    <Collapse in={open[adminMenu.id]} timeout="auto">
                       <List component="div" disablePadding>
                         {adminChildren.map((child) => (
                           <ListItemButton
@@ -297,17 +292,19 @@ export default function Sidebar({
                             }}
                           >
                             <ListItemIcon>{child.icon ?? null}</ListItemIcon>
-                            <ListItemText
-                              primary={child.label}
-                              slotProps={{
-                                primary: {
-                                  sx: {
-                                    fontWeight:
-                                      child.id === selectedId ? 700 : 500,
+                            {!collapsed && (
+                              <ListItemText
+                                primary={child.label}
+                                slotProps={{
+                                  primary: {
+                                    sx: {
+                                      fontWeight:
+                                        child.id === selectedId ? 700 : 500,
+                                    },
                                   },
-                                },
-                              }}
-                            />
+                                }}
+                              />
+                            )}
                           </ListItemButton>
                         ))}
                       </List>

@@ -17,6 +17,7 @@ import { useAuthStore } from "../store/useAuthStore";
 import type { MemberProfile } from "../admin/member/type/MemberType";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import { BASE_URL } from "../config/httpClient";
 
 interface InfoRowProps {
   label: string;
@@ -96,7 +97,10 @@ export default function MyPage() {
 
       {/* 프로필 이미지 */}
       <Box sx={{ display: "flex", justifyContent: "center", mb: 6 }}>
-        <Avatar src={profile.profileUrl} sx={{ width: 150, height: 150 }} />
+        <Avatar
+          src={profile.profileUrl ? `${BASE_URL}${profile.profileUrl}` : ""}
+          sx={{ width: 150, height: 150 }}
+        />
       </Box>
 
       {/* 정보 필드 */}
