@@ -74,12 +74,12 @@ export default function MeetingUpdate() {
         );
         const categoryId = selectedCategory ? String(selectedCategory.id) : "";
 
-        const departmentIds = meeting.departmentName
+        const departmentIds: string[] = meeting.departmentName
           .map((name) => {
             const dept = dep.find((d) => d.name === name);
-            return dept ? dept.id + "" : null;
+            return dept ? String(dept.id) : undefined;
           })
-          .filter((id) => id !== null);
+          .filter((id): id is string => Boolean(id));
 
         let formattedStartDate = meeting.startDate;
         if (meeting.startDate) {
@@ -154,11 +154,10 @@ export default function MeetingUpdate() {
       // 1) 확장자 체크
       const isAllowed = ext != null && allowedExtensions.includes(ext);
       if (!isAllowed) {
-        alert(
-          `허용되지 않은 파일입니다: ${
-            file.name
-          }\n허용 확장자: ${allowedExtensions.join(", ")}`
-        );
+        if (!isAllowed) {
+          alert(`허용되지 않은 확장자입니다: ${file.name}`);
+          return;
+        }
         return;
       }
 
@@ -169,8 +168,11 @@ export default function MeetingUpdate() {
 
       if (sizeMB > maxFileSize) {
         alert(
-          `${file.name} 파일의 크기가 ${maxFileSize}MB를 초과했습니다.
-             (현재: ${sizeMB.toFixed(2)}MB)`
+          `${
+            file.name
+          } 파일의 크기가 ${maxFileSize}MB를 초과했습니다.\n(현재: ${sizeMB.toFixed(
+            2
+          )}MB)`
         );
         return;
       }

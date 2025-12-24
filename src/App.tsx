@@ -5,6 +5,12 @@ import { lazy } from "react";
 import MeetingCreate from "./meeting/page/MeetingCreate";
 import AppLayout from "./AppLayout";
 import MeetingScheduler from "./meeting/page/MeetingScheduler";
+import MTIssueKanban from "./mytask/page/MTIssueKanban";
+import MTIssueList from "./mytask/page/MTIssueList";
+import MTMeetingList from "./mytask/page/MTMeetingList";
+import MTMeetingScheduler from "./mytask/page/MTMeetingScheduler";
+import MyPage from "./mypage/MyPage";
+import Dashboard from "./dashboard/page/Dashboard";
 
 const Login = lazy(() => import("./login/page/Login"));
 const IssueList = lazy(() => import("./issue/page/IssueList"));
@@ -19,14 +25,6 @@ const AdminSetting = lazy(() => import("./admin/setting/page/AdminSetting"));
 const MemberList = lazy(() => import("./admin/member/page/MemberList"));
 const AdminLog = lazy(() => import("./admin/log/page/LogList"));
 
-/*===============================
-  PrivateRoute 사용 안내
-  ===============================
-  1. 로그인만 필요하면:
-    <PrivateRoute>컴포넌트</PrivateRoute>
-  2. 관리자 전용 페이지면:
-    <PrivateRoute isAdmin>컴포넌트</PrivateRoute>
-  ===============================*/
 type PrivateRouteProps = {
   children: JSX.Element;
   isAdmin?: boolean;
@@ -55,7 +53,7 @@ export default function App() {
           path="/login"
           element={
             isAuthenticated ? (
-              <Navigate to="/issue/list" replace />
+              <Navigate to="/" replace />
             ) : (
               <div className="flex justify-center items-center min-h-screen">
                 <Login />
@@ -71,6 +69,13 @@ export default function App() {
             <PrivateRoute>
               <AppLayout>
                 <Routes>
+                  {/* 대시보드 */}
+                  <Route path="/" element={<Dashboard />} />
+
+                  {/* 마이페이지 */}
+                  <Route path="/mypage" element={<MyPage />} />
+
+                  {/* 사이드바 */}
                   <Route path="/issue/list" element={<IssueList />} />
                   <Route path="/issue/kanban" element={<IssueKanban />} />
                   <Route path="/issue/create" element={<IssueCreate />} />
@@ -90,6 +95,18 @@ export default function App() {
                   <Route
                     path="/meeting/:meetingId/update"
                     element={<MeetingUpdate />}
+                  />
+
+                  {/* 나의 업무 */}
+                  <Route
+                    path="/mytask/issue/kanban"
+                    element={<MTIssueKanban />}
+                  />
+                  <Route path="/mytask/issue/list" element={<MTIssueList />} />
+                  <Route path="/mytask/meeting" element={<MTMeetingList />} />
+                  <Route
+                    path="/mytask/schedule"
+                    element={<MTMeetingScheduler />}
                   />
 
                   {/* 관리자 */}

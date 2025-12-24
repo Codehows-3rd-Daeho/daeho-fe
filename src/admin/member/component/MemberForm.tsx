@@ -299,19 +299,37 @@ export default function MemberForm({
         helperText={errors.email}
       />
       {/* 재직여부 */}
-      <FormControl>
-        <FormLabel>재직여부</FormLabel>
-        <RadioGroup
-          row
-          value={member.isEmployed ? "true" : "false"}
-          onChange={(e) =>
-            handleChange("isEmployed", e.target.value === "true")
-          }
-        >
-          <FormControlLabel value={true} control={<Radio />} label="재직중" />
-          <FormControlLabel value={false} control={<Radio />} label="퇴사" />
-        </RadioGroup>
-      </FormControl>
+      <Box sx={{ display: "flex", gap: 2 }}>
+        <FormControl sx={{ flex: 1 }}>
+          <FormLabel>재직여부</FormLabel>
+          <RadioGroup
+            row
+            value={member.isEmployed ? "true" : "false"}
+            onChange={(e) =>
+              handleChange("isEmployed", e.target.value === "true")
+            }
+          >
+            <FormControlLabel value={true} control={<Radio />} label="재직중" />
+            <FormControlLabel value={false} control={<Radio />} label="퇴사" />
+          </RadioGroup>
+        </FormControl>
+        <FormControl sx={{ flex: 1 }}>
+          <FormLabel>관리자 권한</FormLabel>
+          <RadioGroup
+            row
+            value={member.role || "USER"}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === "ADMIN" || value === "USER") {
+                handleChange("role", value);
+              }
+            }}
+          >
+            <FormControlLabel value="ADMIN" control={<Radio />} label="부여" />
+            <FormControlLabel value="USER" control={<Radio />} label="미부여" />
+          </RadioGroup>
+        </FormControl>
+      </Box>
     </Box>
   );
 }

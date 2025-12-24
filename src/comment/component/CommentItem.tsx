@@ -247,7 +247,8 @@ export const CommentItem = ({
           )}
         </Box>
 
-        <Typography sx={{ mt: 1 }}>
+        {/* 댓글 내용 */}
+        <Typography sx={{ mt: 1, whiteSpace: "pre-line" }}>
           {RenderMentionText(comment.content, comment.mentions ?? [])}
         </Typography>
 
