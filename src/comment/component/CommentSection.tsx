@@ -30,7 +30,8 @@ interface Props {
     commentId: number,
     content: string,
     newFiles: File[],
-    removeFileIds: number[]
+    removeFileIds: number[],
+    mentionedMemberIds?: number[]
   ) => Promise<void>;
 
   onDeleteComment?: (commentId: number) => Promise<void>;

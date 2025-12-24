@@ -29,7 +29,7 @@ export interface CommentItemProps {
     content: string,
     newFiles: File[],
     removeFileIds: number[],
-    mentions?: Mention[]
+    mentionedMemberIds?: number[]
   ) => Promise<void>;
   onDeleteComment?: (commentId: number) => Promise<void>;
 }
@@ -79,6 +79,8 @@ export const CommentItem = ({
   };
 
   const handleUpdate = async () => {
+    const mentionedMemberIds = editMentions.map((m) => m.memberId);
+
     if (
       !editedContent.trim() &&
       newFiles.length === 0 &&
@@ -93,7 +95,7 @@ export const CommentItem = ({
       editedContent,
       newFiles,
       removeFileIds,
-      editMentions
+      mentionedMemberIds
     );
 
     setIsEditing(false);
