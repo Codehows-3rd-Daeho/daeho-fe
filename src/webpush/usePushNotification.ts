@@ -87,17 +87,21 @@ export const usePushNotification = (
         ...prev,
         error: "푸시 알림을 지원하지 않는 브라우저입니다.",
       }));
+      console.log("푸시 알림을 지원하지 않는 브라우저입니다.");
       return false;
     }
 
     // 이미 허용된 경우 다시 요청하지 않음
     if (Notification.permission === "granted") {
       setState((prev) => ({ ...prev, permission: "granted" }));
+      console.log("푸시 알림이 허용되어 있습니다.");
       return true;
     }
 
     try {
+      console.log("푸시 권한을 요청합니다");
       const permission = await Notification.requestPermission(); // 권한 요청
+      console.log(permission);
       setState((prev) => ({ ...prev, permission }));
       if (permission === "granted") {
         return true;

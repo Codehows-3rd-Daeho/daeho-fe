@@ -170,6 +170,7 @@ export default function IssueCreate() {
       members: issueMembers, //PartMember에서 전달받은 객체
       isDel: false,
     };
+    console.log(issueDto);
 
     // 2. issueDto를 JSON 문자열로 변환하여 "data" 파트에 추가
     // 백엔드의 @RequestPart("data")와 매칭

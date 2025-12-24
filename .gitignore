@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+localhost-key.pem
+localhost.pem
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
