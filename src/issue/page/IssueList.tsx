@@ -12,11 +12,13 @@ import { Box, Typography } from "@mui/material";
 import { useAuthStore } from "../../store/useAuthStore";
 import { getIssueList } from "../api/issueApi";
 import { getStatusLabel } from "../../common/commonFunction";
+import { SearchBar } from "../../common/SearchBar/SearchBar";
 
 export default function IssueList() {
   const navigate = useNavigate();
   const { member } = useAuthStore();
   const role = member?.role;
+  const [searchQuery, setSearchQuery] = useState("");
 
   // 페이징
   const [page, setPage] = useState(1);
@@ -122,7 +124,12 @@ export default function IssueList() {
   return (
     <>
       {/* 타이틀 */}
-      <Box mb={2}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="flex-end" // 타이틀과 버튼 하단 정렬
+        mb={3}
+      >
         {/* 아래 여백 */}
         <Typography
           variant="h4" // 글자 크기
@@ -132,6 +139,9 @@ export default function IssueList() {
         >
           이슈
         </Typography>
+        {role === "USER" && (
+          <AddButton onClick={() => navigate("/issue/create")} />
+        )}
       </Box>
       <PageHeader>
         <Toggle
@@ -140,10 +150,13 @@ export default function IssueList() {
             { label: "칸반", value: "kanban", path: "/issue/kanban" },
           ]}
         />
-
-        {role === "USER" && (
-          <AddButton onClick={() => navigate("/issue/create")} />
-        )}
+        <Box display="flex" alignItems="center" gap={1.5}>
+          <SearchBar
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="검색"
+          />
+        </Box>
       </PageHeader>
 
       <ListDataGrid<IssueListItem>
