@@ -3,16 +3,21 @@ import { TextField, InputAdornment } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 
 interface SearchBarProps {
-  onSearch: (value: string) => void; // 부모에게 최종 검색어 전달
+  onSearch: (value: string) => void;
   placeholder?: string;
 }
-
-export const SearchBar = ({ placeholder }: SearchBarProps) => {
+export const SearchBar = ({ onSearch, placeholder }: SearchBarProps) => {
   const [localValue, setLocalValue] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
-    setLocalValue(val); // 로컬 상태만 바꿔서 타이핑은 가볍게!
+    setLocalValue(val);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      onSearch(localValue);
+    }
   };
 
   return (
@@ -21,6 +26,7 @@ export const SearchBar = ({ placeholder }: SearchBarProps) => {
       placeholder={placeholder}
       value={localValue}
       onChange={handleChange}
+      onKeyDown={handleKeyDown}
       InputProps={{
         startAdornment: (
           <InputAdornment position="start">

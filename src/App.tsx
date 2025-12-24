@@ -17,6 +17,7 @@ const MeetingDtl = lazy(() => import("./meeting/page/MeetingDtl"));
 const MeetingUpdate = lazy(() => import("./meeting/page/MeetingUpdate"));
 const AdminSetting = lazy(() => import("./admin/setting/page/AdminSetting"));
 const MemberList = lazy(() => import("./admin/member/page/MemberList"));
+const AdminLog = lazy(() => import("./admin/log/page/LogList"));
 
 /*===============================
   PrivateRoute 사용 안내
@@ -105,6 +106,14 @@ export default function App() {
                     element={
                       <PrivateRoute isAdmin>
                         <AdminSetting />
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/log"
+                    element={
+                      <PrivateRoute isAdmin>
+                        <AdminLog />
                       </PrivateRoute>
                     }
                   />

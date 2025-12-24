@@ -89,7 +89,7 @@ export default function TabLog({ meetingId }: TabLogProps) {
       minWidth: 120,
       headerAlign: "center",
       align: "center",
-      valueGetter: ((value, row) => {
+      valueGetter: ((_, row) => {
         const type = changeTypeMap[row.changeType] ?? row.changeType;
 
         return row.updateField ? `${row.updateField} ${type}` : type;
