@@ -35,6 +35,7 @@ export default function CreateMemberModal({
     departmentId: "",
     jobPositionId: "",
     isEmployed: true,
+    role: "USER",
   });
 
   const [department, setDepartment] = useState<MasterDataType[]>([]);
@@ -212,6 +213,7 @@ export default function CreateMemberModal({
       departmentId: "",
       jobPositionId: "",
       isEmployed: true,
+      role: "USER",
     });
     setErrors({});
     setIsDuplicate(false);

@@ -1,21 +1,22 @@
 import { useRef, useState } from "react";
-import type { CommentDto } from "../type/type"; // 필요시 type 경로 수정
+import type { CommentDto, Mention } from "../type/type";
 import {
   Avatar,
   Box,
   Button,
   IconButton,
-  TextField,
   Typography,
   Menu,
   MenuItem,
 } from "@mui/material";
-import FileList from "./FileList"; // FileList 경로 확인
+import FileList from "./FileList";
 import CloseIcon from "@mui/icons-material/Close";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import RenderMentionText from "./mention/RenderMentionText";
+import MentionTextInput from "./mention/MentionTextInput";
 
 // =====================================================================
-// CommentItem Props 인터페이스
+// CommentItem Props
 // =====================================================================
 
 export interface CommentItemProps {
@@ -27,13 +28,14 @@ export interface CommentItemProps {
     commentId: number,
     content: string,
     newFiles: File[],
-    removeFileIds: number[]
+    removeFileIds: number[],
+    mentionedMemberIds?: number[]
   ) => Promise<void>;
   onDeleteComment?: (commentId: number) => Promise<void>;
 }
 
 // =====================================================================
-// CommentItem 컴포넌트
+// CommentItem Component
 // =====================================================================
 
 export const CommentItem = ({
@@ -42,29 +44,29 @@ export const CommentItem = ({
   onUpdateComment,
   onDeleteComment,
 }: CommentItemProps) => {
-  // 로그인된 사용자와 댓글 작성자가 동일한지 확인
   const isMyComment = comment.writerMemberId === currentUserId;
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(comment.content);
+
+  // ⭐ 수정용 멘션 상태
+  const [editMentions, setEditMentions] = useState<Mention[]>(
+    comment.mentions ?? []
+  );
+
   const [newFiles, setNewFiles] = useState<File[]>([]);
   const [removeFileIds, setRemoveFileIds] = useState<number[]>([]);
 
   const newFileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
   const handleEditClick = () => {
     setIsEditing(true);
     setAnchorEl(null);
     setEditedContent(comment.content);
+    setEditMentions(comment.mentions ?? []);
     setNewFiles([]);
     setRemoveFileIds([]);
   };
@@ -77,7 +79,8 @@ export const CommentItem = ({
   };
 
   const handleUpdate = async () => {
-    // 내용 또는 파일이 하나도 없으면 경고
+    const mentionedMemberIds = editMentions.map((m) => m.memberId);
+
     if (
       !editedContent.trim() &&
       newFiles.length === 0 &&
@@ -87,51 +90,41 @@ export const CommentItem = ({
       return;
     }
 
-    try {
-      await onUpdateComment?.(
-        comment.id,
-        editedContent,
-        newFiles,
-        removeFileIds
-      );
-      setIsEditing(false);
-    } catch (error) {
-      console.error("댓글 수정 실패:", error);
-      alert("댓글 수정에 실패했습니다.");
-    }
-  };
+    await onUpdateComment?.(
+      comment.id,
+      editedContent,
+      newFiles,
+      removeFileIds,
+      mentionedMemberIds
+    );
 
-  const handleRemoveExistingFile = (fileId: number) => {
-    setRemoveFileIds((prev) => [...prev, fileId]);
-  };
-
-  const handleRemoveNewFile = (index: number) => {
-    setNewFiles((prev) => prev.filter((_, i) => i !== index));
+    setIsEditing(false);
   };
 
   const handleCancelEdit = () => {
     setIsEditing(false);
     setEditedContent(comment.content);
+    setEditMentions(comment.mentions ?? []);
     setNewFiles([]);
     setRemoveFileIds([]);
   };
 
-  const formatDate = (date: string) => {
-    const d = new Date(date);
-    return d.toLocaleString("ko-KR", {
+  const formatDate = (date: string) =>
+    new Date(date).toLocaleString("ko-KR", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
     });
-  };
-  const createdTime = new Date(comment.createdAt).getTime();
-  const updatedTime = new Date(comment.updatedAt).getTime();
 
-  const isUpdated = updatedTime > createdTime;
+  const isUpdated =
+    new Date(comment.updatedAt).getTime() >
+    new Date(comment.createdAt).getTime();
 
-  // === 수정 모드 렌더링 ===
+  // =====================================================================
+  // ✏️ 수정 모드
+  // =====================================================================
   if (isEditing) {
     const currentFiles = comment.fileList.filter(
       (f) => !removeFileIds.includes(f.fileId)
@@ -140,29 +133,30 @@ export const CommentItem = ({
     return (
       <Box sx={{ mb: 3, display: "flex", gap: 2 }}>
         <Avatar sx={{ width: 40, height: 40 }}>👤</Avatar>
+
         <Box sx={{ flex: 1 }}>
-          <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-            <Typography fontWeight={600}>
-              {comment.writerName} {comment.writerJPName}
-            </Typography>
-          </Box>
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
+          <Typography fontWeight={600}>
+            {comment.writerName} {comment.writerJPName}
+          </Typography>
+
+          {/* ⭐ 멘션 입력 */}
+          <MentionTextInput
             value={editedContent}
-            onChange={(e) => setEditedContent(e.target.value)}
-            sx={{ mb: 1 }}
+            onChange={setEditedContent}
+            mentions={editMentions}
+            setMentions={setEditMentions}
+            enableMention={true}
+            placeholder="댓글을 수정하세요"
           />
 
           {currentFiles.length > 0 && (
             <FileList
               files={currentFiles}
-              onRemoveFile={handleRemoveExistingFile}
+              onRemoveFile={(id) => setRemoveFileIds((prev) => [...prev, id])}
             />
           )}
 
-          {/* 신규 첨부파일 입력 */}
+          {/* 신규 파일 */}
           <Box sx={{ mt: 1 }}>
             <Button
               size="small"
@@ -178,28 +172,21 @@ export const CommentItem = ({
               ref={newFileInputRef}
               onChange={(e) => {
                 if (!e.target.files) return;
-                setNewFiles((prev) => [...prev, ...e.target.files!]);
+                setNewFiles((prev) => [
+                  ...prev,
+                  ...Array.from(e.target.files!),
+                ]);
               }}
-              onClick={(e) => (e.currentTarget.value = "")}
             />
 
-            {/* 신규 첨부파일 목록 및 삭제 버튼 */}
             {newFiles.map((file, idx) => (
-              <Box
-                key={idx}
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1,
-                  py: 0.5,
-                  fontSize: "0.85rem",
-                  color: "text.secondary",
-                }}
-              >
+              <Box key={idx} sx={{ display: "flex", gap: 1, mt: 0.5 }}>
                 {file.name}
                 <IconButton
                   size="small"
-                  onClick={() => handleRemoveNewFile(idx)}
+                  onClick={() =>
+                    setNewFiles((prev) => prev.filter((_, i) => i !== idx))
+                  }
                 >
                   <CloseIcon fontSize="small" />
                 </IconButton>
@@ -211,15 +198,7 @@ export const CommentItem = ({
             <Button size="small" onClick={handleCancelEdit}>
               취소
             </Button>
-            <Button
-              size="small"
-              variant="contained"
-              onClick={handleUpdate}
-              disabled={
-                !editedContent.trim() &&
-                currentFiles.length + newFiles.length === 0
-              }
-            >
+            <Button size="small" variant="contained" onClick={handleUpdate}>
               수정 완료
             </Button>
           </Box>
@@ -228,19 +207,19 @@ export const CommentItem = ({
     );
   }
 
-  // === 일반 보기 모드 렌더링 ===
+  // =====================================================================
+  // 📄 일반 보기 모드
+  // =====================================================================
   return (
-    <Box key={comment.id} sx={{ mb: 3, display: "flex", gap: 2 }}>
+    <Box sx={{ mb: 3, display: "flex", gap: 2 }}>
       <Avatar sx={{ width: 40, height: 40 }}>👤</Avatar>
 
       <Box sx={{ flex: 1 }}>
-        {/* 헤더 영역 */}
         <Box
           sx={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            minHeight: 32, // ⭐ 메뉴 열려도 레이아웃 안 흔들림
           }}
         >
           <Typography fontWeight={600}>
@@ -251,33 +230,15 @@ export const CommentItem = ({
             <>
               <IconButton
                 size="small"
-                aria-label="more"
-                aria-controls={open ? "long-menu" : undefined}
-                aria-expanded={open ? "true" : undefined}
-                aria-haspopup="true"
-                onClick={handleClick}
+                onClick={(e) => setAnchorEl(e.currentTarget)}
               >
                 <MoreVertIcon fontSize="small" />
               </IconButton>
 
               <Menu
-                id="long-menu"
                 anchorEl={anchorEl}
                 open={open}
-                onClose={handleClose}
-                anchorOrigin={{
-                  vertical: "bottom",
-                  horizontal: "right",
-                }}
-                transformOrigin={{
-                  vertical: "top",
-                  horizontal: "right",
-                }}
-                PaperProps={{
-                  sx: {
-                    width: 100,
-                  },
-                }}
+                onClose={() => setAnchorEl(null)}
               >
                 <MenuItem onClick={handleEditClick}>수정</MenuItem>
                 <MenuItem onClick={handleDeleteClick}>삭제</MenuItem>
@@ -287,21 +248,14 @@ export const CommentItem = ({
         </Box>
 
         {/* 댓글 내용 */}
-        <Typography sx={{ mt: 1 }}>{comment.content}</Typography>
+        <Typography sx={{ mt: 1, whiteSpace: "pre-line" }}>
+          {RenderMentionText(comment.content, comment.mentions ?? [])}
+        </Typography>
 
-        {/* ===== 첨부 파일 (일반 보기) ===== */}
-        {comment.fileList && comment.fileList.length > 0 && (
-          <FileList files={comment.fileList} />
-        )}
+        {comment.fileList.length > 0 && <FileList files={comment.fileList} />}
 
-        {/* ===== 등록/수정일 ===== */}
         <Typography
-          sx={{
-            mt: 0.5,
-            fontSize: "0.75rem",
-            color: "text.secondary",
-            textAlign: "left",
-          }}
+          sx={{ mt: 0.5, fontSize: "0.75rem", color: "text.secondary" }}
         >
           {isUpdated
             ? `${formatDate(comment.updatedAt)} (수정됨)`

@@ -2,7 +2,7 @@ import {
   getIssueComments,
   createIssueComment,
   updateComment as updateCommentApi,
-  deleteComment as deleteCommentApi, 
+  deleteComment as deleteCommentApi,
 } from "../../../comment/api/CommentApi";
 import { useCommentController } from "../../../comment/component/useCommentController";
 import { CommonPagination } from "../../../common/Pagination/Pagination";
@@ -10,20 +10,12 @@ import CommentSection from "../../../comment/component/CommentSection";
 import { Box } from "@mui/material";
 import { useAuthStore } from "../../../store/useAuthStore";
 
-
 interface Props {
   issueId: number;
 }
 
 export default function TabComment({ issueId }: Props) {
-  /* =========================
-     로그인 사용자
-  ========================= */
-  const { member } = useAuthStore(); // member.id
-
-  /* =========================
-     댓글 컨트롤러
-  ========================= */
+  const { member } = useAuthStore();
   const {
     comments,
     commentText,
@@ -45,7 +37,7 @@ export default function TabComment({ issueId }: Props) {
 
   return (
     <Box>
-      {/* ================= 댓글 목록 ================= */}
+      {/* 1. 댓글 목록 섹션 (입력창 비활성화) */}
       <CommentSection
         comments={comments}
         enableInput={false}
@@ -60,7 +52,7 @@ export default function TabComment({ issueId }: Props) {
         </Box>
       )}
 
-      {/* ================= 페이지네이션 ================= */}
+      {/* 2. 페이지네이션 */}
       <Box sx={{ display: "flex", justifyContent: "center", my: 2 }}>
         <CommonPagination
           page={page}
@@ -69,9 +61,10 @@ export default function TabComment({ issueId }: Props) {
         />
       </Box>
 
-      {/* ================= 댓글 입력 ================= */}
+      {/* 3. 댓글 입력 섹션 (여기에 placeholder 추가) */}
       <CommentSection
         comments={[]}
+        enableInput={true} // 명시적으로 입력창 활성화
         enableMention
         commentText={commentText}
         onChangeText={setCommentText}

@@ -100,16 +100,26 @@ export function useCommentController({
     commentId: number,
     content: string,
     newFiles: File[],
-    removeFileIds: number[]
+    removeFileIds: number[],
+    mentionedMemberIds?: number[]
   ) => {
     if (!updateApi) return;
 
     const formData = new FormData();
     formData.append(
       "data",
-      new Blob([JSON.stringify({ content, removeFileIds })], {
-        type: "application/json",
-      })
+      new Blob(
+        [
+          JSON.stringify({
+            content,
+            removeFileIds,
+            mentionedMemberIds,
+          }),
+        ],
+        {
+          type: "application/json",
+        }
+      )
     );
     newFiles.forEach((f) => formData.append("file", f));
 
