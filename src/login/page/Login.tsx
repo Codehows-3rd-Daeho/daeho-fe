@@ -13,6 +13,7 @@ import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/useAuthStore";
 import { loginAndGetToken } from "../api/LoginApi";
+import axios from "axios";
 
 export default function Login() {
   const [loginId, setLoginId] = useState("");
@@ -41,6 +42,7 @@ export default function Login() {
 
     try {
       const res = await loginAndGetToken({ loginId, password });
+
       if (!res) {
         setError("아이디 또는 비밀번호가 올바르지 않습니다.");
         return;
@@ -54,8 +56,17 @@ export default function Login() {
       });
 
       navigate("/issue/create");
-    } catch {
-      setError("아이디 또는 비밀번호가 올바르지 않습니다.");
+    } catch (error: unknown) {
+      //퇴사 메세지
+      let message = "아이디 또는 비밀번호가 올바르지 않습니다.";
+
+      if (axios.isAxiosError(error)) {
+        message =
+          (error.response?.data as { message?: string })?.message ?? message;
+      }
+
+      setError(message);
+      alert(message);
     }
   };
 
