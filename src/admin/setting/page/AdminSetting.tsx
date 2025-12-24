@@ -159,6 +159,8 @@ export default function AdminSetting() {
           return;
         } else if (status === 409 || status === 404) {
           alert(`${errorMessage}`);
+        } else if (status === 500) {
+          alert(`다른곳에 사용중이므로 삭제가 불가능합니다.`);
         } else {
           alert(`오류 발생 (상태 코드: ${status})`);
         }

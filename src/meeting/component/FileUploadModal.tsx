@@ -109,9 +109,6 @@ export default function FileUploadModal({
       return;
     }
 
-    const ok = confirm("회의록 등록 시 회의가 종결됩니다. 등록하시겠습니까?");
-    if (!ok) return;
-
     try {
       const formData = new FormData();
       formData.append("file", uploadedFile[0].file);

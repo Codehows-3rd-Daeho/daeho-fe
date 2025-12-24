@@ -79,7 +79,7 @@ export default function NotificationDropdown({
             },
           }}
         >
-          <NotificationsIcon sx={{ fontSize: 24, color: "#64748b" }} />
+          <NotificationsIcon sx={{ fontSize: 24 }} />
         </Badge>
       </IconButton>
 
