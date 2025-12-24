@@ -10,3 +10,15 @@ export const getMyNotifications = async (
   });
   return res.data;
 };
+
+// 알림 읽음
+export const readNotification = async (id: number) => {
+  const res = await httpClient.patch(`notifications/${id}/read`);
+  return res.data;
+};
+
+// 안읽은 알림 개수
+export const getUnreadNotificationCount = async (): Promise<number> => {
+  const res = await httpClient.get("/notifications/unread-count");
+  return res.data;
+};

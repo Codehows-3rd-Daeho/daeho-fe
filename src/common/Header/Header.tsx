@@ -2,8 +2,21 @@ import { AppBar, Toolbar, IconButton, Typography, Box } from "@mui/material";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import type { HeaderProps } from "./type";
 import NotificationDropdown from "../../webpush/page/NotificationDropdown";
+import { useEffect, useState } from "react";
+import { getUnreadNotificationCount } from "../../webpush/api/notificationApi";
 
 export default function Header({ name, jobPosition }: HeaderProps) {
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      const count = await getUnreadNotificationCount();
+      setUnreadCount(count);
+    };
+
+    fetchUnreadCount();
+  }, []);
+
   return (
     <AppBar
       position="fixed"
@@ -13,9 +26,13 @@ export default function Header({ name, jobPosition }: HeaderProps) {
       }}
     >
       <Toolbar sx={{ justifyContent: "flex-end", gap: 2 }}>
-        <NotificationDropdown />
+        {/* 알림 */}
+        <NotificationDropdown
+          unreadCount={unreadCount}
+          onReadNotification={() => setUnreadCount((prev) => prev - 1)}
+        />
 
-        {/* 2️⃣ 이름 + 직책 */}
+        {/* 이름 + 직책 */}
         <Box
           display="inline-flex" // inline-flex로 텍스트 길이에 맞게 가로 늘어나게
           alignItems="center"
@@ -45,8 +62,7 @@ export default function Header({ name, jobPosition }: HeaderProps) {
             {jobPosition}
           </Typography>
         </Box>
-
-        {/* 3️⃣ 마이페이지 아이콘 */}
+        {/* 마이페이지 아이콘 */}
         <IconButton
           sx={{ color: "#333" }}
           onClick={() => (window.location.href = "/mypage")}

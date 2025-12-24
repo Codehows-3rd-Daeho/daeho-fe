@@ -1,7 +1,7 @@
 import Sidebar from "./common/Sidebar/Sidebar";
 import Header from "./common/Header/Header";
 import { sidebarItems } from "./common/Sidebar/SidebarItems";
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useAuthStore } from "./store/useAuthStore";
 import { usePushNotification } from "./webpush/usePushNotification";
 
@@ -15,31 +15,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   const handleToggleSidebar = () => setCollapsed((prev) => !prev);
 
-  const { permission, isSubscribed, subscribe, requestPermission } =
-    usePushNotification(member?.memberId ? String(member.memberId) : "");
-
-  // default → requestPermission 호출
-  useEffect(() => {
-    if (!member?.memberId) return;
-    if (permission === "default") {
-      requestPermission();
-    }
-  }, [member?.memberId, permission, requestPermission]);
-
-  // 권한 허용  미구독 시 구독
-  useEffect(() => {
-    if (!member?.memberId) return;
-    if (permission === "granted" && !isSubscribed) {
-      subscribe();
-    }
-  }, [member?.memberId, permission, isSubscribed, subscribe]);
-
-  // denied → 경고
-  useEffect(() => {
-    if (permission === "denied") {
-      console.warn("알림이 차단되어 있습니다. 브라우저 설정에서 허용");
-    }
-  }, [permission]);
+  usePushNotification(member?.memberId ? String(member.memberId) : "");
 
   return (
     <div className="flex h-screen">

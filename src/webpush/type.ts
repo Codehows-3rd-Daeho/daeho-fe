@@ -1,8 +1,9 @@
 export interface NotificationType {
+  id: number;
   senderName: string;
   message: string;
   forwardUrl: string;
-  //   isRead: boolean;
+  isRead: boolean;
   createdAt: string;
 }
 

@@ -74,53 +74,135 @@ export const usePushNotification = (
   });
 
   /************************************************************
-   * 3️. 초기화 (컴포넌트 마운트 시)
+   * 3. 권한 요청 함수
+   *
+   * @function requestPermission
+   * @description 사용자에게 알림 권한을 요청하는 비동기 함수입니다.
+   *              권한 요청 결과에 따라 상태를 업데이트합니다.
+   * @returns {Promise<boolean>} 권한 요청 성공 여부 (granted: true, denied/default: false)
+   */
+  const requestPermission = useCallback(async (): Promise<boolean> => {
+    if (!isPushSupported()) {
+      setState((prev) => ({
+        ...prev,
+        error: "푸시 알림을 지원하지 않는 브라우저입니다.",
+      }));
+      return false;
+    }
+
+    // 이미 허용된 경우 다시 요청하지 않음
+    if (Notification.permission === "granted") {
+      setState((prev) => ({ ...prev, permission: "granted" }));
+      return true;
+    }
+
+    try {
+      const permission = await Notification.requestPermission(); // 권한 요청
+      setState((prev) => ({ ...prev, permission }));
+      if (permission === "granted") {
+        return true;
+      }
+      setState((prev) => ({
+        ...prev,
+        error: "푸시 알림 권한이 거부되었습니다.",
+      }));
+      return false;
+    } catch (error) {
+      console.error("Permission request failed:", error);
+      setState((prev) => ({ ...prev, error: "권한 요청에 실패했습니다." }));
+      return false;
+    }
+  }, []);
+
+  /************************************************************
+   * 4. 구독 함수
    ************************************************************/
   /**
+   * @function subscribe
+   * @description 푸시 알림 서비스에 구독을 요청하는 비동기 함수입니다.
+   *              성공 시 구독 객체를 상태에 저장합니다.
+   * @returns {Promise<boolean>} 구독 성공 여부
+   */
+  const subscribe = useCallback(async (): Promise<boolean> => {
+    try {
+      const registration = await navigator.serviceWorker.ready; //서비스워커 준비대기
+      console.log("subscribe 구독합니다.");
+      const subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true, // 사용자에게 항상 알림이 표시되도록 설정
+        applicationServerKey: import.meta.env.VITE_APP_VAPID_PUBLIC_KEY, // VAPID 공개 키
+      });
+
+      setState((prev) => ({
+        ...prev,
+        isSubscribed: true,
+        subscription,
+        error: null,
+      }));
+      return true;
+    } catch (error) {
+      console.error("Subscription failed:", error);
+      setState((prev) => ({ ...prev, error: "푸시 구독에 실패했습니다." }));
+      return false;
+    }
+  }, []); // `permission` 상태가 변경될 때마다 이 함수를 재생성합니다.
+
+  /************************************************************
+   5. 초기화 (컴포넌트 마운트 시)
    * @hook useEffect
-   * @description 컴포넌트가 마운트될 때 한 번 실행되어 푸시 알림 기능을 초기화합니다.
-   *              브라우저 지원 여부 확인, 권한 상태 설정, 기존 구독 정보 로드 등을 수행합니다.
+   * @description * 컴포넌트 마운트 시 브라우저의 푸시 지원 여부를 확인하고, 기존 구독 정보가 없다면 권한 상태에 따라 자동으로 구독을 시도합니다.
    */
   useEffect(() => {
     const initialize = async () => {
       if (!memberId) return;
       // 1. 푸시 알림 지원 여부 확인
-      if (isPushSupported()) {
-        // 2. 지원하는 경우, 상태 업데이트 및 현재 알림 권한 설정
-        setState((prev) => ({
-          ...prev,
-          isSupported: true,
-          permission: Notification.permission,
-        }));
-
-        // 3. 기존 푸시 구독 정보 확인 및 로드
-        try {
-          // 서비스 워커가 활성화될 때까지 기다립니다.
-          const registration = await navigator.serviceWorker.ready;
-          // 현재 활성화된 푸시 구독 객체를 가져옵니다.
-          const subscription = await registration.pushManager.getSubscription();
-          // 기존 구독이 존재하면 상태를 업데이트합니다.
-          if (subscription) {
-            setState((prev) => ({ ...prev, isSubscribed: true, subscription }));
-          }
-        } catch (error) {
-          console.error("Error getting existing subscription:", error);
-        }
-      } else {
-        // 4. 푸시 알림을 지원하지 않는 경우, 관련 상태를 업데이트합니다.
+      if (!isPushSupported()) {
         setState((prev) => ({
           ...prev,
           isSupported: false,
-          error: "Push notifications are not supported by this browser.",
+          error: "Push notifications are not supported.",
         }));
+        return;
+      }
+
+      // 2. 지원하는 경우, 상태 업데이트 및 현재 알림 권한 설정
+      setState((prev) => ({
+        ...prev,
+        isSupported: true,
+        permission: Notification.permission,
+      }));
+
+      const registration = await navigator.serviceWorker.ready; // 서비스 워커가 활성화될 때까지 기다립니다.
+      const existingSubscription =
+        await registration.pushManager.getSubscription(); // 현재 활성화된 푸시 구독 객체를 가져옵니다.
+
+      // 기존 구독이 존재하면 상태를 업데이트합니다.
+      if (existingSubscription) {
+        setState((prev) => ({
+          ...prev,
+          isSubscribed: true,
+          subscription: existingSubscription,
+        }));
+      } else {
+        const currentPermission = Notification.permission;
+        setState((prev) => ({
+          ...prev,
+          isSupported: true,
+          permission: currentPermission,
+        }));
+        if (currentPermission === "default") {
+          const isGranted = await requestPermission(); // 내부 함수 호출
+          if (isGranted) await subscribe(); // 권한 허용되면 바로 구독
+        } else if (currentPermission === "granted") {
+          await subscribe(); // 이미 권한이 있으면 바로 구독
+        }
       }
     };
 
     initialize();
-  }, [memberId]);
+  }, [memberId, requestPermission, subscribe]);
 
   /************************************************************
-   * 4️. subscription 변경 시 - 구독 정보 서버 등록
+   * 6. subscription 변경 시 - 구독 정보 서버 등록
    ************************************************************/
   /**
    * @hook useEffect
@@ -134,7 +216,7 @@ export const usePushNotification = (
    */
   useEffect(() => {
     if (state.subscription && state.isSubscribed) {
-      const alreadyRegistered = localStorage.getItem("pushRegistered");
+      const alreadyRegistered = localStorage.getItem("pushRegistered"); // 서버에 구독정보가 저장되어있는지
       if (alreadyRegistered) return; // 이미 등록했으면 종료
       const sendSubscriptionToServer = async () => {
         try {
@@ -165,87 +247,6 @@ export const usePushNotification = (
       sendSubscriptionToServer();
     }
   }, [state.subscription, state.isSubscribed]);
-
-  /************************************************************
-   * 5. 구독 함수
-   ************************************************************/
-  /**
-   * @function subscribe
-   * @description 푸시 알림 서비스에 구독을 요청하는 비동기 함수입니다.
-   *              성공 시 구독 객체를 상태에 저장합니다.
-   * @returns {Promise<boolean>} 구독 성공 여부
-   */
-  const subscribe = useCallback(async (): Promise<boolean> => {
-    // 권한 확인
-    if (state.permission !== "granted") {
-      setState((prev) => ({ ...prev, error: "푸시 알림 권한이 필요합니다." }));
-      return false;
-    }
-    // 2. 이미 구독되어 있으면 실행하지 않음
-    if (state.isSubscribed || state.subscription) {
-      console.log("이미 구독되어있음!");
-      return true;
-    }
-
-    try {
-      const registration = await navigator.serviceWorker.ready; //서비스워커 준비대기
-
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true, // 사용자에게 항상 알림이 표시되도록 설정
-        applicationServerKey: import.meta.env.VITE_APP_VAPID_PUBLIC_KEY, // VAPID 공개 키
-      });
-
-      setState((prev) => ({
-        ...prev,
-        isSubscribed: true,
-        subscription,
-        error: null,
-      }));
-      return true;
-    } catch (error) {
-      console.error("Subscription failed:", error);
-      setState((prev) => ({ ...prev, error: "푸시 구독에 실패했습니다." }));
-      return false;
-    }
-  }, [state.permission, state.isSubscribed, state.subscription]); // `permission` 상태가 변경될 때마다 이 함수를 재생성합니다.
-
-  /************************************************************
-   * 6. 권한 요청 함수
-   *
-   * @function requestPermission
-   * @description 사용자에게 알림 권한을 요청하는 비동기 함수입니다.
-   *              권한 요청 결과에 따라 상태를 업데이트합니다.
-   * @returns {Promise<boolean>} 권한 요청 성공 여부 (granted: true, denied/default: false)
-   */
-  const requestPermission = useCallback(async (): Promise<boolean> => {
-    if (!isPushSupported()) {
-      setState((prev) => ({
-        ...prev,
-        error: "푸시 알림을 지원하지 않는 브라우저입니다.",
-      }));
-      return false;
-    }
-
-    try {
-      const permission = await Notification.requestPermission(); // 권한 요청
-      setState((prev) => ({ ...prev, permission }));
-
-      if (permission === "granted") {
-        await subscribe();
-        return true;
-      } else {
-        setState((prev) => ({
-          ...prev,
-          error: "푸시 알림 권한이 거부되었습니다.",
-        }));
-        return false;
-      }
-    } catch (error) {
-      console.error("Permission request failed:", error);
-      setState((prev) => ({ ...prev, error: "권한 요청에 실패했습니다." }));
-      return false;
-    }
-  }, [subscribe]);
 
   /************************************************************
    * 7️. 구독 해제 함수
