@@ -85,7 +85,7 @@ export default function IssueCreate() {
 
         //==================주관자 자동 입력==================
         if (memberId) {
-          const hostString = `${name}  ${jobPosition}`;
+          const hostString = `${name} ${jobPosition}`;
 
           setFormData((prev) => ({
             ...prev,
@@ -170,6 +170,7 @@ export default function IssueCreate() {
       members: issueMembers, //PartMember에서 전달받은 객체
       isDel: false,
     };
+    console.log(issueDto);
 
     // 2. issueDto를 JSON 문자열로 변환하여 "data" 파트에 추가
     // 백엔드의 @RequestPart("data")와 매칭
@@ -233,11 +234,7 @@ export default function IssueCreate() {
       const isAllowed = ext != null && allowedExtensions.includes(ext);
 
       if (!isAllowed) {
-        alert(
-          `허용되지 않은 파일입니다: ${
-            file.name
-          }\n허용 확장자: ${allowedExtensions.join(", ")}`
-        );
+        alert(`허용되지 않은 확장자입니다: ${file.name}`);
         return;
       }
 
@@ -248,8 +245,11 @@ export default function IssueCreate() {
 
       if (sizeMB > maxFileSize) {
         alert(
-          `${file.name} 파일의 크기가 ${maxFileSize}MB를 초과했습니다.
-           (현재: ${sizeMB.toFixed(2)}MB)`
+          `${
+            file.name
+          } 파일의 크기가 ${maxFileSize}MB를 초과했습니다.\n(현재: ${sizeMB.toFixed(
+            2
+          )}MB)`
         );
         return; // 이 파일만 제외
       }

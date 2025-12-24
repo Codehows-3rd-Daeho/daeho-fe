@@ -21,6 +21,20 @@ export const getIssueList = async (
   return response.data;
 };
 
+//나의 업무 - 리스트
+export const getIssueListMT = async (
+  id: number,
+  page: number,
+  size: number = 10
+): Promise<IssueListResponse> => {
+  console.log("getIssueListMT id: ", id);
+  const response = await httpClient.get(`/issue/list/mytask/${id}`, {
+    params: { page, size },
+  });
+  console.log("response.data: ", response.data);
+  return response.data;
+};
+
 //등록
 export const issueCreate = async (formData: FormData) => {
   const response = await httpClient.post(`/issue/create`, formData, {
@@ -51,8 +65,15 @@ type temp = {
   delayed: IssueListItem[];
 };
 
+//칸반 전체
 export const getKanbanIssues = async (): Promise<temp> => {
   const response = await httpClient.get("/issue/kanban");
+  return response.data;
+};
+
+//나의 업무 칸반
+export const getKanbanIssuesMT = async (id: number): Promise<temp> => {
+  const response = await httpClient.get(`/issue/kanban/mytask/${id}`);
   return response.data;
 };
 

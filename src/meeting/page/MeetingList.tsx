@@ -8,13 +8,10 @@ import { PageHeader } from "../../common/PageHeader/PageHeader";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { useNavigate } from "react-router-dom";
 import { getMeetingList } from "../api/MeetingApi";
-import { useAuthStore } from "../../store/useAuthStore";
 import { getStatusLabel } from "../../common/commonFunction";
 
 export default function MeetingList() {
   const navigate = useNavigate();
-  const { member } = useAuthStore();
-  const role = member?.role;
 
   const [page, setPage] = useState(1);
   const [data, setData] = useState<MeetingListItem[]>([]);
@@ -45,7 +42,7 @@ export default function MeetingList() {
       field: "title",
       headerName: "제목",
       flex: 2,
-      minWidth: 600,
+      minWidth: 500,
       headerAlign: "center",
       align: "left",
       renderCell: (params) => (
@@ -61,9 +58,33 @@ export default function MeetingList() {
       field: "status",
       headerName: "상태",
       flex: 0.5,
-      minWidth: 80,
+      minWidth: 100,
       headerAlign: "center",
       align: "center",
+      renderCell: (params) => {
+        const status = params.value;
+        let bgColor = "";
+        let textColor = "";
+
+        if (status === "진행전") {
+          bgColor = "bg-green-100";
+          textColor = "text-green-700";
+        } else if (status === "진행중") {
+          bgColor = "bg-blue-100";
+          textColor = "text-blue-700";
+        } else {
+          bgColor = "bg-red-100";
+          textColor = "text-red-700";
+        }
+
+        return (
+          <span
+            className={`px-3 py-1 text-sm font-semibold rounded-sm ${bgColor} ${textColor}`}
+          >
+            {status}
+          </span>
+        );
+      },
     },
     {
       field: "startDate",
@@ -115,9 +136,7 @@ export default function MeetingList() {
 
       <PageHeader>
         <Box />
-        {role === "USER" && (
-          <AddButton onClick={() => navigate("/meeting/create")} />
-        )}
+        <AddButton onClick={() => navigate("/meeting/create")} />
       </PageHeader>
       {/* 리스트 */}
       <ListDataGrid<MeetingListItem>

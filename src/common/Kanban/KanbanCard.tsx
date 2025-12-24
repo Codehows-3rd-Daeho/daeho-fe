@@ -1,19 +1,20 @@
 import type { IssueListItem } from "../../issue/type/type";
+import { calculateDDay } from "./KanbanDDay";
 
-// D-Day 및 마감 임박 여부를 계산하는 함수
-const calculateDDay = (endDate: string) => {
-  const today = new Date();
-  const end = new Date(endDate);
+// // D-Day 및 마감 임박 여부를 계산하는 함수
+// const calculateDDay = (endDate: string) => {
+//   const today = new Date();
+//   const end = new Date(endDate);
 
-  // 날짜만 비교하여 D-Day 계산
-  const diffTime = end.getTime() - today.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+//   // 날짜만 비교하여 D-Day 계산
+//   const diffTime = end.getTime() - today.getTime();
+//   const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-  // 마감 임박: D-Day가 0이거나 1일 이하
-  const isImminent = diffDays <= 1 && diffDays >= 0;
+//   // 마감 임박: D-Day가 0이거나 1일 이하
+//   const isImminent = diffDays <= 1 && diffDays >= 0;
 
-  return { dDay: diffDays, isImminent };
-};
+//   return { dDay: diffDays, isImminent };
+// };
 
 export default function KanbanCard({
   issue,
@@ -28,8 +29,10 @@ export default function KanbanCard({
   const { dDay, isImminent } = calculateDDay(issue.endDate);
   const dDayText = isDone
     ? "완료"
-    : dDay >= 0
+    : dDay > 0
     ? `D-${dDay}`
+    : dDay === 0
+    ? "D-DAY"
     : `D+${Math.abs(dDay)}`;
 
   // 부서(Department) 표시 처리 (최대 2개 표시, 3개 이상은 ...)
@@ -66,7 +69,7 @@ export default function KanbanCard({
         <div className="flex items-center space-x-2">
           {/* D-Day */}
           <span
-            className={`text-sm font-medium px-2 py-0.5 rounded-full ${
+            className={`text-sm font-medium px-2 py-1 rounded-full ${
               isDone
                 ? "bg-gray-200 text-gray-600"
                 : dDay <= 0

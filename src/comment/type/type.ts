@@ -2,7 +2,7 @@ import type { FileItem } from "../component/FileList";
 
 export interface CommentDto {
   id: number;
-  writerMemberId: number; 
+  writerMemberId: number;
   writerName: string;
   writerJPName: string;
   content: string;
@@ -10,6 +10,7 @@ export interface CommentDto {
   updatedAt: string;
   isDel: boolean;
   fileList: FileItem[];
+  mentions?: Mention[];
 }
 
 export interface CommentsResponse {
@@ -23,3 +24,8 @@ export interface MentionMemberDto {
   jobPositionName: string;
   departmentName: string;
 }
+
+export type Mention = {
+  memberId: number;
+  name: string;
+};

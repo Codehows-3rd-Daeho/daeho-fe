@@ -1,30 +1,26 @@
 import { useEffect, useRef, useState } from "react";
-import type { CommentDto, MentionMemberDto } from "../type/type"; // type 경로 확인
-import { searchMembersForMention } from "../api/CommentApi"; // api 경로 확인
-import {
-  Avatar,
-  Box,
-  Button,
-  IconButton,
-  TextField,
-  Typography,
-} from "@mui/material";
+import { Avatar, Box, Button, IconButton, Typography } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
+
 import { CommentItem } from "./CommentItem";
+
 import {
   getExtensions,
   getFileSize,
 } from "../../admin/setting/api/FileSettingApi";
 
-// =====================================================================
-//  CommentSection Props 인터페이스
-// =====================================================================
+import type { CommentDto, Mention } from "../type/type";
+import MentionTextInput from "./mention/MentionTextInput";
 
+// =====================================================================
+//  Props
+// =====================================================================
 interface Props {
   comments?: CommentDto[];
   enableInput?: boolean;
   enableMention?: boolean;
+
   commentText?: string;
   onChangeText?: (text: string) => void;
   onSubmit?: (files: File[]) => void;
@@ -34,16 +30,17 @@ interface Props {
     commentId: number,
     content: string,
     newFiles: File[],
-    removeFileIds: number[]
+    removeFileIds: number[],
+    mentionedMemberIds?: number[]
   ) => Promise<void>;
+
   onDeleteComment?: (commentId: number) => Promise<void>;
   currentMemberId?: number;
 }
 
 // =====================================================================
-//  CommentSection 메인 컴포넌트
+//  CommentSection
 // =====================================================================
-
 export default function CommentSection({
   comments = [],
   enableInput = true,
@@ -56,83 +53,73 @@ export default function CommentSection({
   onDeleteComment,
   currentMemberId,
 }: Props) {
-  const [mentionKeyword, setMentionKeyword] = useState<string | null>(null);
-  const [mentionList, setMentionList] = useState<MentionMemberDto[]>([]);
-  const [showMentionBox, setShowMentionBox] = useState(false);
+  /* =========================
+     멘션 상태 (작성용)
+  ========================= */
+  const [mentions, setMentions] = useState<Mention[]>([]);
 
-  const inputRef = useRef<HTMLTextAreaElement | null>(null);
-  const mentionBoxRef = useRef<HTMLDivElement | null>(null);
+  /* =========================
+     파일 업로드 상태
+  ========================= */
   const [files, setFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  /* =========================
-     멘션 외부 클릭 닫기
-  ========================= */
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        mentionBoxRef.current &&
-        !mentionBoxRef.current.contains(e.target as Node)
-      ) {
-        setShowMentionBox(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  /* =========================
-    입력 변경 + 멘션 검색
-  ========================= */
-  const handleChange = async (value: string) => {
-    onChangeText?.(value);
-
-    if (!enableMention) return;
-
-    const match = value.match(/@([가-힣a-zA-Z0-9_]*)$/);
-    if (!match) {
-      setShowMentionBox(false);
-      return;
-    }
-
-    const keyword = match[1];
-    setMentionKeyword(keyword);
-
-    if (keyword.length === 0) {
-      setShowMentionBox(false);
-      return;
-    }
-
-    const data = await searchMembersForMention(keyword);
-    setMentionList(data);
-    setShowMentionBox(true);
-  };
 
   const [maxFileSize, setMaxFileSize] = useState<number | null>(null);
   const [allowedExtensions, setAllowedExtensions] = useState<string[] | null>(
     null
   );
 
+  /* =========================
+     파일 설정 조회
+  ========================= */
   useEffect(() => {
     async function fetchFileSetting() {
       const sizeConfig = await getFileSize();
       const extensionConfig = await getExtensions();
 
       const maxFileSizeByte = Number(sizeConfig.name);
-      const maxFileSize = maxFileSizeByte / 1024 / 1024;
+      const maxFileSizeMB = maxFileSizeByte / 1024 / 1024;
 
-      const allowedExtensions = extensionConfig.map((e) =>
-        e.name.toLowerCase()
-      );
-
-      setMaxFileSize(maxFileSize);
-      setAllowedExtensions(allowedExtensions);
+      setMaxFileSize(maxFileSizeMB);
+      setAllowedExtensions(extensionConfig.map((e) => e.name.toLowerCase()));
     }
-
     fetchFileSetting();
   }, []);
 
+  /* =========================
+     Drag & Drop
+  ========================= */
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (!e.dataTransfer.files) return;
+
+    const droppedFiles = Array.from(e.dataTransfer.files);
+
+    const validFiles = droppedFiles.filter((file) => {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "";
+      if (allowedExtensions && !allowedExtensions.includes(ext)) {
+        alert(`허용되지 않은 확장자입니다: ${file.name}`);
+        return false;
+      }
+      if (maxFileSize && file.size / 1024 / 1024 > maxFileSize) {
+        alert(
+          `${file.name} 파일의 크기가 최대 용량(${maxFileSize}MB)을 초과했습니다.`
+        );
+        return false;
+      }
+      return true;
+    });
+
+    setFiles((prev) => [...prev, ...validFiles]);
+  };
+
+  /* =========================
+     렌더링
+  ========================= */
   return (
     <Box>
       {/* ================= 댓글 목록 ================= */}
@@ -148,23 +135,24 @@ export default function CommentSection({
         />
       ))}
 
-      {/* ================= 입력 영역 ================= */}
+      {/* ================= 댓글 입력 ================= */}
       {enableInput && (
         <Box sx={{ display: "flex", gap: 2, mt: 3 }}>
           <Avatar sx={{ width: 40, height: 40 }}>👤</Avatar>
 
-          <Box sx={{ flex: 1, position: "relative" }}>
-            <TextField
-              fullWidth
-              multiline
-              rows={3}
-              placeholder="댓글을 입력하세요"
+          <Box sx={{ flex: 1 }}>
+            {/* ===== 멘션 입력 ===== */}
+            <MentionTextInput
               value={commentText}
-              inputRef={inputRef}
-              onChange={(e) => handleChange(e.target.value)}
+              onChange={(text) => onChangeText?.(text)}
+              mentions={mentions}
+              setMentions={setMentions}
+              enableMention={enableMention}
+              onAddMention={onAddMention}
+              placeholder="댓글을 입력하세요"
             />
 
-            {/* 첨부파일 영역 */}
+            {/* ===== 파일 업로드 ===== */}
             <Box sx={{ mt: 1 }}>
               <input
                 type="file"
@@ -177,6 +165,7 @@ export default function CommentSection({
                 }}
                 onClick={(e) => (e.currentTarget.value = "")}
               />
+
               <Box
                 sx={{
                   border: "2px dashed #d0d0d0",
@@ -191,6 +180,8 @@ export default function CommentSection({
                   },
                 }}
                 onClick={() => fileInputRef.current?.click()}
+                onDragOver={handleDragOver}
+                onDrop={handleDrop}
               >
                 <UploadFileIcon
                   sx={{ fontSize: 36, color: "#9e9e9e", mb: 0.5 }}
@@ -198,6 +189,7 @@ export default function CommentSection({
                 <Typography sx={{ fontSize: "0.875rem", fontWeight: 500 }}>
                   파일 첨부
                 </Typography>
+
                 {maxFileSize && allowedExtensions && (
                   <Typography
                     sx={{
@@ -206,14 +198,13 @@ export default function CommentSection({
                       color: "text.secondary",
                     }}
                   >
-                    {" "}
-                    최대 파일 크기: {maxFileSize}MB <br /> 허용 확장자: .
-                    {allowedExtensions.join(", .")}
+                    최대 파일 크기: {maxFileSize}MB <br />
+                    허용 확장자: .{allowedExtensions.join(", .")}
                   </Typography>
                 )}
               </Box>
 
-              {/* 첨부된 파일 목록 (삭제 버튼 포함) */}
+              {/* 첨부된 파일 목록 */}
               {files.map((file, idx) => (
                 <Box
                   key={idx}
@@ -246,75 +237,22 @@ export default function CommentSection({
               ))}
             </Box>
 
-            {/* ===== 멘션 박스 ===== */}
-            {enableMention && showMentionBox && mentionList.length > 0 && (
-              <Box
-                ref={mentionBoxRef}
-                sx={{
-                  position: "absolute",
-                  bottom: "100%",
-                  left: 12,
-                  mb: 0.5,
-                  backgroundColor: "#fff",
-                  border: "1px solid #ddd",
-                  borderRadius: 1,
-                  boxShadow: 3,
-                  width: 300,
-                  maxHeight: 56 * 5,
-                  overflowY: "auto",
-                  zIndex: 1300,
-                }}
-              >
-                {mentionList.map((m) => (
-                  <Box
-                    key={m.id}
-                    sx={{
-                      px: 2,
-                      py: 1,
-                      height: 56,
-                      cursor: "pointer",
-                      "&:hover": { backgroundColor: "#f5f5f5" },
-                    }}
-                    onClick={() => {
-                      if (!mentionKeyword || !onChangeText) return;
-
-                      onChangeText(
-                        commentText.replace(
-                          new RegExp(`@${mentionKeyword}$`),
-                          `@${m.name} `
-                        )
-                      );
-
-                      onAddMention?.(m.id);
-                      setShowMentionBox(false);
-                    }}
-                  >
-                    <Typography fontWeight={500}>
-                      {m.name} {m.jobPositionName}
-                    </Typography>
-                    <Typography fontSize="0.8rem" color="text.secondary">
-                      {m.departmentName}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
-            )}
-
+            {/* ===== 저장 버튼 ===== */}
             <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1 }}>
               <Button
                 size="small"
                 variant="contained"
+                disabled={!commentText.trim() && files.length === 0}
                 onClick={async () => {
-                  if (!commentText?.trim() && files.length === 0) {
+                  if (!commentText.trim() && files.length === 0) {
                     alert("내용 또는 파일을 입력하세요.");
                     return;
                   }
-
                   await onSubmit?.(files);
                   setFiles([]);
+                  setMentions([]);
                   onChangeText?.("");
                 }}
-                disabled={!commentText?.trim() && files.length === 0}
               >
                 저장
               </Button>
