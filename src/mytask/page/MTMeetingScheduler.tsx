@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Box, Typography, IconButton, Card } from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import { getMeetingMonth } from "../api/MeetingApi";
-import type { MeetingListItem } from "../type/type";
 import { useNavigate } from "react-router-dom";
+import type { MeetingListItem } from "../../meeting/type/type";
+import { getMeetingMonthMT } from "../../meeting/api/MeetingApi";
+import { useAuthStore } from "../../store/useAuthStore";
 import { PageHeader } from "../../common/PageHeader/PageHeader";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 
@@ -32,7 +33,8 @@ function getMonthMatrix(year: number, month: number) {
   return matrix;
 }
 
-export default function MeetingScheduler() {
+export default function MTMeetingScheduler() {
+  const { member } = useAuthStore();
   const navigate = useNavigate();
 
   const today = new Date();
@@ -54,7 +56,11 @@ export default function MeetingScheduler() {
   //달이 바뀔 때마다 데이터 조회
   useEffect(() => {
     const fetchMeetings = async () => {
-      const response = await getMeetingMonth(year, month + 1);
+      const response = await getMeetingMonthMT(
+        member!.memberId,
+        year,
+        month + 1
+      );
       setMeetings(response);
       console.log("response: ", response);
     };

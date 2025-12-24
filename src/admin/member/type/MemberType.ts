@@ -23,3 +23,15 @@ export interface MemberList {
   isEmployed: string;
   isAdmin: boolean;
 }
+
+//마이페이지
+export interface MemberProfile {
+  loginId: string;
+  password: string;
+  name: string;
+  email: string;
+  phone: string;
+  departmentName: string | "";
+  jobPositionName: string | "";
+  profileUrl?: string;
+}
