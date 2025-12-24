@@ -5,6 +5,12 @@ import { lazy } from "react";
 import MeetingCreate from "./meeting/page/MeetingCreate";
 import AppLayout from "./AppLayout";
 import MeetingScheduler from "./meeting/page/MeetingScheduler";
+import MTIssueKanban from "./mytask/page/MTIssueKanban";
+import MTIssueList from "./mytask/page/MTIssueList";
+import MTMeetingList from "./mytask/page/MTMeetingList";
+import MTMeetingScheduler from "./mytask/page/MTMeetingScheduler";
+import MyPage from "./mypage/MyPage";
+import Dashboard from "./dashboard/page/Dashboard";
 
 const Login = lazy(() => import("./login/page/Login"));
 const IssueList = lazy(() => import("./issue/page/IssueList"));
@@ -63,6 +69,13 @@ export default function App() {
             <PrivateRoute>
               <AppLayout>
                 <Routes>
+                  {/* 대시보드 */}
+                  <Route path="/" element={<Dashboard />} />
+
+                  {/* 마이페이지 */}
+                  <Route path="/mypage" element={<MyPage />} />
+
+                  {/* 사이드바 */}
                   <Route path="/issue/list" element={<IssueList />} />
                   <Route path="/issue/kanban" element={<IssueKanban />} />
                   <Route path="/issue/create" element={<IssueCreate />} />
@@ -82,6 +95,18 @@ export default function App() {
                   <Route
                     path="/meeting/:meetingId/update"
                     element={<MeetingUpdate />}
+                  />
+
+                  {/* 나의 업무 */}
+                  <Route
+                    path="/mytask/issue/kanban"
+                    element={<MTIssueKanban />}
+                  />
+                  <Route path="/mytask/issue/list" element={<MTIssueList />} />
+                  <Route path="/mytask/meeting" element={<MTMeetingList />} />
+                  <Route
+                    path="/mytask/schedule"
+                    element={<MTMeetingScheduler />}
                   />
 
                   {/* 관리자 */}

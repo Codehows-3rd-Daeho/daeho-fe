@@ -3,6 +3,8 @@ import "./index.css";
 import App from "./App.tsx";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { CssBaseline, ThemeProvider } from "@mui/material";
+import theme from "./theme.ts";
 
 // PWA: 서비스 워커 등록 Service Worker를 지원하는지 확인.
 if ("serviceWorker" in navigator) {
@@ -22,8 +24,12 @@ if ("serviceWorker" in navigator) {
 }
 
 createRoot(document.getElementById("root")!).render(
-  //DatePicker 사용
-  <LocalizationProvider dateAdapter={AdapterDayjs}>
-    <App />
-  </LocalizationProvider>
+  // theme사용
+  <ThemeProvider theme={theme}>
+    <CssBaseline />
+    {/* DatePicker 사용 */}
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <App />
+    </LocalizationProvider>
+  </ThemeProvider>
 );
