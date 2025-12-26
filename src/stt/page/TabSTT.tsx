@@ -32,7 +32,6 @@ type RecordingStatus = "idle" | "recording" | "paused" | "finished";
 interface STTWithRecording extends STT {
   recordingStatus?: RecordingStatus;
   recordingTime?: number;
-  liveSttId?: number | null;
 }
 
 
@@ -255,7 +254,7 @@ export default function TabSTT() {
 
   const handleDelete = async (sttId: number) => {
     // Prevent memory leaks by revoking the blob URL if it exists
-    const sttIdToDelete = findSttById(sttId)?.liveSttId ?? sttId;
+    const sttIdToDelete = findSttById(sttId)?.id ?? sttId;
 
     if (!selectedSttId) {
       alert("삭제할 STT가 선택되지 않았습니다.");
@@ -439,7 +438,7 @@ export default function TabSTT() {
   
   const handleResumeRecording = (sttId: number | null) => {
     if (sttId === null || !mediaRecorderRef.current[sttId]) return;
-    const liveSttId = findSttById(sttId)?.liveSttId ?? null;
+    const liveSttId = findSttById(sttId)?.id ?? null;
     if(liveSttId === null) return;
 
     mediaRecorderRef.current[sttId].resume();
@@ -476,7 +475,7 @@ export default function TabSTT() {
   
   const handleConfirmUpload = async (sttId: number | null) => {
     if (sttId === null) return;
-    const liveSttId = findSttById(sttId)?.liveSttId ?? null;
+    const liveSttId = findSttById(sttId)?.id ?? null;
     if(liveSttId === null) return;
     try {
       updateSttState(sttId, { isTemp: false, isLoading: true })
@@ -491,7 +490,6 @@ export default function TabSTT() {
         isTemp: false,
         recordingStatus: 'idle',
         recordingTime: 0,
-        liveSttId: null,
       })
       setSelectedSttId(resStt.id);
     } catch (e) {
