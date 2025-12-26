@@ -829,7 +829,7 @@ export default function TabSTT() {
                       녹음 완료
                     </Typography>
                     <Typography variant="h6" sx={{ mb: 2 }}>
-                      {currentStt.recordingTime}
+                      {formatTime(currentStt.recordingTime || 0)}
                     </Typography>
                     <AudioPlayer stts={stts} sttId={selectedSttId} />
                     <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>
