@@ -152,6 +152,7 @@ export default function TabSTT() {
   const mediaStreamRef = useRef<{ [key: number]: MediaStream }>({});
 
   //daglo 최대 업로드 용량, 허용 확장자
+  const chunkingRate = 10; // 10초
   const maxFileSizeMB = 2 * 1024; //2GB (MB)
   const allowedExtensions = [
     // audio
@@ -529,7 +530,7 @@ export default function TabSTT() {
           audioChunksRef.current[sttId] = [];
         }
       }
-    }, 10000); // 10초
+    }, chunkingRate * 1000); // 10초
     updateSttState(sttId, { recordingStatus: 'recording' });
   };
   
@@ -657,6 +658,12 @@ export default function TabSTT() {
       console.error("Microphone permission error:", error);
       alert("마이크 권한이 없습니다. 권한 허용 후 다시 시도해주세요. \n(모바일의 경우 앱 설정에서 브라우저 마이크 권한 설정)");
     }
+  }
+
+  const assumeDuration = (cnt: number) => {
+    const min = cnt*chunkingRate / 60;
+    if(min < 1) return "1분 미만 녹음 파일"
+    return `약 ${min}분 녹음 파일`
   }
   
   return (
@@ -829,7 +836,7 @@ export default function TabSTT() {
                       녹음 완료
                     </Typography>
                     <Typography variant="h6" sx={{ mb: 2 }}>
-                      {formatTime(currentStt.recordingTime || 0)}
+                      {assumeDuration(currentStt.chunkingCnt || 0)}
                     </Typography>
                     <AudioPlayer stts={stts} sttId={selectedSttId} />
                     <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>

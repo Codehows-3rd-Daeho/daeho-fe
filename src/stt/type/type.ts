@@ -11,4 +11,5 @@ export interface STT {
   isLoading: boolean;
   isTemp: boolean;
   file?: FileDto;
+  chunkingCnt?: number;
 }
