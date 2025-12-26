@@ -562,14 +562,6 @@ export default function TabSTT() {
     }
   };
 
-  const handleRecordAgain = (sttId: number | null) => {
-      if (sttId === null) return;
-      updateSttState(sttId, {
-          recordingStatus: 'idle',
-          recordingTime: 0,
-      });
-  };
-
   const setRecorder = async (sttId: number) => {
     try {
       setIsRecording(true);
@@ -840,10 +832,7 @@ export default function TabSTT() {
                     <AudioPlayer stts={stts} sttId={selectedSttId} />
                     <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>
                         <Button variant="contained" color="primary" onClick={() => handleConfirmUpload(selectedSttId)}>
-                            변환 하기
-                        </Button>
-                        <Button variant="outlined" color="secondary" onClick={() => handleRecordAgain(selectedSttId)}>
-                            다시 녹음하기
+                          음성 변환 시작
                         </Button>
                     </Box>
                 </Box>
