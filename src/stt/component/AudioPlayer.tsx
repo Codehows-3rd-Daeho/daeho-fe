@@ -47,15 +47,21 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ stts, sttId }) => {
     setIsPlaying(!isPlaying);
   };
 
-  const formatTime = (time: number) => {
-    if (typeof time !== "number" || isNaN(time) || !isFinite(time)){
-        const recordingTime = stts.find(s => s.id === sttId)?.recordingTime;
-        return recordingTime === 0 ? "--" : recordingTime;
-    } 
-    const min = Math.floor(time / 60);
-    const sec = Math.floor(time % 60);
-    return `${min}:${sec.toString().padStart(2, '0')}`;
-  };
+    const formatTime = (time: number) => {
+        const toMinSec = (t: number) => {
+            const min = Math.floor(t / 60);
+            const sec = Math.floor(t % 60);
+            return `${min}:${sec.toString().padStart(2, "0")}`;
+        };
+
+        // time이 유효하지 않으면 recordingTime 사용
+        if (typeof time !== "number" || !isFinite(time)) {
+            const recordingTime = stts.find(s => s.id === sttId)?.recordingTime ?? 0;
+            return recordingTime > 0 ? toMinSec(recordingTime) : "--";
+        }
+
+        return toMinSec(time);
+    };
 
   if(sttId == null) return;
 
