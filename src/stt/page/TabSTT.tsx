@@ -832,7 +832,7 @@ export default function TabSTT() {
                     <Typography variant="h6" sx={{ mb: 2 }}>
                       녹음 완료
                     </Typography>
-                    {(currentStt.recordingTime ?? 0 === 0) && (
+                    {((currentStt.recordingTime ?? 0) === 0) && (
                       <Typography variant="h6" sx={{ mb: 2 }}>
                         {assumeDuration(currentStt.chunkingCnt || 0)}
                       </Typography>
