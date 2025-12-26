@@ -48,7 +48,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ stts, sttId }) => {
   };
 
   const formatTime = (time: number) => {
-    if(!time) return "--";
+    if (typeof time !== "number" || isNaN(time)) return "--";
     const min = Math.floor(time / 60);
     const sec = Math.floor(time % 60);
     return `${min}:${sec.toString().padStart(2, '0')}`;
@@ -79,7 +79,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ stts, sttId }) => {
       />
       
       <Typography variant="body2" sx={{ minWidth: 40 }}>
-        {formatTime(duration)}
+        {duration ? formatTime(duration) : "--" }
       </Typography>
     </Box>
   );

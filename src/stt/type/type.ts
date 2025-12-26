@@ -11,5 +11,4 @@ export interface STT {
   isLoading: boolean;
   isTemp: boolean;
   file?: FileDto;
-  recordingTime: number;
 }
