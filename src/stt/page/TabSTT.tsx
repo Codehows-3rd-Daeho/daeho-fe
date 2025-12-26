@@ -958,9 +958,6 @@ export default function TabSTT() {
                       <PlayCircleIcon fontSize="small" /> 
                     </Box>
                     <Typography
-                      sx={{
-                        width: 150
-                      }}
                       fontSize="small"
                       component="a"
                       href={`${BASE_URL}${findSttById(selectedSttId)?.file?.path}`}
@@ -989,7 +986,7 @@ export default function TabSTT() {
                     <GridDownloadIcon fontSize="small" />
                   </IconButton>
                 </Box>
-                <AudioPlayer src={`${BASE_URL}${findSttById(selectedSttId)?.file?.path}`} name="녹음 파일" />
+                <AudioPlayer stts={stts} sttId={selectedSttId} />
               </Box>
               <Typography>
                 요약 결과

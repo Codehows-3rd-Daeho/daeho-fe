@@ -3,13 +3,15 @@ import { IconButton, Slider, Typography } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import { Box } from '@mui/material';
+import type { STT } from '../type/type';
+import { BASE_URL } from '../../config/httpClient';
 
 interface AudioPlayerProps {
-  src: string;
-  name?: string;
+    stts: STT[]
+    sttId: number | null;
 }
 
-const AudioPlayer: React.FC<AudioPlayerProps> = ({ src, name = "Audio" }) => {
+const AudioPlayer: React.FC<AudioPlayerProps> = ({ stts, sttId }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -51,9 +53,11 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ src, name = "Audio" }) => {
     return `${min}:${sec.toString().padStart(2, '0')}`;
   };
 
+  if(sttId == null) return;
+
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1 }}>
-      <audio ref={audioRef} src={src} preload="metadata" />
+      <audio ref={audioRef} src={`${BASE_URL}${stts.find(s => s.id === sttId)?.file?.path}`} preload="metadata" />
       
       <IconButton onClick={togglePlay} size="small">
         {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
