@@ -339,84 +339,84 @@ export default function TabSTT() {
 
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const { sttId: liveSttId } = await startRecording(meetingId);
-      updateSttState(sttId, { id: liveSttId });
-      setSelectedSttId(liveSttId);
-      mediaStreamRef.current[liveSttId] = stream;
+      const newStt = await startRecording(meetingId);
+      updateSttState(sttId, newStt);
+      setSelectedSttId(newStt.id);
+      mediaStreamRef.current[newStt.id] = stream;
   
       const recorder = new MediaRecorder(stream);
-      mediaRecorderRef.current[liveSttId] = recorder;
+      mediaRecorderRef.current[newStt.id] = recorder;
 
-      audioChunksRef.current[liveSttId] = [];
+      audioChunksRef.current[newStt.id] = [];
       recorder.ondataavailable = async (event) => {
         if (event.data.size > 0) {
-          audioChunksRef.current[liveSttId].push(event.data);
+          audioChunksRef.current[newStt.id].push(event.data);
         }
       };
 
       const startChunkTimer = () => {
-        recordTimeTimerRef.current[liveSttId] = setInterval(() => {
+        recordTimeTimerRef.current[newStt.id] = setInterval(() => {
           setStts(prevStts =>
             prevStts.map(stt =>
-              stt.id === liveSttId ? { ...stt, recordingTime: (stt.recordingTime || 0) + 1 } : stt
+              stt.id === newStt.id ? { ...stt, recordingTime: (stt.recordingTime || 0) + 1 } : stt
             )
           );
         }, 1000);
-        chunkTimerRef.current[liveSttId] = setInterval(async () => {
-          const chunks = audioChunksRef.current[liveSttId];
+        chunkTimerRef.current[newStt.id] = setInterval(async () => {
+          const chunks = audioChunksRef.current[newStt.id];
           if (chunks.length > 0) {
             const chunk = new Blob(chunks, { type: 'audio/wav' });
             const formData = new FormData();
             formData.append("file", chunk, "chunk.wav");
             
             try {
-              await uploadAudioChunk(liveSttId, formData);
-              console.log(`10초 청크 ${liveSttId} 전송 성공`);
+              await uploadAudioChunk(newStt.id, formData);
+              console.log(`10초 청크 ${newStt.id} 전송 성공`);
             } catch (e) {
               console.error("청크 전송 실패:", e);
               // 재시도 로직 추가 가능
             } finally {
               // 메모리 정리: 청크 배열 초기화
-              audioChunksRef.current[liveSttId] = [];
+              audioChunksRef.current[newStt.id] = [];
             }
           }
         }, 10000); // 10초
       };
         
       recorder.onstop = () => {
-        const remainingChunks = audioChunksRef.current[liveSttId];
+        const remainingChunks = audioChunksRef.current[newStt.id];
         if (remainingChunks.length > 0) {
           const finalChunk = new Blob(remainingChunks, { type: 'audio/wav' });
           const formData = new FormData();
           formData.append("file", finalChunk, "final.wav");
           try{
-            uploadAudioChunk(liveSttId, formData)
-            console.log(`남은 청크 ${liveSttId} 전송 성공`);
+            uploadAudioChunk(newStt.id, formData)
+            console.log(`남은 청크 ${newStt.id} 전송 성공`);
           }catch (e) {
             console.error("청크 전송 실패:", e);
           } finally {
-            audioChunksRef.current[liveSttId] = [];
+            audioChunksRef.current[newStt.id] = [];
           }
         }
-        updateSttState(liveSttId, { recordingStatus: 'finished' });
+        updateSttState(newStt.id, { recordingStatus: 'finished' });
         // Clean up stream and recorder refs
-        mediaStreamRef.current[liveSttId]?.getTracks().forEach(track => track.stop());
-        delete mediaStreamRef.current[liveSttId];
-        delete mediaRecorderRef.current[liveSttId];
-        delete audioChunksRef.current[liveSttId];
-        if (recordTimeTimerRef.current[liveSttId]) {
-          clearInterval(recordTimeTimerRef.current[liveSttId]);
-          delete recordTimeTimerRef.current[liveSttId];
+        mediaStreamRef.current[newStt.id]?.getTracks().forEach(track => track.stop());
+        delete mediaStreamRef.current[newStt.id];
+        delete mediaRecorderRef.current[newStt.id];
+        delete audioChunksRef.current[newStt.id];
+        if (recordTimeTimerRef.current[newStt.id]) {
+          clearInterval(recordTimeTimerRef.current[newStt.id]);
+          delete recordTimeTimerRef.current[newStt.id];
         }
-        if (chunkTimerRef.current[liveSttId]) {
-          clearInterval(chunkTimerRef.current[liveSttId]);
-          delete chunkTimerRef.current[liveSttId];
+        if (chunkTimerRef.current[newStt.id]) {
+          clearInterval(chunkTimerRef.current[newStt.id]);
+          delete chunkTimerRef.current[newStt.id];
         }
       };
       
       recorder.start(1000);
       startChunkTimer();
-      updateSttState(liveSttId, { recordingStatus: 'recording', recordingTime: 0 });
+      updateSttState(newStt.id, { recordingStatus: 'recording', recordingTime: 0 });
   
     } catch (error) {
       console.error("Microphone permission error:", error);
@@ -477,6 +477,8 @@ export default function TabSTT() {
     if (sttId === null) return;
     const liveSttId = findSttById(sttId)?.id ?? null;
     if(liveSttId === null) return;
+    if (!window.confirm("음성 파일을 등록하시겠습니까?")) return;
+
     try {
       updateSttState(sttId, { isTemp: false, isLoading: true })
       const resStt: STTWithRecording = await finishRecording(liveSttId);
