@@ -484,92 +484,10 @@ export default function TabSTT() {
 
   const handleStartRecording = async (sttId: number | null) => {
     if (sttId === null || !meetingId) return;
-
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const newStt = await startRecording(meetingId);
-      updateSttState(sttId, newStt);
-      setSelectedSttId(newStt.id);
-      mediaStreamRef.current[newStt.id] = stream;
-  
-      const recorder = new MediaRecorder(stream);
-      mediaRecorderRef.current[newStt.id] = recorder;
-
-      audioChunksRef.current[newStt.id] = [];
-      recorder.ondataavailable = async (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current[newStt.id].push(event.data);
-        }
-      };
-
-      const startChunkTimer = () => {
-        recordTimeTimerRef.current[newStt.id] = setInterval(() => {
-          setStts(prevStts =>
-            prevStts.map(stt =>
-              stt.id === newStt.id ? { ...stt, recordingTime: (stt.recordingTime || 0) + 1 } : stt
-            )
-          );
-        }, 1000);
-        chunkTimerRef.current[newStt.id] = setInterval(async () => {
-          const chunks = audioChunksRef.current[newStt.id];
-          if (chunks.length > 0) {
-            const chunk = new Blob(chunks, { type: 'audio/wav' });
-            const formData = new FormData();
-            formData.append("file", chunk, "chunk.wav");
-            
-            try {
-              await uploadAudioChunk(newStt.id, formData);
-              console.log(`10초 청크 ${newStt.id} 전송 성공`);
-            } catch (e) {
-              console.error("청크 전송 실패:", e);
-              // 재시도 로직 추가 가능
-            } finally {
-              // 메모리 정리: 청크 배열 초기화
-              audioChunksRef.current[newStt.id] = [];
-            }
-          }
-        }, 10000); // 10초
-      };
-        
-      recorder.onstop = () => {
-        const remainingChunks = audioChunksRef.current[newStt.id];
-        if (remainingChunks.length > 0) {
-          const finalChunk = new Blob(remainingChunks, { type: 'audio/wav' });
-          const formData = new FormData();
-          formData.append("file", finalChunk, "final.wav");
-          try{
-            uploadAudioChunk(newStt.id, formData)
-            console.log(`남은 청크 ${newStt.id} 전송 성공`);
-          }catch (e) {
-            console.error("청크 전송 실패:", e);
-          } finally {
-            audioChunksRef.current[newStt.id] = [];
-          }
-        }
-        updateSttState(newStt.id, { recordingStatus: 'finished' });
-        // Clean up stream and recorder refs
-        mediaStreamRef.current[newStt.id]?.getTracks().forEach(track => track.stop());
-        delete mediaStreamRef.current[newStt.id];
-        delete mediaRecorderRef.current[newStt.id];
-        delete audioChunksRef.current[newStt.id];
-        if (recordTimeTimerRef.current[newStt.id]) {
-          clearInterval(recordTimeTimerRef.current[newStt.id]);
-          delete recordTimeTimerRef.current[newStt.id];
-        }
-        if (chunkTimerRef.current[newStt.id]) {
-          clearInterval(chunkTimerRef.current[newStt.id]);
-          delete chunkTimerRef.current[newStt.id];
-        }
-      };
-      
-      recorder.start(1000);
-      startChunkTimer();
-      updateSttState(newStt.id, { recordingStatus: 'recording', recordingTime: 0 });
-  
-    } catch (error) {
-      console.error("Microphone permission error:", error);
-      alert("마이크 권한이 없습니다. 권한 허용 후 다시 시도해주세요. \n(모바일의 경우 앱 설정에서 브라우저 마이크 권한 설정)");
-    }
+    const newStt = await startRecording(meetingId);
+    updateSttState(sttId, newStt);
+    setSelectedSttId(newStt.id);
+    setRecorder(newStt.id);
   };
 
   const handlePauseRecording = (sttId: number | null) => {
@@ -647,13 +565,95 @@ export default function TabSTT() {
     }
   };
 
-  const handleRecordAgain = (sttId: number | null) => {
-      if (sttId === null) return;
-      updateSttState(sttId, {
-          recordingStatus: 'idle',
-          recordingTime: 0,
-      });
+  const handleRecordContinuous = async (sttId: number | null) => {
+    if (sttId === null) return;
+    setRecorder(sttId);
   };
+
+  const setRecorder = async (sttId: number) => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current[sttId] = stream;
+  
+      const recorder = new MediaRecorder(stream);
+      mediaRecorderRef.current[sttId] = recorder;
+
+      audioChunksRef.current[sttId] = [];
+      recorder.ondataavailable = async (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current[sttId].push(event.data);
+        }
+      };
+
+      const startChunkTimer = () => {
+        recordTimeTimerRef.current[sttId] = setInterval(() => {
+          setStts(prevStts =>
+            prevStts.map(stt =>
+              stt.id === sttId ? { ...stt, recordingTime: (stt.recordingTime || 0) + 1 } : stt
+            )
+          );
+        }, 1000);
+        chunkTimerRef.current[sttId] = setInterval(async () => {
+          const chunks = audioChunksRef.current[sttId];
+          if (chunks.length > 0) {
+            const chunk = new Blob(chunks, { type: 'audio/wav' });
+            const formData = new FormData();
+            formData.append("file", chunk, "chunk.wav");
+            
+            try {
+              await uploadAudioChunk(sttId, formData);
+              console.log(`10초 청크 ${sttId} 전송 성공`);
+            } catch (e) {
+              console.error("청크 전송 실패:", e);
+              // 재시도 로직 추가 가능
+            } finally {
+              // 메모리 정리: 청크 배열 초기화
+              audioChunksRef.current[sttId] = [];
+            }
+          }
+        }, 10000); // 10초
+      };
+        
+      recorder.onstop = () => {
+        const remainingChunks = audioChunksRef.current[sttId];
+        if (remainingChunks.length > 0) {
+          const finalChunk = new Blob(remainingChunks, { type: 'audio/wav' });
+          const formData = new FormData();
+          formData.append("file", finalChunk, "final.wav");
+          try{
+            uploadAudioChunk(sttId, formData)
+            console.log(`남은 청크 ${sttId} 전송 성공`);
+          }catch (e) {
+            console.error("청크 전송 실패:", e);
+          } finally {
+            audioChunksRef.current[sttId] = [];
+          }
+        }
+        updateSttState(sttId, { recordingStatus: 'finished' });
+        // Clean up stream and recorder refs
+        mediaStreamRef.current[sttId]?.getTracks().forEach(track => track.stop());
+        delete mediaStreamRef.current[sttId];
+        delete mediaRecorderRef.current[sttId];
+        delete audioChunksRef.current[sttId];
+        if (recordTimeTimerRef.current[sttId]) {
+          clearInterval(recordTimeTimerRef.current[sttId]);
+          delete recordTimeTimerRef.current[sttId];
+        }
+        if (chunkTimerRef.current[sttId]) {
+          clearInterval(chunkTimerRef.current[sttId]);
+          delete chunkTimerRef.current[sttId];
+        }
+      };
+      
+      recorder.start(1000);
+      startChunkTimer();
+      updateSttState(sttId, { recordingStatus: 'recording', recordingTime: 0 });
+  
+    } catch (error) {
+      console.error("Microphone permission error:", error);
+      alert("마이크 권한이 없습니다. 권한 허용 후 다시 시도해주세요. \n(모바일의 경우 앱 설정에서 브라우저 마이크 권한 설정)");
+    }
+  }
   
   return (
     <>
@@ -816,7 +816,7 @@ export default function TabSTT() {
                   </Box>
                 </Box>
               );
-            } else if (currentStt?.recordingStatus === 'finished') {
+            } else if (currentStt?.recordingStatus === 'finished' || currentStt?.status === "RECORDING") {
               return (
                 <Box sx={{ p: 3, border: '2px dashed #d0d0d0', borderRadius: 2, minHeight: 300, textAlign: 'center' }}>
                     <Typography variant="h6" sx={{ mb: 2 }}>
@@ -827,8 +827,8 @@ export default function TabSTT() {
                         <Button variant="contained" color="primary" onClick={() => handleConfirmUpload(selectedSttId)}>
                             변환 하기
                         </Button>
-                        <Button variant="outlined" color="secondary" onClick={() => handleRecordAgain(selectedSttId)}>
-                            다시 녹음하기
+                        <Button variant="outlined" color="secondary" onClick={() => handleRecordContinuous(selectedSttId)}>
+                            이어서 녹음하기
                         </Button>
                     </Box>
                 </Box>
