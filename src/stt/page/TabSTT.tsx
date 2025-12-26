@@ -144,7 +144,7 @@ export default function TabSTT() {
   const [selectedSttId, setSelectedSttId] = useState<number | null>(null);
 
   // refs for recording
-  const [isRecording, setIsRecording] = useState<boolean>(true); 
+  const [isRecording, setIsRecording] = useState<boolean>(false); 
   const mediaRecorderRef = useRef<{ [key: number]: MediaRecorder }>({});
   const audioChunksRef = useRef<{ [key: number]: Blob[] }>({});
   const recordTimeTimerRef = useRef<{ [key: number]: number }>({});
@@ -661,7 +661,7 @@ export default function TabSTT() {
   }
 
   const assumeDuration = (cnt: number) => {
-    const min = cnt*chunkingRate / 60;
+    const min = Math.floor(cnt*chunkingRate/60);
     if(min < 1) return "1분 미만 녹음 파일"
     return `약 ${min}분 녹음 파일`
   }

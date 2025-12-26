@@ -79,7 +79,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ stts, sttId }) => {
       />
       
       <Typography variant="body2" sx={{ minWidth: 40 }}>
-        {formatTime(currentTime)}
+        {formatTime(duration)}
       </Typography>
     </Box>
   );
