@@ -31,7 +31,7 @@ export const updateSummary = async (id: number, content: string): Promise<void> 
   });
 };
 
-export const startRecording = async (meetingId: string): Promise<{ sttId: number }> => {
+export const startRecording = async (meetingId: string): Promise<STT> => {
   const response = await httpClient.post(`/stt/recording/start`, { meetingId });
   return response.data;
 };

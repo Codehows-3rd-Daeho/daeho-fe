@@ -20,12 +20,13 @@ import PlayCircleIcon from "@mui/icons-material/PlayCircle";
 import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
-import { useParams } from "react-router-dom";
+import { useBlocker, useParams } from "react-router-dom";
 import axios from "axios";
 import type { STT } from "../type/type";
 import { BASE_URL } from "../../config/httpClient";
 import { GridDownloadIcon } from "@mui/x-data-grid";
 import AudioPlayer from "../component/AudioPlayer";
+import { is } from "date-fns/locale";
 
 type RecordingStatus = "idle" | "recording" | "paused" | "finished";
 
@@ -34,6 +35,107 @@ interface STTWithRecording extends STT {
   recordingTime?: number;
 }
 
+function usePreventPageLeave(shouldPrevent: boolean) {
+  useEffect(() => {
+    if (!shouldPrevent) return;
+
+    // 브라우저 새로고침, 탭 닫기 등을 방지
+    const handleBeforeUnload = (e: { preventDefault: () => void; returnValue: string; }) => {
+      e.preventDefault();
+      e.returnValue = ''; // Chrome에서 필요
+      return ''; // 일부 브라우저에서 필요
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [shouldPrevent]);
+}
+
+// React Router 링크 클릭 방지
+function useBlockRouterNavigation(shouldBlock: boolean, message = '변경사항이 저장되지 않을 수 있습니다. 정말 나가시겠습니까?') {
+  const isBlockingRef = useRef(false);
+
+  useEffect(() => {
+    if (!shouldBlock) {
+      isBlockingRef.current = false;
+      return;
+    }
+
+    isBlockingRef.current = true;
+
+    // 모든 링크 클릭 감지
+    const handleClick = (e) => {
+      // a 태그나 Link 컴포넌트 클릭 확인
+      const link = e.target.closest('a');
+      
+      if (link && isBlockingRef.current) {
+        const href = link.getAttribute('href');
+        
+        // 외부 링크나 # 링크는 제외
+        if (href && !href.startsWith('http') && href !== '#') {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          if (window.confirm(message)) {
+            isBlockingRef.current = false;
+            link.click(); // 확인하면 다시 클릭
+          }
+        }
+      }
+    };
+
+    // 캡처 단계에서 이벤트 가로채기
+    document.addEventListener('click', handleClick, true);
+
+    return () => {
+      document.removeEventListener('click', handleClick, true);
+      isBlockingRef.current = false;
+    };
+  }, [shouldBlock, message]);
+
+  // 언마운트 전에 경고
+  useEffect(() => {
+    return () => {
+      if (isBlockingRef.current) {
+        console.warn('⚠️ 저장되지 않은 변경사항이 있는 상태로 컴포넌트가 언마운트되었습니다.');
+      }
+    };
+  }, []);
+}
+
+// React Router를 사용하는 경우의 페이지 이탈 방지 (예시)
+function useBlockNavigation(shouldBlock: boolean, message = '변경사항이 저장되지 않을 수 있습니다. 정말 나가시겠습니까?') {
+  useEffect(() => {
+    if (!shouldBlock) return;
+
+    let isNavigating = false;
+
+    // popstate 이벤트 (뒤로가기 등)
+    const handlePopState = (e) => {
+      if (isNavigating) return;
+
+      const userConfirmed = window.confirm(message);
+      
+      if (!userConfirmed) {
+        // 사용자가 취소하면 현재 위치로 다시 이동
+        isNavigating = true;
+        window.history.pushState(null, '', window.location.href);
+        isNavigating = false;
+      }
+    };
+
+    // 초기 히스토리 상태 추가
+    window.history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [shouldBlock, message]);
+}
 
 export default function TabSTT() {
   const { meetingId } = useParams();
@@ -43,6 +145,7 @@ export default function TabSTT() {
   const [selectedSttId, setSelectedSttId] = useState<number | null>(null);
 
   // refs for recording
+  const [isRecording, setIsRecording] = useState<boolean>(true); 
   const mediaRecorderRef = useRef<{ [key: number]: MediaRecorder }>({});
   const audioChunksRef = useRef<{ [key: number]: Blob[] }>({});
   const recordTimeTimerRef = useRef<{ [key: number]: number }>({});
@@ -81,6 +184,52 @@ export default function TabSTT() {
     "mpg",
     "wmv",
   ];
+  useBlockRouterNavigation(isRecording);
+  usePreventPageLeave(isRecording);
+  useBlockNavigation(isRecording);
+
+  useEffect(() => {
+    // 컴포넌트 언마운트 시 모든 녹음 리소스 정리
+    return () => {
+      // 모든 MediaRecorder 중지
+      Object.values(mediaRecorderRef.current).forEach(recorder => {
+        if (recorder && recorder.state !== 'inactive') {
+          recorder.stop();
+        }
+      });
+
+      // 모든 타이머 정리
+      Object.values(recordTimeTimerRef.current).forEach(timerId => {
+        if (timerId) {
+          clearInterval(timerId);
+        }
+      });
+
+      Object.values(chunkTimerRef.current).forEach(timerId => {
+        if (timerId) {
+          clearInterval(timerId);
+        }
+      });
+
+      // 모든 MediaStream 트랙 중지
+      Object.values(mediaStreamRef.current).forEach(stream => {
+        if (stream) {
+          stream.getTracks().forEach(track => {
+            track.stop();
+          });
+        }
+      });
+
+      // ref 객체 초기화
+      mediaRecorderRef.current = {};
+      audioChunksRef.current = {};
+      recordTimeTimerRef.current = {};
+      chunkTimerRef.current = {};
+      mediaStreamRef.current = {};
+
+      console.log('모든 녹음 리소스가 정리되었습니다.');
+    };
+  }, []);
 
   const findSttById = (sttId: number | null): STTWithRecording | null => {
     return stts.find(s => s.id === sttId) ?? null;
@@ -138,7 +287,6 @@ export default function TabSTT() {
         }
       }
     };
-
     fetch();
   }, [meetingId]);
 
