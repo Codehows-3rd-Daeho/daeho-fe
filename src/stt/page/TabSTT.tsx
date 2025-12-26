@@ -484,7 +484,7 @@ export default function TabSTT() {
   const handleStartRecording = async (sttId: number | null) => {
     if (sttId === null || !meetingId) return;
     const newStt = await startRecording(meetingId);
-    updateSttState(sttId, newStt);
+    updateSttState(sttId, {...newStt, recordingStatus: "recording"});
     setSelectedSttId(newStt.id);
     setRecorder(newStt.id);
   };
@@ -824,7 +824,7 @@ export default function TabSTT() {
                     <Typography variant="h6" sx={{ mb: 2 }}>
                         녹음 완료
                     </Typography>
-                    <AudioPlayer src={`${BASE_URL}${currentStt?.file?.path}`} name="녹음 파일" />
+                    <AudioPlayer stts={stts} sttId={selectedSttId} />
                     <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>
                         <Button variant="contained" color="primary" onClick={() => handleConfirmUpload(selectedSttId)}>
                             변환 하기
