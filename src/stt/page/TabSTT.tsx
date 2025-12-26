@@ -1,5 +1,5 @@
 import { useEffect, useState, type SetStateAction, useRef } from "react";
-import { deleteSTT, finishRecording, getSTT, saveCurrentStt, startRecording, uploadAudioChunk, uploadContext, uploadSTT } from "../api/sttApi";
+import { deleteSTT, finishRecording, getSTT, updateSummary, startRecording, uploadAudioChunk, uploadSTT } from "../api/sttApi";
 import {
   Box,
   Button,
@@ -23,6 +23,9 @@ import SaveIcon from '@mui/icons-material/Save';
 import { useParams } from "react-router-dom";
 import axios from "axios";
 import type { STT } from "../type/type";
+import { BASE_URL } from "../../config/httpClient";
+import { GridDownloadIcon } from "@mui/x-data-grid";
+import AudioPlayer from "../component/AudioPlayer";
 
 type RecordingStatus = "idle" | "recording" | "paused" | "finished";
 
@@ -99,23 +102,34 @@ export default function TabSTT() {
     const fetch = async () => {
       try {
         const response = await getSTT(meetingId);
-        const sttsWithRecordingState = response.map(stt => ({
-          ...stt,
-          recordingStatus: 'idle' as RecordingStatus,
-          recordingTime: 0,
-        }));
-        setStts(sttsWithRecordingState);
+        const sttsWithRecordingState = response.map(stt => 
+          {
+            if(stt.status === "PROCESSING")
+            return {
+              ...stt,
+              isLoading: true,
+              recordingStatus: 'idle' as RecordingStatus,
+              recordingTime: 0,
+            }
+            return {
+              ...stt,
+              recordingStatus: 'idle' as RecordingStatus,
+              recordingTime: 0,
+            }
+          }
+        );
+          setStts(sttsWithRecordingState);
 
         //업로드 화면 or 결과 화면
         if (response.length !== 0)
-          setSelectedSttId(response[0].id);
+          setSelectedSttId(response[response.length-1].id);
 
         //자동 선택
         setSelectedSttId((prev) => {
           if (prev && response.some((stt) => stt.id === prev)) {
             return prev; // 기존 선택 유지
           }
-          return response[0]?.id ?? null; // 없으면 첫 번째
+          return response[response.length-1]?.id ?? null;
         });
       } catch (error) {
         if (axios.isAxiosError(error) && error.response?.status === 404) {
@@ -210,19 +224,13 @@ export default function TabSTT() {
       formData.append("file", file);
 
       //1. 음성 파일 변환
-      await uploadSTT(meetingId, formData);
-
-      //변환 결과 조회
-      const response = await getSTT(meetingId);
-      const newStt = response[response.length - 1];
-      await uploadContext(newStt.id, newStt.content); //id넣어야됨
-      const summaray = (await getSTT(meetingId))[response.length - 1].summary;
+      const newStt = await uploadSTT(meetingId, formData);
 
       setStts(prevStts => 
         prevStts.map(stt => 
           stt.id === selectedSttId 
             ? { ...newStt,
-              summary: summaray,
+              summary: newStt.summary,
               isEditable: false,
               isLoading: false,
               isTemp: false,
@@ -294,9 +302,9 @@ export default function TabSTT() {
     const currentStt = findSttById(selectedSttId);
     if (currentStt?.isEditable) {
       if (window.confirm('변경된 내용을 저장하시겠습니까?')) {
-        await saveCurrentStt(currentStt.id, currentStt.summary);
+        await updateSummary(currentStt.id, currentStt.summary);
+        updateSttState(selectedSttId, { isEditable: false });
       }
-      updateSttState(selectedSttId, { isEditable: false });
     }
   }
 
@@ -331,32 +339,32 @@ export default function TabSTT() {
     if (sttId === null || !meetingId) return;
 
     try {
-      const { sttId: liveSttId } = await startRecording(meetingId);
-      updateSttState(sttId, { liveSttId });
-
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaStreamRef.current[sttId] = stream;
+      const { sttId: liveSttId } = await startRecording(meetingId);
+      updateSttState(sttId, { id: liveSttId });
+      setSelectedSttId(liveSttId);
+      mediaStreamRef.current[liveSttId] = stream;
   
       const recorder = new MediaRecorder(stream);
-      mediaRecorderRef.current[sttId] = recorder;
+      mediaRecorderRef.current[liveSttId] = recorder;
 
-      audioChunksRef.current[sttId] = [];
+      audioChunksRef.current[liveSttId] = [];
       recorder.ondataavailable = async (event) => {
         if (event.data.size > 0) {
-          audioChunksRef.current[sttId].push(event.data);
+          audioChunksRef.current[liveSttId].push(event.data);
         }
       };
 
       const startChunkTimer = () => {
-        recordTimeTimerRef.current[sttId] = setInterval(() => {
+        recordTimeTimerRef.current[liveSttId] = setInterval(() => {
           setStts(prevStts =>
             prevStts.map(stt =>
-              stt.id === sttId ? { ...stt, recordingTime: (stt.recordingTime || 0) + 1 } : stt
+              stt.id === liveSttId ? { ...stt, recordingTime: (stt.recordingTime || 0) + 1 } : stt
             )
           );
         }, 1000);
-        chunkTimerRef.current[sttId] = setInterval(async () => {
-          const chunks = audioChunksRef.current[sttId];
+        chunkTimerRef.current[liveSttId] = setInterval(async () => {
+          const chunks = audioChunksRef.current[liveSttId];
           if (chunks.length > 0) {
             const chunk = new Blob(chunks, { type: 'audio/wav' });
             const formData = new FormData();
@@ -370,14 +378,14 @@ export default function TabSTT() {
               // 재시도 로직 추가 가능
             } finally {
               // 메모리 정리: 청크 배열 초기화
-              audioChunksRef.current[sttId] = [];
+              audioChunksRef.current[liveSttId] = [];
             }
           }
         }, 10000); // 10초
       };
         
       recorder.onstop = () => {
-        const remainingChunks = audioChunksRef.current[sttId];
+        const remainingChunks = audioChunksRef.current[liveSttId];
         if (remainingChunks.length > 0) {
           const finalChunk = new Blob(remainingChunks, { type: 'audio/wav' });
           const formData = new FormData();
@@ -388,32 +396,32 @@ export default function TabSTT() {
           }catch (e) {
             console.error("청크 전송 실패:", e);
           } finally {
-            audioChunksRef.current[sttId] = [];
+            audioChunksRef.current[liveSttId] = [];
           }
         }
-        updateSttState(sttId, { recordingStatus: 'finished' });
+        updateSttState(liveSttId, { recordingStatus: 'finished' });
         // Clean up stream and recorder refs
-        mediaStreamRef.current[sttId]?.getTracks().forEach(track => track.stop());
-        delete mediaStreamRef.current[sttId];
-        delete mediaRecorderRef.current[sttId];
-        delete audioChunksRef.current[sttId];
-        if (recordTimeTimerRef.current[sttId]) {
-          clearInterval(recordTimeTimerRef.current[sttId]);
-          delete recordTimeTimerRef.current[sttId];
+        mediaStreamRef.current[liveSttId]?.getTracks().forEach(track => track.stop());
+        delete mediaStreamRef.current[liveSttId];
+        delete mediaRecorderRef.current[liveSttId];
+        delete audioChunksRef.current[liveSttId];
+        if (recordTimeTimerRef.current[liveSttId]) {
+          clearInterval(recordTimeTimerRef.current[liveSttId]);
+          delete recordTimeTimerRef.current[liveSttId];
         }
-        if (chunkTimerRef.current[sttId]) {
-          clearInterval(chunkTimerRef.current[sttId]);
-          delete chunkTimerRef.current[sttId];
+        if (chunkTimerRef.current[liveSttId]) {
+          clearInterval(chunkTimerRef.current[liveSttId]);
+          delete chunkTimerRef.current[liveSttId];
         }
       };
       
       recorder.start(1000);
       startChunkTimer();
-      updateSttState(sttId, { recordingStatus: 'recording', recordingTime: 0 });
+      updateSttState(liveSttId, { recordingStatus: 'recording', recordingTime: 0 });
   
     } catch (error) {
       console.error("Microphone permission error:", error);
-      alert("Microphone access is required. Please check your browser settings.");
+      alert("마이크 권한이 없습니다. 권한 허용 후 다시 시도해주세요. \n(모바일의 경우 앱 설정에서 브라우저 마이크 권한 설정)");
     }
   };
 
@@ -527,7 +535,7 @@ export default function TabSTT() {
           value={selectedSttId}
           onChange={handleTabChange}
           variant="scrollable"           // 스크롤 가능하게 설정
-          scrollButtons         // 자동 스크롤 버튼 표시
+          scrollButtons="auto"       // 자동 스크롤 버튼 표시
           sx={{
             '& .MuiTab-root': {
               transition: 'all 0.1s ease',
@@ -666,9 +674,7 @@ export default function TabSTT() {
                     <Typography variant="h6" sx={{ mb: 2 }}>
                         녹음 완료
                     </Typography>
-                    {/* <audio controls src={currentStt.recordedBlobUrl!} style={{ width: '100%' }}>
-                        Your browser does not support the audio element.
-                    </audio> */}
+                    <AudioPlayer src={`${BASE_URL}${currentStt?.file?.path}`} name="녹음 파일" />
                     <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>
                         <Button variant="contained" color="primary" onClick={() => handleConfirmUpload(selectedSttId)}>
                             변환 하기
@@ -757,6 +763,84 @@ export default function TabSTT() {
         <Box>
           <Box sx={{ display: "flex", gap: 2, alignItems: "start", mt: 3 }}>
             <Box sx={{ flex: 1 }}>
+              {/*녹음 파일*/}
+              <Box
+                sx={{
+                  px: 2,
+                  pt: 2,
+                  bgcolor: "#fafafa",
+                  borderRadius: 1.5,
+                  "&::-webkit-scrollbar": {
+                    width: 6,
+                  },
+                  "&::-webkit-scrollbar-thumb": {
+                    backgroundColor: "#ccc",
+                    borderRadius: 3,
+                  },
+                }}
+              >
+                {/* 파일 리스트 */}
+                <Box
+                  key={findSttById(selectedSttId)?.file?.fileId}
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 85px 120px 35px",
+                    alignItems: "center",
+                  }}
+                >
+                  {/* 파일 이름 + 아이콘 */}
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                    <Box
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        bgcolor: 'gray',
+                        borderRadius: 1,
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        color: "#fff",
+                        fontSize: "0.7rem",
+                        fontWeight: 700,
+                        flexShrink: 0,
+                      }}
+                    >
+                      <PlayCircleIcon fontSize="small" /> 
+                    </Box>
+                    <Typography
+                      sx={{
+                        width: 150
+                      }}
+                      fontSize="small"
+                      component="a"
+                      href={`${BASE_URL}${findSttById(selectedSttId)?.file?.path}`}
+                      download={findSttById(selectedSttId)?.file?.originalName}
+                    >
+                      {findSttById(selectedSttId)?.file?.originalName}
+                    </Typography>
+                  </Box>
+
+                  {/* 크기 */}
+                  <Typography sx={{ color: "text.secondary" }} fontSize="0.9rem">
+                    {findSttById(selectedSttId)?.file?.size}
+                  </Typography>
+                  {/* 생성 날짜 */}
+                  <Typography sx={{ color: "text.secondary" }} fontSize="0.9rem">
+                    {findSttById(selectedSttId)?.file?.createdAt}
+                  </Typography>
+
+                  {/* 다운로드 버튼 */}
+                  <IconButton
+                    size="small"
+                    component="a"
+                    href={`${BASE_URL}${findSttById(selectedSttId)?.file?.path}`}
+                    download={findSttById(selectedSttId)?.file?.originalName}
+                  >
+                    <GridDownloadIcon fontSize="small" />
+                  </IconButton>
+                </Box>
+                <AudioPlayer src={`${BASE_URL}${findSttById(selectedSttId)?.file?.path}`} name="녹음 파일" />
+              </Box>
               <Typography>
                 요약 결과
                 <Tooltip title={findSttById(selectedSttId)?.isEditable ? "저장" : "수정"} placement="top">
