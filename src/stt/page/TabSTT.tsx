@@ -828,7 +828,7 @@ export default function TabSTT() {
               );
             } else if (currentStt?.recordingStatus === 'finished' || currentStt?.status === "RECORDING") {
               return (
-                <Box sx={{ p: 3, border: '2px dashed #d0d0d0', borderRadius: 2, minHeight: 300, textAlign: 'center' }}>
+                <Box sx={{ p: 3, border: '2px dashed #d0d0d0', borderRadius: 2, textAlign: 'center' }}>
                     <Typography variant="h6" sx={{ mb: 2 }}>
                       녹음 완료
                     </Typography>
