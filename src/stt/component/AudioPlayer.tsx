@@ -14,20 +14,20 @@ interface AudioPlayerProps {
 const AudioPlayer: React.FC<AudioPlayerProps> = ({ stts, sttId }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(stts.find(s => s.id === sttId)?.recordingTime || 0);
-  const [duration, setDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(stts.find(s => s.id === sttId)?.recordingTime || 0);
 
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
     const updateTime = () => {
-      setCurrentTime(audio.currentTime ?? stts.find(s => s.id === sttId)?.recordingTime ?? 0);
+      setCurrentTime(audio.currentTime ?? 0);
     };
 
     audio.addEventListener('timeupdate', updateTime);
     audio.addEventListener('loadedmetadata', () => {
-      setDuration(audio.duration);
+      setDuration(audio.duration || stts.find(s => s.id === sttId)?.recordingTime || 0);
     });
 
     return () => {
