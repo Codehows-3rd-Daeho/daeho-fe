@@ -614,14 +614,15 @@ export default function TabSTT() {
         }, 10000); // 10초
       };
         
-      recorder.onstop = () => {
+      recorder.onstop = async () => {
         const remainingChunks = audioChunksRef.current[sttId];
         if (remainingChunks.length > 0) {
           const finalChunk = new Blob(remainingChunks, { type: 'audio/wav' });
           const formData = new FormData();
           formData.append("file", finalChunk, "final.wav");
           try{
-            uploadAudioChunk(sttId, formData)
+            const updatedStt = await uploadAudioChunk(sttId, formData);
+            updateSttState(sttId, updatedStt);
             console.log(`남은 청크 ${sttId} 전송 성공`);
           }catch (e) {
             console.error("청크 전송 실패:", e);
