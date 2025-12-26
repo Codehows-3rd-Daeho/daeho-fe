@@ -36,13 +36,12 @@ export const startRecording = async (meetingId: string): Promise<STT> => {
   return response.data;
 };
 
-export const uploadAudioChunk = async (sttId: number, chunk: FormData): Promise<STT> => {
-  const response = await httpClient.post(`/stt/${sttId}/chunk`, chunk, {
+export const uploadAudioChunk = async (sttId: number, chunk: FormData): Promise<void> => {
+  await httpClient.post(`/stt/${sttId}/chunk`, chunk, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
   });
-  return response.data;
 };
 
 export const finishRecording = async (sttId: number): Promise<STT> => {

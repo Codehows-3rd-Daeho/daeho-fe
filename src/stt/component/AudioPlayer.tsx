@@ -3,18 +3,18 @@ import { IconButton, Slider, Typography } from '@mui/material';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import PauseIcon from '@mui/icons-material/Pause';
 import { Box } from '@mui/material';
-import type { STT } from '../type/type';
 import { BASE_URL } from '../../config/httpClient';
+import type { STTWithRecording } from '../page/TabSTT';
 
 interface AudioPlayerProps {
-    stts: STT[]
+    stts: STTWithRecording[]
     sttId: number | null;
 }
 
 const AudioPlayer: React.FC<AudioPlayerProps> = ({ stts, sttId }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
+  const [currentTime, setCurrentTime] = useState(stts.find(s => s.id === sttId)?.recordingTime || 0);
   const [duration, setDuration] = useState(0);
 
   useEffect(() => {
@@ -22,7 +22,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ stts, sttId }) => {
     if (!audio) return;
 
     const updateTime = () => {
-      setCurrentTime(audio.currentTime);
+      setCurrentTime(audio.currentTime ?? stts.find(s => s.id === sttId)?.recordingTime ?? 0);
     };
 
     audio.addEventListener('timeupdate', updateTime);
@@ -48,6 +48,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ stts, sttId }) => {
   };
 
   const formatTime = (time: number) => {
+    if(!time) return "--";
     const min = Math.floor(time / 60);
     const sec = Math.floor(time % 60);
     return `${min}:${sec.toString().padStart(2, '0')}`;

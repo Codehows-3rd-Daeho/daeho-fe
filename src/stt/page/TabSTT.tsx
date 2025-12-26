@@ -29,7 +29,7 @@ import AudioPlayer from "../component/AudioPlayer";
 
 type RecordingStatus = "idle" | "recording" | "paused" | "finished";
 
-interface STTWithRecording extends STT {
+export interface STTWithRecording extends STT {
   recordingStatus?: RecordingStatus;
   recordingTime?: number;
 }
@@ -564,9 +564,12 @@ export default function TabSTT() {
     }
   };
 
-  const handleRecordContinuous = async (sttId: number | null) => {
-    if (sttId === null) return;
-    setRecorder(sttId);
+  const handleRecordAgain = (sttId: number | null) => {
+      if (sttId === null) return;
+      updateSttState(sttId, {
+          recordingStatus: 'idle',
+          recordingTime: 0,
+      });
   };
 
   const setRecorder = async (sttId: number) => {
@@ -621,8 +624,7 @@ export default function TabSTT() {
           const formData = new FormData();
           formData.append("file", finalChunk, "final.wav");
           try{
-            const updatedStt = await uploadAudioChunk(sttId, formData);
-            updateSttState(sttId, updatedStt);
+            uploadAudioChunk(sttId, formData);
             console.log(`남은 청크 ${sttId} 전송 성공`);
           }catch (e) {
             console.error("청크 전송 실패:", e);
@@ -822,15 +824,18 @@ export default function TabSTT() {
               return (
                 <Box sx={{ p: 3, border: '2px dashed #d0d0d0', borderRadius: 2, minHeight: 300, textAlign: 'center' }}>
                     <Typography variant="h6" sx={{ mb: 2 }}>
-                        녹음 완료
+                      녹음 완료
+                    </Typography>
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                      {currentStt.recordingTime}
                     </Typography>
                     <AudioPlayer stts={stts} sttId={selectedSttId} />
                     <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>
                         <Button variant="contained" color="primary" onClick={() => handleConfirmUpload(selectedSttId)}>
                             변환 하기
                         </Button>
-                        <Button variant="outlined" color="secondary" onClick={() => handleRecordContinuous(selectedSttId)}>
-                            이어서 녹음하기
+                        <Button variant="outlined" color="secondary" onClick={() => handleRecordAgain(selectedSttId)}>
+                            다시 녹음하기
                         </Button>
                     </Box>
                 </Box>
