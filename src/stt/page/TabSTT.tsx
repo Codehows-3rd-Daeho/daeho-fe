@@ -20,13 +20,12 @@ import PlayCircleIcon from "@mui/icons-material/PlayCircle";
 import CloseIcon from "@mui/icons-material/Close";
 import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
-import { useBlocker, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import axios from "axios";
 import type { STT } from "../type/type";
 import { BASE_URL } from "../../config/httpClient";
 import { GridDownloadIcon } from "@mui/x-data-grid";
 import AudioPlayer from "../component/AudioPlayer";
-import { is } from "date-fns/locale";
 
 type RecordingStatus = "idle" | "recording" | "paused" | "finished";
 
@@ -572,6 +571,7 @@ export default function TabSTT() {
 
   const setRecorder = async (sttId: number) => {
     try {
+      setIsRecording(true);
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaStreamRef.current[sttId] = stream;
   
@@ -644,6 +644,7 @@ export default function TabSTT() {
           clearInterval(chunkTimerRef.current[sttId]);
           delete chunkTimerRef.current[sttId];
         }
+        setIsRecording(false);
       };
       
       recorder.start(1000);
