@@ -49,8 +49,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ stts, sttId }) => {
 
   const formatTime = (time: number) => {
     if (typeof time !== "number" || isNaN(time) || !isFinite(time)){
-        console.log(time);
-        return "--";
+        const recordingTime = stts.find(s => s.id === sttId)?.recordingTime;
+        return recordingTime === 0 ? "--" : recordingTime;
     } 
     const min = Math.floor(time / 60);
     const sec = Math.floor(time % 60);
