@@ -549,10 +549,7 @@ export default function TabSTT() {
       updateSttState(sttId, { isTemp: false, isLoading: true })
       const resStt: STTWithRecording = await finishRecording(liveSttId);
       updateSttState(sttId, {
-        content: resStt.content,
-        id: resStt.id,
-        meetingId: resStt.meetingId,
-        summary: resStt.summary,
+        ...resStt,
         isEditable: false,
         isLoading: false,
         isTemp: false,
