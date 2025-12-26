@@ -789,7 +789,8 @@ export default function TabSTT() {
             </div>
           </div>
         ) : <></>}
-        {findSttById(selectedSttId)?.isTemp ? (
+        {findSttById(selectedSttId)?.status === "RECORDING" || 
+          findSttById(selectedSttId)?.status === "PROCESSING" ? (
           (() => {
             const currentStt = findSttById(selectedSttId);
             if (currentStt?.recordingStatus === 'recording' || currentStt?.recordingStatus === 'paused') {
