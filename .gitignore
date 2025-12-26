@@ -28,5 +28,4 @@ certs/
 *.sln
 *.sw?
 
-
 vite.config.ts
