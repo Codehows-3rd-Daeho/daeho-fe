@@ -1,5 +1,5 @@
 import { useEffect, useState, type SetStateAction, useRef } from "react";
-import { deleteSTT, finishRecording, getSTT, updateSummary, startRecording, uploadAudioChunk, uploadSTT } from "../api/sttApi";
+import { deleteSTT, getSTT, updateSummary, uploadSTT } from "../api/sttApi";
 import {
   Box,
   Button,
@@ -28,8 +28,7 @@ import { GridDownloadIcon } from "@mui/x-data-grid";
 import AudioPlayer from "../component/AudioPlayer";
 import { useAuthStore } from "../../store/useAuthStore";
 import type { MeetingDto } from "../../meeting/type/type";
-
-type RecordingStatus = "idle" | "recording" | "paused" | "finished";
+import useRecordingStore, { type RecordingStatus } from "../../store/useRecordingStore";
 
 export interface STTWithRecording extends STT {
   recordingStatus?: RecordingStatus;
@@ -147,17 +146,22 @@ export default function TabSTT({meeting}: TabSTTProp) {
   const { member } = useAuthStore();
   const role = member?.role;
 
+  const { 
+    stt: recordingStt, 
+    recordingStatus, 
+    recordingTime,
+    startRecording,
+    pauseRecording,
+    resumeRecording,
+    stopRecording,
+    confirmUpload,
+    cancelRecording,
+    isRecording,
+  } = useRecordingStore();
+
   // STT 내용을 상태로 관리
   const [stts, setStts] = useState<STTWithRecording[]>([]);
   const [selectedSttId, setSelectedSttId] = useState<number | null>(null);
-
-  // refs for recording
-  const [isRecording, setIsRecording] = useState<boolean>(false); 
-  const mediaRecorderRef = useRef<{ [key: number]: MediaRecorder }>({});
-  const audioChunksRef = useRef<{ [key: number]: Blob[] }>({});
-  const recordTimeTimerRef = useRef<{ [key: number]: number }>({});
-  const chunkTimerRef = useRef<{ [key: number]: number }>({});
-  const mediaStreamRef = useRef<{ [key: number]: MediaStream }>({});
 
   //daglo 최대 업로드 용량, 허용 확장자
   const chunkingRate = 10; // 10초
@@ -192,52 +196,10 @@ export default function TabSTT({meeting}: TabSTTProp) {
     "mpg",
     "wmv",
   ];
-  useBlockRouterNavigation(isRecording);
-  usePreventPageLeave(isRecording);
-  useBlockNavigation(isRecording);
-
-  useEffect(() => {
-    // 컴포넌트 언마운트 시 모든 녹음 리소스 정리
-    return () => {
-      // 모든 MediaRecorder 중지
-      Object.values(mediaRecorderRef.current).forEach(recorder => {
-        if (recorder && recorder.state !== 'inactive') {
-          recorder.stop();
-        }
-      });
-
-      // 모든 타이머 정리
-      Object.values(recordTimeTimerRef.current).forEach(timerId => {
-        if (timerId) {
-          clearInterval(timerId);
-        }
-      });
-
-      Object.values(chunkTimerRef.current).forEach(timerId => {
-        if (timerId) {
-          clearInterval(timerId);
-        }
-      });
-
-      // 모든 MediaStream 트랙 중지
-      Object.values(mediaStreamRef.current).forEach(stream => {
-        if (stream) {
-          stream.getTracks().forEach(track => {
-            track.stop();
-          });
-        }
-      });
-
-      // ref 객체 초기화
-      mediaRecorderRef.current = {};
-      audioChunksRef.current = {};
-      recordTimeTimerRef.current = {};
-      chunkTimerRef.current = {};
-      mediaStreamRef.current = {};
-
-      console.log('모든 녹음 리소스가 정리되었습니다.');
-    };
-  }, []);
+  const isCurrentlyRecording = isRecording();
+  useBlockRouterNavigation(isCurrentlyRecording);
+  usePreventPageLeave(isCurrentlyRecording);
+  useBlockNavigation(isCurrentlyRecording);
 
   const findSttById = (sttId: number | null): STTWithRecording | null => {
     return stts.find(s => s.id === sttId) ?? null;
@@ -297,6 +259,28 @@ export default function TabSTT({meeting}: TabSTTProp) {
     };
     fetch();
   }, [meetingId]);
+
+  useEffect(() => {
+    if (recordingStt) {
+      const isSttInList = stts.some(s => s.id === recordingStt.id);
+      if (!isSttInList) {
+        const newSttEntry: STTWithRecording = {
+          ...recordingStt,
+          isTemp: true, 
+          recordingStatus: recordingStatus,
+          recordingTime: recordingTime,
+        };
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setStts(prev => [...prev, newSttEntry]);
+        setSelectedSttId(newSttEntry.id);
+      } else {
+        updateSttState(recordingStt.id, {
+          recordingStatus: recordingStatus,
+          recordingTime: recordingTime,
+        });
+      }
+    }
+  }, [recordingStt, recordingStatus, recordingTime]);
 
   // 파일 입력창 열기
   const openFileInput = () => {
@@ -409,47 +393,41 @@ export default function TabSTT({meeting}: TabSTTProp) {
   // ========================================================================
 
   const handleDelete = async (sttId: number) => {
-    // Prevent memory leaks by revoking the blob URL if it exists
     const sttToDelete = findSttById(sttId);
-    if (!sttToDelete) {
-      alert("삭제할 STT가 선택되지 않았습니다.");
+    if (!sttToDelete) return;
+
+    if (sttToDelete.id === recordingStt?.id && isCurrentlyRecording) {
+      alert("녹음 중인 파일은 삭제할 수 없습니다.");
       return;
     }
-    if (!window.confirm("음성 파일을 삭제하시겠습니까?")) 
-      return;
-    if(sttToDelete?.isTemp) {
-      setStts((prev) => {
-        const updated = prev.filter((stt) => stt.id !== sttId);
-        // 선택된 STT가 삭제되면 다음 STT 선택
-        setSelectedSttId((current) => {
-          if (current !== sttId) return current;
-          return updated[0]?.id ?? null;
-        });
 
-        return updated;
-      });
-      return;
+    if (!window.confirm("음성 파일을 삭제하시겠습니까?")) return;
+    
+    if (sttToDelete.id === recordingStt?.id) {
+        await cancelRecording();
+    }
+    
+    if (sttToDelete.isTemp && sttToDelete.id !== recordingStt?.id) {
+        setStts((prev) => prev.filter((stt) => stt.id !== sttId));
+        setSelectedSttId(stts[0]?.id ?? null);
+        return;
     }
 
     try {
-      await deleteSTT(sttToDelete.id);
-      // 상태에서 삭제
+      if (!sttToDelete.isTemp) {
+          await deleteSTT(sttToDelete.id);
+      }
       setStts((prev) => {
         const updated = prev.filter((stt) => stt.id !== sttId);
-        // 선택된 STT가 삭제되면 다음 STT 선택
         setSelectedSttId((current) => {
           if (current !== sttId) return current;
           return updated[0]?.id ?? null;
         });
-
         return updated;
       });
-
-      alert("음성 파일이 삭제되었습니다.");
+      if (!sttToDelete.isTemp) alert("음성 파일이 삭제되었습니다.");
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
-        return;
-      }
+      if (axios.isAxiosError(error) && error.response?.status === 401) return;
       alert("stt 삭제 중 오류가 발생했습니다.");
     }
   };
@@ -501,85 +479,31 @@ export default function TabSTT({meeting}: TabSTTProp) {
     return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
   };
 
-  const handleStartRecording = async (sttId: number | null) => {
-    if (sttId === null || !meetingId) return;
-    try{
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-    }catch{
-      alert("마이크 권한이 없습니다. 권한 허용 후 다시 시도해주세요. \n(모바일의 경우 앱 설정에서 브라우저 마이크 권한 설정)");
+  const handleStartRecording = async () => {
+    if (isCurrentlyRecording) {
+      alert("다른 녹음이 진행 중입니다.");
       return;
     }
-    const newStt = await startRecording(meetingId);
-    updateSttState(sttId, {...newStt, recordingStatus: "recording"});
-    setSelectedSttId(newStt.id);
-    setRecorder(newStt.id);
+    if (!meetingId) return;
+    await startRecording(meetingId, (newStt: STTWithRecording) => {
+      const newSttEntry: STTWithRecording = {
+        ...newStt,
+        isTemp: true,
+        recordingStatus: 'recording',
+        recordingTime: 0,
+      };
+      setStts(prev => [...prev.filter(s => s.id !== selectedSttId), newSttEntry]);
+      setSelectedSttId(newStt.id);
+    });
   };
 
-  const handlePauseRecording = async (sttId: number | null) => {
-    if (sttId === null || !mediaRecorderRef.current[sttId]) return;
-    mediaRecorderRef.current[sttId].pause();
-    if (recordTimeTimerRef.current[sttId]) {
-      clearInterval(recordTimeTimerRef.current[sttId]);
-    }
-    if (chunkTimerRef.current[sttId]) {
-      clearInterval(chunkTimerRef.current[sttId]);
-    }
-    updateSttState(sttId, { recordingStatus: 'paused' });
-  };
-  
-  const handleResumeRecording = async (sttId: number | null) => {
-    try{
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-    }catch{
-      alert("마이크 권한이 없습니다. 권한 허용 후 다시 시도해주세요. \n(모바일의 경우 앱 설정에서 브라우저 마이크 권한 설정)");
-      return;
-    }
-    if (sttId === null || !mediaRecorderRef.current[sttId]) return;
-    const liveSttId = findSttById(sttId)?.id ?? null;
-    if(liveSttId === null) return;
-
-    mediaRecorderRef.current[sttId].resume();
-    recordTimeTimerRef.current[sttId] = setInterval(() => {
-      setStts(prevStts =>
-        prevStts.map(stt =>
-          stt.id === sttId ? { ...stt, recordingTime: (stt.recordingTime || 0) + 1 } : stt
-        )
-      );
-    }, 1000);
-    chunkTimerRef.current[sttId] = setInterval(async () => {
-      const chunks = audioChunksRef.current[sttId];
-      if (chunks.length > 0) {
-        const chunk = new Blob(chunks, { type: 'audio/wav' });
-        const formData = new FormData();
-        formData.append("file", chunk, "chunk.wav");
-        try {
-          await uploadAudioChunk(liveSttId, formData);
-          console.log(`10초 청크 ${liveSttId} 전송 성공`);
-        } catch (e) {
-          console.error("청크 전송 실패:", e);
-        } finally {
-          audioChunksRef.current[sttId] = [];
-        }
-      }
-    }, chunkingRate * 1000); // 10초
-    updateSttState(sttId, { recordingStatus: 'recording' });
-  };
-  
-  const handleStopRecording = (sttId: number | null) => {
-    if (sttId === null || !mediaRecorderRef.current[sttId]) return;
-    mediaRecorderRef.current[sttId].stop();
-  };
-  
   const handleConfirmUpload = async (sttId: number | null) => {
     if (sttId === null) return;
-    const liveSttId = findSttById(sttId)?.id ?? null;
-    if(liveSttId === null) return;
     if (!window.confirm("음성 파일을 등록하시겠습니까?")) return;
 
-    try {
-      {/* TODO: PROCESSING 상태는 백엔드로부터 받도록 추후 수정 */}
-      updateSttState(sttId, { isTemp: false, isLoading: true, status: "PROCESSING" })
-      const resStt: STTWithRecording = await finishRecording(liveSttId);
+    updateSttState(sttId, { isTemp: false, isLoading: true, status: "PROCESSING" })
+    const resStt = await confirmUpload();
+    if (resStt) {
       updateSttState(sttId, {
         ...resStt,
         isEditable: false,
@@ -587,99 +511,14 @@ export default function TabSTT({meeting}: TabSTTProp) {
         isTemp: false,
         recordingStatus: 'idle',
         recordingTime: 0,
-      })
+      });
       setSelectedSttId(resStt.id);
-    } catch (e) {
-      console.error("변환 요청 실패 :", e);
+    } else {
+      alert("음성 변환에 실패했습니다.");
+      updateSttState(sttId, { isLoading: false, status: "RECORDING" });
     }
   };
-
-  const setRecorder = async (sttId: number) => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaStreamRef.current[sttId] = stream;
   
-      const recorder = new MediaRecorder(stream);
-      mediaRecorderRef.current[sttId] = recorder;
-
-      audioChunksRef.current[sttId] = [];
-      recorder.ondataavailable = async (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current[sttId].push(event.data);
-        }
-      };
-
-      const startChunkTimer = () => {
-        recordTimeTimerRef.current[sttId] = setInterval(() => {
-          setStts(prevStts =>
-            prevStts.map(stt =>
-              stt.id === sttId ? { ...stt, recordingTime: (stt.recordingTime || 0) + 1 } : stt
-            )
-          );
-        }, 1000);
-        chunkTimerRef.current[sttId] = setInterval(async () => {
-          const chunks = audioChunksRef.current[sttId];
-          if (chunks.length > 0) {
-            const chunk = new Blob(chunks, { type: 'audio/wav' });
-            const formData = new FormData();
-            formData.append("file", chunk, "chunk.wav");
-            
-            try {
-              await uploadAudioChunk(sttId, formData);
-              console.log(`10초 청크 ${sttId} 전송 성공`);
-            } catch (e) {
-              console.error("청크 전송 실패:", e);
-              // 재시도 로직 추가 가능
-            } finally {
-              // 메모리 정리: 청크 배열 초기화
-              audioChunksRef.current[sttId] = [];
-            }
-          }
-        }, 10000); // 10초
-      };
-        
-      recorder.onstop = async () => {
-        const remainingChunks = audioChunksRef.current[sttId];
-        if (remainingChunks.length > 0) {
-          const finalChunk = new Blob(remainingChunks, { type: 'audio/wav' });
-          const formData = new FormData();
-          formData.append("file", finalChunk, "final.wav");
-          try{
-            uploadAudioChunk(sttId, formData);
-            console.log(`남은 청크 ${sttId} 전송 성공`);
-          }catch (e) {
-            console.error("청크 전송 실패:", e);
-          } finally {
-            audioChunksRef.current[sttId] = [];
-          }
-        }
-        updateSttState(sttId, { recordingStatus: 'finished' });
-        // Clean up stream and recorder refs
-        mediaStreamRef.current[sttId]?.getTracks().forEach(track => track.stop());
-        delete mediaStreamRef.current[sttId];
-        delete mediaRecorderRef.current[sttId];
-        delete audioChunksRef.current[sttId];
-        if (recordTimeTimerRef.current[sttId]) {
-          clearInterval(recordTimeTimerRef.current[sttId]);
-          delete recordTimeTimerRef.current[sttId];
-        }
-        if (chunkTimerRef.current[sttId]) {
-          clearInterval(chunkTimerRef.current[sttId]);
-          delete chunkTimerRef.current[sttId];
-        }
-        setIsRecording(false);
-      };
-      setIsRecording(true);
-      recorder.start(1000);
-      startChunkTimer();
-      updateSttState(sttId, { recordingStatus: 'recording', recordingTime: 0 });
-    } catch (error) {
-      setIsRecording(false);
-      console.error("Microphone permission error:", error);
-      alert("마이크 권한이 없습니다. 권한 허용 후 다시 시도해주세요. \n(모바일의 경우 앱 설정에서 브라우저 마이크 권한 설정)");
-    }
-  }
-
   const assumeDuration = (cnt: number) => {
     const min = Math.floor(cnt*chunkingRate/60);
     if(min < 1) return "1분 미만 녹음 파일"
@@ -772,7 +611,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
                     alignItems: "center", 
                     textTransform: 'none',
                   }}>
-                  {stt.recordingStatus === 'recording' && (
+                  {(stt.id === recordingStt?.id && (recordingStatus === 'recording' || recordingStatus === 'paused')) && (
                     <Box sx={{ display: 'flex', alignItems: 'center', mr: 1 }}>
                       <Box 
                         component="span"
@@ -787,7 +626,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
                             '70%': { transform: 'scale(1)', boxShadow: '0 0 0 8px rgba(255, 82, 82, 0)' },
                             '100%': { transform: 'scale(0.8)', boxShadow: '0 0 0 0 rgba(255, 82, 82, 0)' }
                           },
-                          animation: 'heartbeat 1.5s infinite'
+                          animation: recordingStatus === 'recording' ? 'heartbeat 1.5s infinite' : 'none'
                         }}
                       />
                       <Typography variant="caption" sx={{ color: 'red', fontWeight: 'bold' }}>Live</Typography>
@@ -799,8 +638,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
                     meeting.isDel === false && (
                     <IconButton
                       size="small"
-                      // Prevent closing tab while recording
-                      disabled={stt.recordingStatus === 'recording' || stt.recordingStatus === 'paused'}
+                      disabled={stt.id === recordingStt?.id && isCurrentlyRecording}
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDelete(stt.id);
@@ -824,289 +662,144 @@ export default function TabSTT({meeting}: TabSTTProp) {
             </div>
           </div>
         ) : <></>}
-        {findSttById(selectedSttId)?.status === "RECORDING" ||
-          findSttById(selectedSttId)?.isTemp ? (
+        {
           (() => {
             const currentStt = findSttById(selectedSttId);
-            if (currentStt?.recordingStatus === 'recording' || currentStt?.recordingStatus === 'paused') {
+            if (!currentStt) return (
+              (stts.length === 0) ? (
+              <Box sx={{ textAlign: "center", color: "text.disabled", my: 2 }}>
+                등록된 회의 내용이 없습니다.
+              </Box>) : <></>
+            );
+
+            const isThisSttRecording = currentStt.id === recordingStt?.id;
+            const currentRecordingStatus = isThisSttRecording ? recordingStatus : currentStt.recordingStatus;
+            const currentRecordingTime = isThisSttRecording ? recordingTime : (currentStt.recordingTime || 0);
+
+            if (currentRecordingStatus === 'recording' || currentRecordingStatus === 'paused') {
               return (
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', p: 3, border: '2px dashed #d0d0d0', borderRadius: 2, minHeight: 300 }}>
                   <Typography variant="h4" sx={{ mb: 2, fontFamily: 'monospace' }}>
-                    {formatTime(currentStt.recordingTime || 0)}
+                    {formatTime(currentRecordingTime)}
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 2 }}>
-                    {currentStt.recordingStatus === 'recording' ? (
+                    {currentRecordingStatus === 'recording' ? (
                       <Tooltip title="일시정지">
-                        <IconButton size="large" onClick={() => handlePauseRecording(selectedSttId)}>
+                        <IconButton size="large" onClick={pauseRecording}>
                           <PauseCircleIcon sx={{ fontSize: 40 }} />
                         </IconButton>
                       </Tooltip>
                     ) : (
                       <Tooltip title="다시 시작">
-                        <IconButton size="large" onClick={() => handleResumeRecording(selectedSttId)}>
+                        <IconButton size="large" onClick={resumeRecording}>
                           <PlayCircleIcon sx={{ fontSize: 40 }} />
                         </IconButton>
                       </Tooltip>
                     )}
                     <Tooltip title="종료">
-                      <IconButton size="large" color="error" onClick={() => handleStopRecording(selectedSttId)}>
+                      <IconButton size="large" color="error" onClick={stopRecording}>
                         <StopCircleIcon sx={{ fontSize: 40 }} />
                       </IconButton>
                     </Tooltip>
                   </Box>
                 </Box>
               );
-            } else if (currentStt?.recordingStatus === 'finished' || currentStt?.status === "RECORDING") {
+            } else if (currentRecordingStatus === 'finished' || currentStt.status === "RECORDING") {
               return (
                 <Box sx={{ p: 3, border: '2px dashed #d0d0d0', borderRadius: 2, textAlign: 'center' }}>
-                    <Typography variant="h6" sx={{ mb: 2 }}>
-                      녹음 완료
-                    </Typography>
-                    {((currentStt.recordingTime ?? 0) === 0) && (
-                      <Typography variant="h6" sx={{ mb: 2 }}>
-                        {assumeDuration(currentStt.chunkingCnt || 0)}
-                      </Typography>
+                    <Typography variant="h6" sx={{ mb: 2 }}>녹음 완료</Typography>
+                    {(currentStt.recordingTime ?? 0) === 0 && (
+                      <Typography variant="h6" sx={{ mb: 2 }}>{assumeDuration(currentStt.chunkingCnt || 0)}</Typography>
                     )}
                     <AudioPlayer stts={stts} sttId={selectedSttId} />
                     <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>
-                        <Button variant="contained" color="primary" onClick={() => handleConfirmUpload(selectedSttId)}>
-                          음성 변환 시작
-                        </Button>
+                        <Button variant="contained" color="primary" onClick={() => handleConfirmUpload(selectedSttId)}>음성 변환 시작</Button>
+                        <Button variant="outlined" color="secondary" onClick={() => handleDelete(currentStt.id)}>취소</Button>
                     </Box>
                 </Box>
               );
-            } else {
+            } else if (currentStt.isTemp) {
               return (
                 <Box sx={{ mb: 3 }}>
-                  <Typography sx={{ fontWeight: 600, fontSize: "0.875rem", mb: 1 }}>
-                    첨부 파일
-                  </Typography>
-        
-                  <input
-                    type="file"
-                    multiple
-                    id="fileUpload"
-                    style={{ display: "none" }}
-                    onChange={handleFileSelect}
-                  />
-        
+                  <Typography sx={{ fontWeight: 600, fontSize: "0.875rem", mb: 1 }}>첨부 파일</Typography>
+                  <input type="file" multiple id="fileUpload" style={{ display: "none" }} onChange={handleFileSelect} />
                   <Box
-                    sx={{
-                      border: isDragOver ? "3px dashed #007bff" : "2px dashed #d0d0d0",
-                      borderRadius: 2,
-                      p: 3,
-                      textAlign: "center",
-                      cursor: "pointer",
-                      transition: "all 0.2s ease",
-                      bgcolor: isDragOver ? "#e3f2fd" : "transparent",
-                      "&:hover": {
-                        bgcolor: "#fafafa",
-                        borderColor: "#999",
-                      },
-                    }}
-                    onClick={openFileInput}
-                    onDrop={handleDrop}
-                    onDragOver={handleDragOver}
-                    onDragEnter={handleDragEnter}
-                    onDragLeave={handleDragLeave}
+                    sx={{ border: isDragOver ? "3px dashed #007bff" : "2px dashed #d0d0d0", borderRadius: 2, p: 3, textAlign: "center", cursor: "pointer", transition: "all 0.2s ease", bgcolor: isDragOver ? "#e3f2fd" : "transparent", "&:hover": { bgcolor: "#fafafa", borderColor: "#999" } }}
+                    onClick={openFileInput} onDrop={handleDrop} onDragOver={handleDragOver} onDragEnter={handleDragEnter} onDragLeave={handleDragLeave}
                   >
                     <UploadFileIcon sx={{ fontSize: 48, color: "#9e9e9e", mb: 1 }} />
-                    <Typography
-                      sx={{ fontSize: "0.875rem", fontWeight: 500, mb: 0.5 }}
-                    >
-                      Choose files or Drag and Drop
-                    </Typography>
-                    <Typography
-                      sx={{ fontSize: "0.875rem", fontWeight: 500, mb: 0.5 }}
-                    >
-                      최대 파일 크기: 2GB
-                    </Typography>
-                    <Typography
-                      sx={{ fontSize: "0.875rem", fontWeight: 500, mb: 0.5 }}
-                    >
-                      허용 확장자: {allowedExtensions?.join(", ")}
-                    </Typography>
+                    <Typography sx={{ fontSize: "0.875rem", fontWeight: 500, mb: 0.5 }}>Choose files or Drag and Drop</Typography>
+                    <Typography sx={{ fontSize: "0.875rem", fontWeight: 500, mb: 0.5 }}>최대 파일 크기: 2GB</Typography>
+                    <Typography sx={{ fontSize: "0.875rem", fontWeight: 500, mb: 0.5 }}>허용 확장자: {allowedExtensions?.join(", ")}</Typography>
                   </Box>
-
                   <Box sx={{ display: 'flex', alignItems: 'center', my: 2 }}>
                     <Box sx={{ flexGrow: 1, height: '1px', bgcolor: 'divider' }} />
                     <Typography sx={{ mx: 2, color: 'text.secondary' }}>OR</Typography>
                     <Box sx={{ flexGrow: 1, height: '1px', bgcolor: 'divider' }} />
                   </Box>
-
                   <Box sx={{ textAlign: 'center' }}>
                     <Tooltip title="즉시 녹음 시작">
-                      <IconButton color="primary" sx={{ border: '1px solid', p: 2 }} onClick={() => handleStartRecording(selectedSttId)}>
+                      <IconButton color="primary" sx={{ border: '1px solid', p: 2 }} onClick={handleStartRecording} disabled={isCurrentlyRecording}>
                         <MicIcon sx={{ fontSize: 40 }} />
                       </IconButton>
                     </Tooltip>
-                    <Typography sx={{ mt: 1, fontSize: '0.875rem', fontWeight: 500 }}>
-                      녹음 시작
-                    </Typography>
+                    <Typography sx={{ mt: 1, fontSize: '0.875rem', fontWeight: 500 }}>녹음 시작</Typography>
+                  </Box>
+                </Box>
+              )
+            } else {
+              return (
+                <Box>
+                  <Box sx={{ display: "flex", gap: 2, alignItems: "start", mt: 3 }}>
+                    <Box sx={{ flex: 1 }}>
+                      <Box sx={{ px: 2, pt: 2, bgcolor: "#fafafa", borderRadius: 1.5, "&::-webkit-scrollbar": { width: 6 }, "&::-webkit-scrollbar-thumb": { backgroundColor: "#ccc", borderRadius: 3 } }}>
+                        <Box key={currentStt.file?.fileId} sx={{ display: "grid", gridTemplateColumns: "1fr 85px 120px 35px", alignItems: "center" }}>
+                          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                            <Box sx={{ width: 32, height: 32, bgcolor: 'gray', borderRadius: 1, display: "flex", justifyContent: "center", alignItems: "center", color: "#fff", fontSize: "0.7rem", fontWeight: 700, flexShrink: 0 }}>
+                              <PlayCircleIcon fontSize="small" /> 
+                            </Box>
+                            <Typography fontSize="small" component="a" href={`${BASE_URL}${currentStt.file?.path}`} download={currentStt.file?.originalName}>
+                              {currentStt.file?.originalName}
+                            </Typography>
+                          </Box>
+                          <Typography sx={{ color: "text.secondary" }} fontSize="0.9rem">{currentStt.file?.size}</Typography>
+                          <Typography sx={{ color: "text.secondary" }} fontSize="0.9rem">{currentStt.file?.createdAt}</Typography>
+                          <IconButton size="small" component="a" href={`${BASE_URL}${currentStt.file?.path}`} download={currentStt.file?.originalName}>
+                            <GridDownloadIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                        <AudioPlayer stts={stts} sttId={selectedSttId} />
+                      </Box>
+                      <Typography>
+                        요약 결과
+                        <Tooltip title={currentStt.isEditable ? "저장" : "수정"} placement="top">
+                          <IconButton size="small" sx={{ color: 'primary.main' }} disabled={currentStt.isLoading}>
+                            {currentStt.isEditable ? <SaveIcon onClick={handleSummarySave} /> : <EditIcon onClick={() => updateSttState(selectedSttId, { isEditable: true })} />}
+                          </IconButton>
+                        </Tooltip>
+                      </Typography>
+                      <TextField
+                        fullWidth multiline rows={10}
+                        value={currentStt.isLoading ? "요약 생성 중..." : currentStt.summary ?? "텍스트 없음"}
+                        onChange={handleSummaryChange}
+                        sx={{ mt: 1, mb: 2, "& .MuiOutlinedInput-root": { borderRadius: 1.5, bgcolor: currentStt.isLoading ? "#f0f0f0" : "#fafafa" }, "& .MuiInputBase-input.Mui-disabled": { WebkitTextFillColor: "#000000", color: "#000000" } }}
+                        disabled={!currentStt.isEditable}
+                      />
+                      <Typography>회의 내용</Typography>
+                      <TextField
+                        fullWidth multiline
+                        value={currentStt.isLoading ? "음성 파일 변환 중..." : currentStt.content ?? "텍스트 없음"}
+                        rows={15}
+                        sx={{ mt: 1, mb: 2, "& .MuiOutlinedInput-root": { borderRadius: 1.5, bgcolor: "#fafafa" }, "& .MuiInputBase-input.Mui-disabled": { WebkitTextFillColor: "#000000", color: "#000000" } }}
+                        disabled
+                      />
+                    </Box>
                   </Box>
                 </Box>
               )
             }
           })()
-        ):
-        (stts.length !== 0) ? (
-        <Box>
-          <Box sx={{ display: "flex", gap: 2, alignItems: "start", mt: 3 }}>
-            <Box sx={{ flex: 1 }}>
-              {/*녹음 파일*/}
-              <Box
-                sx={{
-                  px: 2,
-                  pt: 2,
-                  bgcolor: "#fafafa",
-                  borderRadius: 1.5,
-                  "&::-webkit-scrollbar": {
-                    width: 6,
-                  },
-                  "&::-webkit-scrollbar-thumb": {
-                    backgroundColor: "#ccc",
-                    borderRadius: 3,
-                  },
-                }}
-              >
-                {/* 파일 리스트 */}
-                <Box
-                  key={findSttById(selectedSttId)?.file?.fileId}
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 85px 120px 35px",
-                    alignItems: "center",
-                  }}
-                >
-                  {/* 파일 이름 + 아이콘 */}
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                    <Box
-                      sx={{
-                        width: 32,
-                        height: 32,
-                        bgcolor: 'gray',
-                        borderRadius: 1,
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        color: "#fff",
-                        fontSize: "0.7rem",
-                        fontWeight: 700,
-                        flexShrink: 0,
-                      }}
-                    >
-                      <PlayCircleIcon fontSize="small" /> 
-                    </Box>
-                    <Typography
-                      fontSize="small"
-                      component="a"
-                      href={`${BASE_URL}${findSttById(selectedSttId)?.file?.path}`}
-                      download={findSttById(selectedSttId)?.file?.originalName}
-                    >
-                      {findSttById(selectedSttId)?.file?.originalName}
-                    </Typography>
-                  </Box>
-
-                  {/* 크기 */}
-                  <Typography sx={{ color: "text.secondary" }} fontSize="0.9rem">
-                    {findSttById(selectedSttId)?.file?.size}
-                  </Typography>
-                  {/* 생성 날짜 */}
-                  <Typography sx={{ color: "text.secondary" }} fontSize="0.9rem">
-                    {findSttById(selectedSttId)?.file?.createdAt}
-                  </Typography>
-
-                  {/* 다운로드 버튼 */}
-                  <IconButton
-                    size="small"
-                    component="a"
-                    href={`${BASE_URL}${findSttById(selectedSttId)?.file?.path}`}
-                    download={findSttById(selectedSttId)?.file?.originalName}
-                  >
-                    <GridDownloadIcon fontSize="small" />
-                  </IconButton>
-                </Box>
-                <AudioPlayer stts={stts} sttId={selectedSttId} />
-              </Box>
-              <Typography>
-                요약 결과
-                <Tooltip title={findSttById(selectedSttId)?.isEditable ? "저장" : "수정"} placement="top">
-                  <IconButton 
-                    size="small" 
-                    sx={{ color: 'primary.main' }}
-                    disabled={findSttById(selectedSttId)?.isLoading}
-                  >
-                    {findSttById(selectedSttId)?.isEditable ? 
-                    <SaveIcon 
-                      onClick = {() => {
-                        handleSummarySave();
-                      }}
-                    /> 
-                    : <EditIcon 
-                      onClick = {() => {
-                        updateSttState(selectedSttId, { isEditable: true });
-                      }}
-                    />}
-                  </IconButton>
-                </Tooltip>
-              </Typography>
-              <TextField
-                fullWidth
-                multiline
-                rows={10}
-                value={
-                  (findSttById(selectedSttId)?.isLoading)
-                    ? "요약 생성 중..."
-                    : findSttById(selectedSttId)?.summary ?? "텍스트 없음"
-                }
-                onChange={handleSummaryChange}
-                sx={{
-                  mt: 1,
-                  mb: 2,
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: 1.5,
-                    bgcolor: findSttById(selectedSttId)?.isLoading ? "#f0f0f0" : "#fafafa",
-                  },
-                  "& .MuiInputBase-input.Mui-disabled": {
-                    WebkitTextFillColor: "#000000",
-                    color: "#000000",
-                  },
-                }}
-                disabled={!findSttById(selectedSttId)?.isEditable}
-              />
-              <Typography>회의 내용</Typography>
-              <TextField
-                fullWidth
-                multiline
-                value={
-                  (findSttById(selectedSttId)?.isLoading) 
-                    ? "음성 파일 변환 중..." 
-                    : findSttById(selectedSttId)?.content ?? "텍스트 없음"
-                }
-                rows={15}
-                sx={{
-                  mt: 1,
-                  mb: 2,
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: 1.5,
-                    bgcolor: "#fafafa",
-                  },
-                  "& .MuiInputBase-input.Mui-disabled": {
-                    WebkitTextFillColor: "#000000",
-                    color: "#000000",
-                  },
-                }}
-                disabled
-              />
-            </Box>
-          </Box>
-        </Box>
-        ) :
-        (
-        <Box sx={{ textAlign: "center", color: "text.disabled", my: 2 }}>
-          등록된 회의 내용이 없습니다.
-        </Box>
-        )}
+        }
       </div>
     </>
   );

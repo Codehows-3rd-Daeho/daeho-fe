@@ -19,7 +19,7 @@ import { BASE_URL } from "../../config/httpClient";
 import { useAuthStore } from "../../store/useAuthStore";
 import axios from "axios";
 import { getFileInfo, getStatusLabel } from "../../common/commonFunction";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import type { MeetingDto } from "../type/type";
 import {
   deleteMeeting,
@@ -41,10 +41,18 @@ export default function MeetingDtl() {
   const [showParticipantModal, setShowParticipantModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { member } = useAuthStore();
   const role = member?.role;
   const currentMemberId = member?.memberId;
+
+  useEffect(() => {
+    if (location.state?.openSttTab) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTabValue(1);
+    }
+  }, [location.state]);
 
   // 데이터 불러오기
   const fetchMeetingDetail = (id: string) => {
