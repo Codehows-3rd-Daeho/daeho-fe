@@ -298,10 +298,6 @@ export default function TabSTT({meeting}: TabSTTProp) {
 
     if (!window.confirm("음성 파일을 삭제하시겠습니까?")) return;
     
-    if (sttToDelete.id === recordingStt?.id) {
-        await cancelRecording();
-    }
-    
     if (sttToDelete.isTemp && sttToDelete.id !== recordingStt?.id) {
         setStts((prev) => prev.filter((stt) => stt.id !== sttId));
         setSelectedSttId(stts[0]?.id ?? null);
@@ -609,7 +605,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
                     <AudioPlayer stts={stts} sttId={selectedSttId} />
                     <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>
                         <Button variant="contained" color="primary" onClick={() => handleConfirmUpload(selectedSttId)}>음성 변환 시작</Button>
-                        <Button variant="outlined" color="secondary" onClick={() => handleDelete(currentStt.id)}>취소</Button>
+                        <Button variant="outlined" color="secondary" onClick={cancelRecording}>취소</Button>
                     </Box>
                 </Box>
               );

@@ -24,7 +24,7 @@ interface RecordingState {
   resumeRecording: () => Promise<void>;
   stopRecording: () => void;
   confirmUpload: (sttId: number) => Promise<STT | null>;
-  cancelRecording: () => Promise<void>;
+  cancelRecording: (sttId: number) => Promise<void>;
   isRecording: () => boolean;
 }
 
@@ -207,14 +207,11 @@ const useRecordingStore = create<RecordingState>((set, get) => {
       }
     },
 
-    cancelRecording: async () => {
-      const { stt } = get();
-      if (stt) {
-        try {
-          await deleteSTT(stt.id);
-        } catch (error) {
-          console.error("Failed to delete STT on cancel:", error);
-        }
+    cancelRecording: async (sttId: number) => {
+      try {
+        await deleteSTT(sttId);
+      } catch (error) {
+        console.error("Failed to delete STT on cancel:", error);
       }
       cleanup();
     },
