@@ -667,13 +667,12 @@ export default function TabSTT({meeting}: TabSTTProp) {
         }
         setIsRecording(false);
       };
-      
+      setIsRecording(true);
       recorder.start(1000);
       startChunkTimer();
       updateSttState(sttId, { recordingStatus: 'recording', recordingTime: 0 });
-      setIsRecording(true);
-  
     } catch (error) {
+      setIsRecording(false);
       console.error("Microphone permission error:", error);
       alert("마이크 권한이 없습니다. 권한 허용 후 다시 시도해주세요. \n(모바일의 경우 앱 설정에서 브라우저 마이크 권한 설정)");
     }
