@@ -332,7 +332,7 @@ export default function MeetingDtl() {
 
           <Box p={2}>
             {tabValue === 0 && <TabComment meetingId={Number(meetingId)} />}
-            {tabValue === 1 && <TabSTT />}
+            {tabValue === 1 && <TabSTT meeting={meeting} />}
             {tabValue === 2 && <TabLog meetingId={meetingId!} />}
           </Box>
         </Box>

@@ -26,6 +26,8 @@ import type { STT } from "../type/type";
 import { BASE_URL } from "../../config/httpClient";
 import { GridDownloadIcon } from "@mui/x-data-grid";
 import AudioPlayer from "../component/AudioPlayer";
+import { useAuthStore } from "../../store/useAuthStore";
+import type { MeetingDto } from "../../meeting/type/type";
 
 type RecordingStatus = "idle" | "recording" | "paused" | "finished";
 
@@ -136,8 +138,14 @@ function useBlockNavigation(shouldBlock: boolean, message = '변경사항이 저
   }, [shouldBlock, message]);
 }
 
-export default function TabSTT() {
-  const { meetingId } = useParams();
+type TabSTTProp = {
+  meeting: MeetingDto;
+}
+
+export default function TabSTT({meeting}: TabSTTProp) {
+  const { meetingId } = useParams();  
+  const { member } = useAuthStore();
+  const role = member?.role;
 
   // STT 내용을 상태로 관리
   const [stts, setStts] = useState<STTWithRecording[]>([]);
@@ -402,18 +410,29 @@ export default function TabSTT() {
 
   const handleDelete = async (sttId: number) => {
     // Prevent memory leaks by revoking the blob URL if it exists
-    const sttIdToDelete = findSttById(sttId)?.id ?? sttId;
-
-    if (!selectedSttId) {
+    const sttToDelete = findSttById(sttId);
+    if (!sttToDelete) {
       alert("삭제할 STT가 선택되지 않았습니다.");
       return;
     }
+    if (!window.confirm("음성 파일을 삭제하시겠습니까?")) 
+      return;
+    if(sttToDelete?.isTemp) {
+      setStts((prev) => {
+        const updated = prev.filter((stt) => stt.id !== sttId);
+        // 선택된 STT가 삭제되면 다음 STT 선택
+        setSelectedSttId((current) => {
+          if (current !== sttId) return current;
+          return updated[0]?.id ?? null;
+        });
 
-    const isConfirmed = window.confirm("음성 파일을 삭제하시겠습니까?");
-    if (!isConfirmed) return;
+        return updated;
+      });
+      return;
+    }
 
     try {
-      await deleteSTT(sttIdToDelete);
+      await deleteSTT(sttToDelete.id);
       // 상태에서 삭제
       setStts((prev) => {
         const updated = prev.filter((stt) => stt.id !== sttId);
@@ -484,13 +503,18 @@ export default function TabSTT() {
 
   const handleStartRecording = async (sttId: number | null) => {
     if (sttId === null || !meetingId) return;
+    try{
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+    }catch{
+      alert("마이크 권한이 없습니다. 권한 허용 후 다시 시도해주세요. \n(모바일의 경우 앱 설정에서 브라우저 마이크 권한 설정)");
+      return;
+    }
     const newStt = await startRecording(meetingId);
-    updateSttState(sttId, {...newStt, recordingStatus: "recording"});
     setSelectedSttId(newStt.id);
     setRecorder(newStt.id);
   };
 
-  const handlePauseRecording = (sttId: number | null) => {
+  const handlePauseRecording = async (sttId: number | null) => {
     if (sttId === null || !mediaRecorderRef.current[sttId]) return;
     mediaRecorderRef.current[sttId].pause();
     if (recordTimeTimerRef.current[sttId]) {
@@ -502,7 +526,13 @@ export default function TabSTT() {
     updateSttState(sttId, { recordingStatus: 'paused' });
   };
   
-  const handleResumeRecording = (sttId: number | null) => {
+  const handleResumeRecording = async (sttId: number | null) => {
+    try{
+      await navigator.mediaDevices.getUserMedia({ audio: true });
+    }catch{
+      alert("마이크 권한이 없습니다. 권한 허용 후 다시 시도해주세요. \n(모바일의 경우 앱 설정에서 브라우저 마이크 권한 설정)");
+      return;
+    }
     if (sttId === null || !mediaRecorderRef.current[sttId]) return;
     const liveSttId = findSttById(sttId)?.id ?? null;
     if(liveSttId === null) return;
@@ -564,7 +594,6 @@ export default function TabSTT() {
 
   const setRecorder = async (sttId: number) => {
     try {
-      setIsRecording(true);
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaStreamRef.current[sttId] = stream;
   
@@ -642,6 +671,7 @@ export default function TabSTT() {
       recorder.start(1000);
       startChunkTimer();
       updateSttState(sttId, { recordingStatus: 'recording', recordingTime: 0 });
+      setIsRecording(true);
   
     } catch (error) {
       console.error("Microphone permission error:", error);
@@ -660,18 +690,22 @@ export default function TabSTT() {
       {/* STT 제목 */}
       <Typography fontWeight={600} mb={1}>
         음성 파일 변환
-        <Button
-          variant="outlined"
-          onClick={() => {
-            addTempSttTab();
-          }}
-          sx={{ 
-            minWidth: 40,
-            marginLeft: '10px'
-          }}
-        >
-          +
-        </Button>
+        {((meeting.isEditPermitted && meeting.status !== "COMPLETED") ||
+          role === "ADMIN") &&
+          meeting.isDel === false && (
+          <Button
+            variant="outlined"
+            onClick={() => {
+              addTempSttTab();
+            }}
+            sx={{ 
+              minWidth: 40,
+              marginLeft: '10px'
+            }}
+          >
+            +
+          </Button>
+        )}
       </Typography>
       
 
@@ -759,17 +793,21 @@ export default function TabSTT() {
                     </Box>
                   )}
                   {stt.isTemp ? "New Tab" : "Tab " + (index+1)}
-                  <IconButton
-                    size="small"
-                    // Prevent closing tab while recording
-                    disabled={stt.recordingStatus === 'recording' || stt.recordingStatus === 'paused'}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(stt.id);
-                    }}
-                  >
-                    <CloseIcon fontSize="small" />
-                  </IconButton>
+                  {((meeting.isEditPermitted && meeting.status !== "COMPLETED") ||
+                    role === "ADMIN") &&
+                    meeting.isDel === false && (
+                    <IconButton
+                      size="small"
+                      // Prevent closing tab while recording
+                      disabled={stt.recordingStatus === 'recording' || stt.recordingStatus === 'paused'}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(stt.id);
+                      }}
+                    >
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  )}
                 </Box>
               }
             />
@@ -911,7 +949,7 @@ export default function TabSTT() {
             }
           })()
         ):
-        (stts.length !== 0 &&
+        (stts.length !== 0) ? (
         <Box>
           <Box sx={{ display: "flex", gap: 2, alignItems: "start", mt: 3 }}>
             <Box sx={{ flex: 1 }}>
@@ -1062,6 +1100,11 @@ export default function TabSTT() {
               />
             </Box>
           </Box>
+        </Box>
+        ) :
+        (
+        <Box sx={{ textAlign: "center", color: "text.disabled", my: 2 }}>
+          등록된 회의 내용이 없습니다.
         </Box>
         )}
       </div>
