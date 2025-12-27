@@ -35,108 +35,6 @@ export interface STTWithRecording extends STT {
   recordingTime?: number;
 }
 
-function usePreventPageLeave(shouldPrevent: boolean) {
-  useEffect(() => {
-    if (!shouldPrevent) return;
-
-    // 브라우저 새로고침, 탭 닫기 등을 방지
-    const handleBeforeUnload = (e: { preventDefault: () => void; returnValue: string; }) => {
-      e.preventDefault();
-      e.returnValue = ''; // Chrome에서 필요
-      return ''; // 일부 브라우저에서 필요
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [shouldPrevent]);
-}
-
-// React Router 링크 클릭 방지
-function useBlockRouterNavigation(shouldBlock: boolean, message = '변경사항이 저장되지 않을 수 있습니다. 정말 나가시겠습니까?') {
-  const isBlockingRef = useRef(false);
-
-  useEffect(() => {
-    if (!shouldBlock) {
-      isBlockingRef.current = false;
-      return;
-    }
-
-    isBlockingRef.current = true;
-
-    // 모든 링크 클릭 감지
-    const handleClick = (e) => {
-      // a 태그나 Link 컴포넌트 클릭 확인
-      const link = e.target.closest('a');
-      
-      if (link && isBlockingRef.current) {
-        const href = link.getAttribute('href');
-        
-        // 외부 링크나 # 링크는 제외
-        if (href && !href.startsWith('http') && href !== '#') {
-          e.preventDefault();
-          e.stopPropagation();
-          
-          if (window.confirm(message)) {
-            isBlockingRef.current = false;
-            link.click(); // 확인하면 다시 클릭
-          }
-        }
-      }
-    };
-
-    // 캡처 단계에서 이벤트 가로채기
-    document.addEventListener('click', handleClick, true);
-
-    return () => {
-      document.removeEventListener('click', handleClick, true);
-      isBlockingRef.current = false;
-    };
-  }, [shouldBlock, message]);
-
-  // 언마운트 전에 경고
-  useEffect(() => {
-    return () => {
-      if (isBlockingRef.current) {
-        console.warn('⚠️ 저장되지 않은 변경사항이 있는 상태로 컴포넌트가 언마운트되었습니다.');
-      }
-    };
-  }, []);
-}
-
-// React Router를 사용하는 경우의 페이지 이탈 방지 (예시)
-function useBlockNavigation(shouldBlock: boolean, message = '변경사항이 저장되지 않을 수 있습니다. 정말 나가시겠습니까?') {
-  useEffect(() => {
-    if (!shouldBlock) return;
-
-    let isNavigating = false;
-
-    // popstate 이벤트 (뒤로가기 등)
-    const handlePopState = (e) => {
-      if (isNavigating) return;
-
-      const userConfirmed = window.confirm(message);
-      
-      if (!userConfirmed) {
-        // 사용자가 취소하면 현재 위치로 다시 이동
-        isNavigating = true;
-        window.history.pushState(null, '', window.location.href);
-        isNavigating = false;
-      }
-    };
-
-    // 초기 히스토리 상태 추가
-    window.history.pushState(null, '', window.location.href);
-    window.addEventListener('popstate', handlePopState);
-
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, [shouldBlock, message]);
-}
-
 type TabSTTProp = {
   meeting: MeetingDto;
 }
@@ -197,9 +95,6 @@ export default function TabSTT({meeting}: TabSTTProp) {
     "wmv",
   ];
   const isCurrentlyRecording = isRecording();
-  useBlockRouterNavigation(isCurrentlyRecording);
-  usePreventPageLeave(isCurrentlyRecording);
-  useBlockNavigation(isCurrentlyRecording);
 
   const findSttById = (sttId: number | null): STTWithRecording | null => {
     return stts.find(s => s.id === sttId) ?? null;
@@ -270,7 +165,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
           recordingStatus: recordingStatus,
           recordingTime: recordingTime,
         };
-        // eslint-disable-next-line react-hooks/set-state-in-effect
+        // eslint-disable-next-line react-hooks/exhaustive-deps
         setStts(prev => [...prev, newSttEntry]);
         setSelectedSttId(newSttEntry.id);
       } else {
@@ -485,7 +380,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
       return;
     }
     if (!meetingId) return;
-    await startRecording(meetingId, (newStt: STTWithRecording) => {
+    await startRecording(meetingId, (newStt: STT) => {
       const newSttEntry: STTWithRecording = {
         ...newStt,
         isTemp: true,
@@ -502,7 +397,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
     if (!window.confirm("음성 파일을 등록하시겠습니까?")) return;
 
     updateSttState(sttId, { isTemp: false, isLoading: true, status: "PROCESSING" })
-    const resStt = await confirmUpload();
+    const resStt = await confirmUpload(sttId);
     if (resStt) {
       updateSttState(sttId, {
         ...resStt,

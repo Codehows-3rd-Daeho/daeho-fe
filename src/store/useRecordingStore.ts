@@ -23,7 +23,7 @@ interface RecordingState {
   pauseRecording: () => void;
   resumeRecording: () => Promise<void>;
   stopRecording: () => void;
-  confirmUpload: () => Promise<STT | null>;
+  confirmUpload: (sttId: number) => Promise<STT | null>;
   cancelRecording: () => Promise<void>;
   isRecording: () => boolean;
 }
@@ -196,12 +196,9 @@ const useRecordingStore = create<RecordingState>((set, get) => {
       }
     },
 
-    confirmUpload: async () => {
-      const { stt } = get();
-      if (!stt || get().recordingStatus !== "finished") return null;
-
+    confirmUpload: async (sttId: number) => {
       try {
-        const resStt = await finishRecording(stt.id);
+        const resStt = await finishRecording(sttId);
         cleanup();
         return resStt;
       } catch (e) {

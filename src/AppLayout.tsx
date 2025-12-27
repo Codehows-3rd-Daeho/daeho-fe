@@ -1,18 +1,110 @@
 import Sidebar from "./common/Sidebar/Sidebar";
 import Header from "./common/Header/Header";
 import { sidebarItems } from "./common/Sidebar/SidebarItems";
-import { useState, type ReactNode } from "react";
+import { useState, type ReactNode, useEffect, useRef } from "react";
 import { useAuthStore } from "./store/useAuthStore";
 import { usePushNotification } from "./webpush/usePushNotification";
 import Breadcrumb from "./common/PageHeader/Breadcrumb";
+import useRecordingStore from "./store/useRecordingStore";
 
 type AppLayoutProps = {
   children: ReactNode;
 };
 
+function usePreventPageLeave(shouldPrevent: boolean) {
+  useEffect(() => {
+    if (!shouldPrevent) return;
+
+    const handleBeforeUnload = (e: { preventDefault: () => void; returnValue: string; }) => {
+      e.preventDefault();
+      e.returnValue = '';
+      return '';
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [shouldPrevent]);
+}
+
+function useBlockRouterNavigation(shouldBlock: boolean, message: string) {
+  const isBlockingRef = useRef(false);
+
+  useEffect(() => {
+    if (!shouldBlock) {
+      isBlockingRef.current = false;
+      return;
+    }
+
+    isBlockingRef.current = true;
+
+    const handleClick = (e: MouseEvent) => {
+      const link = (e.target as HTMLElement).closest('a');
+      
+      if (link && isBlockingRef.current) {
+        const href = link.getAttribute('href');
+        
+        if (href && !href.startsWith('http') && href !== '#') {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          if (window.confirm(message)) {
+            isBlockingRef.current = false;
+            link.click();
+          }
+        }
+      }
+    };
+
+    document.addEventListener('click', handleClick, true);
+
+    return () => {
+      document.removeEventListener('click', handleClick, true);
+      isBlockingRef.current = false;
+    };
+  }, [shouldBlock, message]);
+}
+
+function useBlockNavigation(shouldBlock: boolean, message: string) {
+  useEffect(() => {
+    if (!shouldBlock) return;
+
+    let isNavigating = false;
+
+    const handlePopState = () => {
+      if (isNavigating) return;
+
+      const userConfirmed = window.confirm(message);
+      
+      if (!userConfirmed) {
+        isNavigating = true;
+        window.history.pushState(null, '', window.location.href);
+        isNavigating = false;
+      }
+    };
+
+    window.history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [shouldBlock, message]);
+}
+
+
 export default function AppLayout({ children }: AppLayoutProps) {
   const { member } = useAuthStore();
   const [collapsed, setCollapsed] = useState(false); // 사이드바 접기 상태
+  const { isRecording } = useRecordingStore();
+  const isCurrentlyRecording = isRecording();
+  const confirmationMessage = "현재 음성 녹음이 진행 중입니다. 페이지를 벗어나면 녹음이 중단될 수 있습니다. 정말로 이동하시겠습니까?";
+
+  usePreventPageLeave(isCurrentlyRecording);
+  useBlockRouterNavigation(isCurrentlyRecording, confirmationMessage);
+  useBlockNavigation(isCurrentlyRecording, confirmationMessage);
 
   const handleToggleSidebar = () => setCollapsed((prev) => !prev);
 
