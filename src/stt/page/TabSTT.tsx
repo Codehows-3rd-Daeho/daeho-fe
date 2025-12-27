@@ -510,6 +510,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
       return;
     }
     const newStt = await startRecording(meetingId);
+    updateSttState(sttId, {...newStt, recordingStatus: "recording"});
     setSelectedSttId(newStt.id);
     setRecorder(newStt.id);
   };
