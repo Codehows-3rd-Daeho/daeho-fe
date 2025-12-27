@@ -306,7 +306,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
 
     try {
       if (!sttToDelete.isTemp) {
-          await deleteSTT(sttToDelete.id);
+        await cancelRecording(sttToDelete.id);
       }
       setStts((prev) => {
         const updated = prev.filter((stt) => stt.id !== sttId);
@@ -605,7 +605,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
                     <AudioPlayer stts={stts} sttId={selectedSttId} />
                     <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>
                         <Button variant="contained" color="primary" onClick={() => handleConfirmUpload(selectedSttId)}>음성 변환 시작</Button>
-                        <Button variant="outlined" color="secondary" onClick={cancelRecording}>취소</Button>
+                        <Button variant="outlined" color="secondary" onClick={() => handleDelete(currentStt.id)}>취소</Button>
                     </Box>
                 </Box>
               );
