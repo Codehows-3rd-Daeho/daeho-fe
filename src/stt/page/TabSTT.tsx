@@ -577,7 +577,8 @@ export default function TabSTT({meeting}: TabSTTProp) {
     if (!window.confirm("음성 파일을 등록하시겠습니까?")) return;
 
     try {
-      updateSttState(sttId, { isTemp: false, isLoading: true })
+      {/* TODO: PROCESSING 상태는 백엔드로부터 받도록 추후 수정 */}
+      updateSttState(sttId, { isTemp: false, isLoading: true, status: "PROCESSING" })
       const resStt: STTWithRecording = await finishRecording(liveSttId);
       updateSttState(sttId, {
         ...resStt,
@@ -823,8 +824,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
             </div>
           </div>
         ) : <></>}
-        {findSttById(selectedSttId)?.status === "RECORDING" || 
-          findSttById(selectedSttId)?.status === "PROCESSING" ||
+        {findSttById(selectedSttId)?.status === "RECORDING" ||
           findSttById(selectedSttId)?.isTemp ? (
           (() => {
             const currentStt = findSttById(selectedSttId);
