@@ -566,6 +566,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
             const isThisSttRecording = currentStt.id === recordingStt?.id;
             const currentRecordingStatus = isThisSttRecording ? recordingStatus : currentStt.recordingStatus;
             const currentRecordingTime = isThisSttRecording ? recordingTime : (currentStt.recordingTime || 0);
+            console.log(currentRecordingStatus);
 
             if (currentRecordingStatus === 'recording' || currentRecordingStatus === 'paused') {
               return (
