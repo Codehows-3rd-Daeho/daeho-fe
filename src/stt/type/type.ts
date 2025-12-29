@@ -12,4 +12,5 @@ export interface STT {
   isTemp: boolean;
   file?: FileDto;
   chunkingCnt?: number;
+  memberId: number;
 }

@@ -1,5 +1,5 @@
-import { useEffect, useState, type SetStateAction, useRef } from "react";
-import { deleteSTT, getSTT, updateSummary, uploadSTT } from "../api/sttApi";
+import { useEffect, useState, type SetStateAction } from "react";
+import { getSTT, updateSummary, uploadSTT } from "../api/sttApi";
 import {
   Box,
   Button,
@@ -10,6 +10,8 @@ import {
   IconButton,
   Tooltip,
 } from "@mui/material";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import MicIcon from "@mui/icons-material/Mic";
@@ -29,6 +31,7 @@ import AudioPlayer from "../component/AudioPlayer";
 import { useAuthStore } from "../../store/useAuthStore";
 import type { MeetingDto } from "../../meeting/type/type";
 import useRecordingStore, { type RecordingStatus } from "../../store/useRecordingStore";
+import MarkdownText from "../component/MarkdownText";
 
 export interface STTWithRecording extends STT {
   recordingStatus?: RecordingStatus;
@@ -595,10 +598,9 @@ export default function TabSTT({meeting}: TabSTTProp) {
                   </Box>
                 </Box>
               );
-            } else if (currentStt.status === "RECORDING") {
+            } else if (currentStt.status === "RECORDING" && member?.memberId === currentStt.memberId) {
               return (
                 <Box sx={{ p: 3, border: '2px dashed #d0d0d0', borderRadius: 2, textAlign: 'center' }}>
-                    <Typography variant="h6" sx={{ mb: 2 }}>녹음 완료</Typography>
                     {(currentStt.recordingTime ?? 0) === 0 && (
                       <Typography variant="h6" sx={{ mb: 2 }}>{assumeDuration(currentStt.chunkingCnt || 0)}</Typography>
                     )}
@@ -663,27 +665,62 @@ export default function TabSTT({meeting}: TabSTTProp) {
                       </Box>
                       <Typography>
                         요약 결과
-                        <Tooltip title={currentStt.isEditable ? "저장" : "수정"} placement="top">
-                          <IconButton size="small" sx={{ color: 'primary.main' }} disabled={currentStt.isLoading}>
-                            {currentStt.isEditable ? <SaveIcon onClick={handleSummarySave} /> : <EditIcon onClick={() => updateSttState(selectedSttId, { isEditable: true })} />}
-                          </IconButton>
-                        </Tooltip>
+                        {((meeting.isEditPermitted && meeting.status !== "COMPLETED") ||
+                          role === "ADMIN") &&(
+                          <Tooltip title={currentStt.isEditable ? "저장" : "수정"} placement="top">
+                            <IconButton size="small" sx={{ color: 'primary.main' }} disabled={currentStt.isLoading}>
+                              {currentStt.isEditable ? <SaveIcon onClick={handleSummarySave} /> : <EditIcon onClick={() => updateSttState(selectedSttId, { isEditable: true })} />}
+                            </IconButton>
+                          </Tooltip>
+                        )}
                       </Typography>
-                      <TextField
-                        fullWidth multiline rows={10}
-                        value={currentStt.isLoading ? "요약 생성 중..." : currentStt.summary ?? "텍스트 없음"}
-                        onChange={handleSummaryChange}
-                        sx={{ mt: 1, mb: 2, "& .MuiOutlinedInput-root": { borderRadius: 1.5, bgcolor: currentStt.isLoading ? "#f0f0f0" : "#fafafa" }, "& .MuiInputBase-input.Mui-disabled": { WebkitTextFillColor: "#000000", color: "#000000" } }}
-                        disabled={!currentStt.isEditable}
-                      />
+                      
+                      {currentStt.isEditable ? (
+                        <TextField
+                          fullWidth multiline rows={10}
+                          value={currentStt.summary ?? "텍스트 없음"}
+                          onChange={handleSummaryChange}
+                          sx={{ mt: 1, mb: 2, "& .MuiOutlinedInput-root": { borderRadius: 1.5, bgcolor: "#fafafa" } }}
+                        />
+                      ) : (
+                        <Box
+                          sx={{
+                            mt: 1,
+                            mb: 2,
+                            p: 2,
+                            borderRadius: 1.5,
+                            bgcolor: "#fafafa",
+                            minHeight: 240,
+                            maxHeight: 300,
+                            overflow: 'auto',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                        >
+                          <MarkdownText 
+                          content={currentStt.isLoading ? "요약 생성 중..." : currentStt.summary ?? "텍스트 없음"}
+                          />
+                        </Box>
+                      )}
                       <Typography>회의 내용</Typography>
-                      <TextField
-                        fullWidth multiline
-                        value={currentStt.isLoading ? "음성 파일 변환 중..." : currentStt.content ?? "텍스트 없음"}
-                        rows={15}
-                        sx={{ mt: 1, mb: 2, "& .MuiOutlinedInput-root": { borderRadius: 1.5, bgcolor: "#fafafa" }, "& .MuiInputBase-input.Mui-disabled": { WebkitTextFillColor: "#000000", color: "#000000" } }}
-                        disabled
-                      />
+                      <Box
+                          sx={{
+                            mt: 1,
+                            mb: 2,
+                            p: 2,
+                            borderRadius: 1.5,
+                            bgcolor: "#fafafa",
+                            minHeight: 240,
+                            maxHeight: 300,
+                            overflow: 'auto',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                        >
+                        <MarkdownText
+                        content={currentStt.isLoading ? "음성 파일 변환 중..." : currentStt.content ?? "텍스트 없음"}
+                        />
+                      </Box>
                     </Box>
                   </Box>
                 </Box>
