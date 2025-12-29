@@ -33,6 +33,7 @@ import FileUploadModal from "./component/FileUploadModal";
 import TabSTT from "../../stt/page/TabSTT";
 import TabComment from "./component/TabComment";
 import TabLog from "./component/TabLog";
+import TotalSummaryModal from "./component/TotalSummaryModal";
 
 export default function MeetingDtl() {
   const { meetingId } = useParams();
@@ -40,6 +41,7 @@ export default function MeetingDtl() {
   const [tabValue, setTabValue] = useState(0);
   const [showParticipantModal, setShowParticipantModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -597,7 +599,23 @@ export default function MeetingDtl() {
               )
             }
           />
+          {/* 회의 요약 */}
+          <InfoRow
+            label="회의 요약"
+            value={
+                <Button
+                  variant="outlined"
+                  size="small"
+                  sx={{ borderRadius: 1.5 }}
+                  onClick={() => setShowSummaryModal(true)}
+                >
+                  요약 보기
+                </Button>
+            }
+          />
         </Box>
+
+        
 
         {/* 버튼 */}
         {((meeting.isEditPermitted && meeting.status !== "COMPLETED") ||
@@ -638,6 +656,11 @@ export default function MeetingDtl() {
         onClose={() => setShowUploadModal(false)}
         meetingId={meetingId!}
         fetchMeetingDetail={fetchMeetingDetail}
+      />
+      <TotalSummaryModal
+        open={showSummaryModal}
+        onClose={() => setShowSummaryModal(false)}
+        content={meeting.totalSummary}
       />
     </Box>
   );
