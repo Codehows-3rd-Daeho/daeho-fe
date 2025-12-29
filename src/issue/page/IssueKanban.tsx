@@ -8,12 +8,14 @@ import { useEffect, useState } from "react";
 import { getKanbanIssues } from "../api/issueApi";
 import type { IssueListItem } from "../type/type";
 import type { KanbanIssue } from "../../common/Kanban/type";
+import { SearchBar } from "../../common/SearchBar/SearchBar";
 
 export type KanbanData = Record<string, KanbanIssue[]>;
 
 export default function IssueKanban() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [data, setData] = useState<KanbanData>({
     pending: [],
@@ -29,7 +31,7 @@ export default function IssueKanban() {
           inProgress: IssueListItem[];
           completed: IssueListItem[];
           delayed: IssueListItem[];
-        } = await getKanbanIssues();
+        } = await getKanbanIssues(searchQuery);
 
         const delayIds = new Set(res.delayed.map((item) => item.id));
         const filteredPending = res.inProgress.filter(
@@ -49,7 +51,7 @@ export default function IssueKanban() {
     };
 
     fetchIssues();
-  }, []);
+  }, [searchQuery]);
 
   if (isLoading) {
     return (
@@ -71,7 +73,12 @@ export default function IssueKanban() {
   return (
     <>
       {/* 타이틀 */}
-      <Box mb={2}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="flex-end" // 타이틀과 버튼 하단 정렬
+        mb={3}
+      >
         {/* 아래 여백 */}
         <Typography
           variant="h4" // 글자 크기
@@ -81,6 +88,7 @@ export default function IssueKanban() {
         >
           이슈
         </Typography>
+        <AddButton onClick={() => navigate("/issue/create")} />
       </Box>
       {/* 헤더 */}
       <PageHeader>
@@ -91,7 +99,9 @@ export default function IssueKanban() {
           ]}
         />
 
-        <AddButton onClick={() => navigate("/issue/create")} />
+        <Box sx={{ height: "40px", display: "flex", alignItems: "center" }}>
+          <SearchBar onSearch={setSearchQuery} placeholder="검색" />
+        </Box>
       </PageHeader>
 
       {/* 칸반 */}

@@ -164,19 +164,27 @@ export default function IssueList() {
         >
           이슈
         </Typography>
-      </Box>
-      <PageHeader>
-        <Toggle
-          options={[
-            { label: "리스트", value: "list", path: "/issue/list" },
-            { label: "칸반", value: "kanban", path: "/issue/kanban" },
-          ]}
-        />
         <AddButton onClick={() => navigate("/issue/create")} />
-        <Box display="flex" alignItems="center" gap={1.5}>
-          <SearchBar onSearch={setSearchQuery} placeholder="검색" />
-        </Box>
-      </PageHeader>
+      </Box>
+
+      <Box sx={{ width: "100%" }}>
+        {" "}
+        {/* PageHeader가 전체 너비를 쓰도록 감싸줌 */}
+        <PageHeader>
+          {/* 왼쪽: 토글 */}
+          <Toggle
+            options={[
+              { label: "리스트", value: "list", path: "/issue/list" },
+              { label: "칸반", value: "kanban", path: "/issue/kanban" },
+            ]}
+          />
+
+          {/* 오른쪽: 검색창 */}
+          <Box sx={{ height: "40px", display: "flex", alignItems: "center" }}>
+            <SearchBar onSearch={setSearchQuery} placeholder="검색" />
+          </Box>
+        </PageHeader>
+      </Box>
 
       <ListDataGrid<IssueListItem>
         rows={data}

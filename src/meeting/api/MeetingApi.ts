@@ -9,10 +9,10 @@ import httpClient from "../../config/httpClient";
 export const getMeetingList = async (
   page: number,
   size: number = 10,
-  searchQuery: string
+  keyword: string
 ): Promise<MeetingListResponse> => {
   const response = await httpClient.get(`/meeting/list`, {
-    params: { page, size, searchQuery },
+    params: { page, size, keyword },
   });
   return response.data; // { content, totalElements }
 };

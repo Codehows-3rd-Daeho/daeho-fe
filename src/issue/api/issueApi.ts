@@ -67,8 +67,10 @@ type temp = {
 };
 
 //칸반 전체
-export const getKanbanIssues = async (): Promise<temp> => {
-  const response = await httpClient.get("/issue/kanban");
+export const getKanbanIssues = async (keyword: string): Promise<temp> => {
+  const response = await httpClient.get(`/issue/kanban`, {
+    params: { keyword },
+  });
   return response.data;
 };
 
