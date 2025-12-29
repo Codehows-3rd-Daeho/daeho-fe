@@ -492,7 +492,8 @@ export default function TabSTT({meeting}: TabSTTProp) {
             },
           }}
         >
-          {stts.map((stt, index) => (
+          {stts.filter(stt => stt.memberId === member?.memberId 
+          || stt.status !== "RECORDING").map((stt, index) => (
             <Tab
               key={stt.id}
               value={stt.id}
