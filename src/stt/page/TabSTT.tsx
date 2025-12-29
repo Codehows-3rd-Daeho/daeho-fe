@@ -10,8 +10,6 @@ import {
   IconButton,
   Tooltip,
 } from "@mui/material";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import MicIcon from "@mui/icons-material/Mic";
@@ -42,11 +40,43 @@ type TabSTTProp = {
   meeting: MeetingDto;
 }
 
+//daglo 최대 업로드 용량, 허용 확장자
+const chunkingRate = 10;
+const maxFileSizeMB = 2 * 1024;
+const allowedExtensions = [
+  // audio
+  "3gp",
+  "3gpp",
+  "ac3",
+  "aac",
+  "aiff",
+  "amr",
+  "au",
+  "flac",
+  "m4a",
+  "mp3",
+  "mxf",
+  "opus",
+  "ra",
+  "wav",
+  "weba",
+  // video
+  "asx",
+  "avi",
+  "ogm",
+  "ogv",
+  "m4v",
+  "mov",
+  "mp4",
+  "mpeg",
+  "mpg",
+  "wmv",
+];
+
 export default function TabSTT({meeting}: TabSTTProp) {
   const { meetingId } = useParams();  
   const { member } = useAuthStore();
   const role = member?.role;
-
   const { 
     stt: recordingStt, 
     recordingStatus, 
@@ -59,45 +89,11 @@ export default function TabSTT({meeting}: TabSTTProp) {
     cancelRecording,
     isRecording,
   } = useRecordingStore();
+  const isCurrentlyRecording = isRecording();
 
-  // STT 내용을 상태로 관리
   const [stts, setStts] = useState<STTWithRecording[]>([]);
   const [selectedSttId, setSelectedSttId] = useState<number | null>(null);
 
-  //daglo 최대 업로드 용량, 허용 확장자
-  const chunkingRate = 10; // 10초
-  const maxFileSizeMB = 2 * 1024; //2GB (MB)
-  const allowedExtensions = [
-    // audio
-    "3gp",
-    "3gpp",
-    "ac3",
-    "aac",
-    "aiff",
-    "amr",
-    "au",
-    "flac",
-    "m4a",
-    "mp3",
-    "mxf",
-    "opus",
-    "ra",
-    "wav",
-    "weba",
-
-    // video
-    "asx",
-    "avi",
-    "ogm",
-    "ogv",
-    "m4v",
-    "mov",
-    "mp4",
-    "mpeg",
-    "mpg",
-    "wmv",
-  ];
-  const isCurrentlyRecording = isRecording();
 
   const findSttById = (sttId: number | null): STTWithRecording | null => {
     return stts.find(s => s.id === sttId) ?? null;
@@ -354,6 +350,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
     const newTempStt: STTWithRecording = {
         id: NEW_STT_ID,
         meetingId: meetingId,
+        memberId: member!.memberId,
         content: "",
         summary: "",
         isEditable: false,
@@ -450,8 +447,8 @@ export default function TabSTT({meeting}: TabSTTProp) {
           key={`${selectedSttId}-${stts.length}`} 
           value={selectedSttId}
           onChange={handleTabChange}
-          variant="scrollable"           // 스크롤 가능하게 설정
-          scrollButtons="auto"       // 자동 스크롤 버튼 표시
+          variant="scrollable"
+          scrollButtons="auto"
           sx={{
             '& .MuiTab-root': {
               transition: 'all 0.1s ease',
@@ -460,36 +457,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
               borderRadius: '5px',
               margin: '0 4px',
               padding: '0 12px',
-              
-              // 모든 탭(첫번째 제외)에 동일한 위치의 구분선
-              '&:not(:first-of-type)::before': {
-                content: '""',
-                position: 'absolute',
-                left: '-2px',              // margin 절반만큼 왼쪽으로 이동
-                top: '20%',
-                height: '60%',
-                width: '1px',
-                backgroundColor: 'rgba(0,0,0,0.12)',
-                zIndex: 2,
-              },
-            },
-            '&.Mui-selected': {
-              backgroundColor: 'white',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-              fontWeight: "bold",
-              color: 'primary.main',
-              // 선택탭에서도 구분선 유지 (제거하지 않음)
-            },
-            '& .MuiTabs-scroller': {
-              '&:not(.MuiTabs-scrollButtonsHide)': {
-                paddingRight: '48px',  // 버튼 공간 예약
-              }
-            },
-            maxWidth: '1000px',
-            '& .MuiTabs-flexContainer': {
-              justifyContent: 'flex-start',  // 왼쪽 정렬
-              gap: '4px',                    // 탭 간격
-            },
+            }
           }}
         >
           {stts.map((stt, index) => (
