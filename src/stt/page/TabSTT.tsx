@@ -412,14 +412,13 @@ export default function TabSTT({meeting}: TabSTTProp) {
     if (sttId === null) return;
     if (!window.confirm("음성 파일을 등록하시겠습니까?")) return;
 
-    updateSttState(sttId, { isTemp: false, isLoading: true, status: "PROCESSING" })
+    updateSttState(sttId, { isLoading: true, isTemp: false })
     const resStt = await confirmUpload(sttId);
     if (resStt) {
       updateSttState(sttId, {
         ...resStt,
-        isEditable: false,
-        isLoading: false,
-        isTemp: false,
+        status: resStt.status,
+        file: resStt.file,
         recordingStatus: 'idle',
         recordingTime: 0,
       });
