@@ -15,6 +15,7 @@ import { SearchBar } from "../../common/SearchBar/SearchBar";
 
 export default function IssueList() {
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
 
   // 페이징
   const [page, setPage] = useState(1);
@@ -25,7 +26,7 @@ export default function IssueList() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await getIssueList(page - 1, 10);
+        const data = await getIssueList(page - 1, 10, searchQuery);
         const list = (data.content ?? data).map((item: IssueListItem) => ({
           ...item,
           status: getStatusLabel(item.status),
@@ -39,7 +40,7 @@ export default function IssueList() {
     };
 
     fetchData();
-  }, [page]);
+  }, [page, searchQuery]);
 
   // 리스트 컬럼
   const allColumns: GridColDef[] = [
@@ -145,24 +146,6 @@ export default function IssueList() {
     },
   ];
 
-  // 검색 필터
-  const [searchQuery, setSearchQuery] = useState("");
-  const filteredData = data.filter((item) => {
-    const query = searchQuery.toLowerCase();
-
-    return (
-      item.title.toLowerCase().includes(query) || // 제목
-      item.status.toLowerCase().includes(query) || // 상태
-      item.categoryName.toLowerCase().includes(query) || // 카테고리
-      item.hostName.toLowerCase().includes(query) || // 주관자
-      item.departmentName.some(
-        (
-          dept // 부서 (리스트 형태 처리)
-        ) => dept.toLowerCase().includes(query)
-      )
-    );
-  });
-
   return (
     <>
       {/* 타이틀 */}
@@ -196,7 +179,7 @@ export default function IssueList() {
       </PageHeader>
 
       <ListDataGrid<IssueListItem>
-        rows={filteredData}
+        rows={data}
         columns={allColumns}
         rowIdField="id"
       />

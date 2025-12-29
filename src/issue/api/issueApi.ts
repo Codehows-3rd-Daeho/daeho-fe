@@ -13,10 +13,11 @@ import type {
 // 이슈 목록 조회
 export const getIssueList = async (
   page: number,
-  size: number = 10
+  size: number = 10,
+  keyword: string
 ): Promise<IssueListResponse> => {
   const response = await httpClient.get(`/issue/list`, {
-    params: { page, size },
+    params: { page, size, keyword },
   });
   return response.data;
 };

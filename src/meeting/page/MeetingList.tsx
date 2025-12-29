@@ -9,6 +9,7 @@ import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { useNavigate } from "react-router-dom";
 import { getMeetingList } from "../api/MeetingApi";
 import { getStatusLabel } from "../../common/commonFunction";
+import { SearchBar } from "../../common/SearchBar/SearchBar";
 
 export default function MeetingList() {
   const navigate = useNavigate();
@@ -16,9 +17,10 @@ export default function MeetingList() {
   const [page, setPage] = useState(1);
   const [data, setData] = useState<MeetingListItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    getMeetingList(page - 1, 10).then((data) => {
+    getMeetingList(page - 1, 10, searchQuery).then((data) => {
       const list = (data.content ?? data).map((item: MeetingListItem) => ({
         ...item,
         status: getStatusLabel(item.status),
@@ -27,7 +29,7 @@ export default function MeetingList() {
       setData(list);
       setTotalCount(data.totalElements); // 전체 개수
     });
-  }, [page]);
+  }, [page, searchQuery]);
 
   const allColumns: GridColDef[] = [
     {
@@ -137,6 +139,9 @@ export default function MeetingList() {
       <PageHeader>
         <Box />
         <AddButton onClick={() => navigate("/meeting/create")} />
+        <Box display="flex" alignItems="center" gap={1.5}>
+          <SearchBar onSearch={setSearchQuery} placeholder="검색" />
+        </Box>
       </PageHeader>
       {/* 리스트 */}
       <ListDataGrid<MeetingListItem>

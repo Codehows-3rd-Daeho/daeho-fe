@@ -8,10 +8,11 @@ import httpClient from "../../config/httpClient";
 // 회의 목록 조회(페이징)
 export const getMeetingList = async (
   page: number,
-  size: number = 10
+  size: number = 10,
+  searchQuery: string
 ): Promise<MeetingListResponse> => {
   const response = await httpClient.get(`/meeting/list`, {
-    params: { page, size },
+    params: { page, size, searchQuery },
   });
   return response.data; // { content, totalElements }
 };
