@@ -6,11 +6,32 @@ export interface STT {
   content: string;
   summary: string;
   meetingId: string;
-  status?: "RECORDING" | "PROCESSING" | "COMPLETED";
+  status?: "RECORDING" | "PROCESSING" | "SUMMARIZING" | "COMPLETED";
+  progress?: number;
   isEditable: boolean;
   isLoading: boolean;
   isTemp: boolean;
   file?: FileDto;
   chunkingCnt?: number;
   memberId: number;
+}
+
+export interface ProcessingState {
+  rid: string;
+  status: 
+  "ai_requested" | "uploaded" | "file_processing" | 
+  "transcribing" | "post_processing" | "transcribed" | 
+  "input_error" | "transcript_error" | "file_error";
+  progress: number;
+  completed: boolean;
+}
+
+export interface ProcessingStt extends ProcessingState {
+  summaryRid: string;
+  content: string;
+}
+
+export interface ProcessingSummary extends ProcessingState {
+  title: string;
+  summaryText: string;
 }

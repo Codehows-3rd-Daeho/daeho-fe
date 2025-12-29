@@ -1,5 +1,5 @@
 import { useEffect, useState, type SetStateAction } from "react";
-import { getSTT, updateSummary, uploadSTT } from "../api/sttApi";
+import { getSTT, getSTTs, updateSummary, uploadSTT } from "../api/sttApi";
 import {
   Box,
   Button,
@@ -113,7 +113,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
 
     const fetch = async () => {
       try {
-        const response = await getSTT(meetingId);
+        const response = await getSTTs(meetingId);
         const sttsWithRecordingState = response.map(stt => 
           {
             if(stt.status === "PROCESSING")
@@ -243,37 +243,41 @@ export default function TabSTT({meeting}: TabSTTProp) {
   const handleUploadFile = async (file: File) => {
     if (!meetingId || !validateFile(file)) return;
     if (!window.confirm("음성 파일을 등록하시겠습니까?")) return;
-
-    const tempSttId = selectedSttId;
-    updateSttState(tempSttId, { isLoading: true, isTemp: false });
-
+    updateSttState(selectedSttId, { isLoading: true, isTemp: false });
     try {
       const formData = new FormData();
       formData.append("file", file);
-
-      //1. 음성 파일 변환
       const newStt = await uploadSTT(meetingId, formData);
-
-      setStts(prevStts => 
-        prevStts.map(stt => 
-          stt.id === selectedSttId 
-            ? { ...newStt,
-              summary: newStt.summary,
-              isEditable: false,
-              isLoading: false,
-              isTemp: false,
-              recordingStatus: 'idle' as RecordingStatus,
-              recordingTime: 0
-            }
-            : stt
-        )
-      )
+      updateSttState(selectedSttId, {
+        id: newStt.id, 
+        status: newStt.status,
+        file: newStt.file,
+      })
       setSelectedSttId(newStt.id);
-      
+      const sttIntervalId = setInterval( async () => {
+        const res = await getSTT(newStt.id);
+        updateSttState(newStt.id, {
+          content: res.content,
+          summary: res.summary,
+          status: res.status,
+          progress: res.progress,
+        })
+        if(res.status === "COMPLETED") {
+          clearInterval(sttIntervalId);
+          console.log('stt Interval cleared')
+          updateSttState(newStt.id, { 
+            content: res.content,
+            summary: res.summary,
+            status: res.status,
+            progress: res.progress,
+            isLoading: false,
+          })
+        }
+      }, 1500);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 401) return;
       alert("음성 파일 등록 중 오류가 발생했습니다.");
-      setStts((prev) => prev.filter((stt) => stt.id !== selectedSttId));
+      updateSttState(selectedSttId, { isLoading: false, isTemp: true });
     }
   };
 
@@ -515,7 +519,9 @@ export default function TabSTT({meeting}: TabSTTProp) {
         {findSttById(selectedSttId)?.isLoading && !findSttById(selectedSttId)?.isTemp ? (
           <div className="absolute inset-0 bg-black/20 backdrop-blur-none z-40 flex items-center justify-center rounded-lg">
             <div className="bg-white/50 p-6 rounded-xl shadow-2xl flex flex-col items-center gap-3">
-              <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin"></div>
+              <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin">
+              </div>
+              {findSttById(selectedSttId)?.progress}
             </div>
           </div>
         ) : <></>}
@@ -641,7 +647,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
                       {currentStt.isEditable ? (
                         <TextField
                           fullWidth multiline rows={10}
-                          value={currentStt.summary ?? "텍스트 없음"}
+                          value={currentStt.summary}
                           onChange={handleSummaryChange}
                           sx={{ mt: 1, mb: 2, "& .MuiOutlinedInput-root": { borderRadius: 1.5, bgcolor: "#fafafa" } }}
                         />
@@ -661,7 +667,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
                           }}
                         >
                           <MarkdownText 
-                          content={currentStt.isLoading ? "요약 생성 중..." : currentStt.summary ?? "텍스트 없음"}
+                          content={currentStt.summary}
                           />
                         </Box>
                       )}
@@ -681,7 +687,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
                           }}
                         >
                         <MarkdownText
-                        content={currentStt.isLoading ? "음성 파일 변환 중..." : currentStt.content ?? "텍스트 없음"}
+                        content={currentStt.content}
                         />
                       </Box>
                     </Box>
