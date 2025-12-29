@@ -26,11 +26,12 @@ export const getIssueList = async (
 export const getIssueListMT = async (
   id: number,
   page: number,
-  size: number = 10
+  size: number = 10,
+  keyword: string
 ): Promise<IssueListResponse> => {
   console.log("getIssueListMT id: ", id);
   const response = await httpClient.get(`/issue/list/mytask/${id}`, {
-    params: { page, size },
+    params: { page, size, keyword },
   });
   console.log("response.data: ", response.data);
   return response.data;
@@ -75,8 +76,13 @@ export const getKanbanIssues = async (keyword: string): Promise<temp> => {
 };
 
 //나의 업무 칸반
-export const getKanbanIssuesMT = async (id: number): Promise<temp> => {
-  const response = await httpClient.get(`/issue/kanban/mytask/${id}`);
+export const getKanbanIssuesMT = async (
+  id: number,
+  keyword: string
+): Promise<temp> => {
+  const response = await httpClient.get(`/issue/kanban/mytask/${id}`, {
+    params: { keyword },
+  });
   return response.data;
 };
 

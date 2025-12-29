@@ -11,11 +11,13 @@ import { useAuthStore } from "../../store/useAuthStore";
 import { getStatusLabel } from "../../common/commonFunction";
 import { getIssueListMT } from "../../issue/api/issueApi";
 import type { IssueListItem } from "../../issue/type/type";
+import { SearchBar } from "../../common/SearchBar/SearchBar";
 
 export default function MTIssueList() {
   const navigate = useNavigate();
   const { member } = useAuthStore();
   const role = member?.role;
+  const [searchQuery, setSearchQuery] = useState("");
 
   // 페이징
   const [page, setPage] = useState(1);
@@ -24,7 +26,7 @@ export default function MTIssueList() {
 
   // 데이터 가져오기
   useEffect(() => {
-    getIssueListMT(member!.memberId, page - 1, 10).then((data) => {
+    getIssueListMT(member!.memberId, page - 1, 10, searchQuery).then((data) => {
       const list = (data.content ?? data).map((item: IssueListItem) => ({
         ...item,
         status: getStatusLabel(item.status),
@@ -33,7 +35,7 @@ export default function MTIssueList() {
       setData(list);
       setTotalCount(data.totalElements); // 전체 개수
     });
-  }, [page]);
+  }, [page, searchQuery]);
 
   // 리스트 컬럼
   const allColumns: GridColDef[] = [
@@ -121,7 +123,12 @@ export default function MTIssueList() {
   return (
     <>
       {/* 타이틀 */}
-      <Box mb={2}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="flex-end"
+        mb={3}
+      >
         {/* 아래 여백 */}
         <Typography
           variant="h4" // 글자 크기
@@ -131,6 +138,9 @@ export default function MTIssueList() {
         >
           이슈
         </Typography>
+        {role === "USER" && (
+          <AddButton onClick={() => navigate("/issue/create")} />
+        )}
       </Box>
       <PageHeader>
         <Toggle
@@ -140,9 +150,7 @@ export default function MTIssueList() {
           ]}
         />
 
-        {role === "USER" && (
-          <AddButton onClick={() => navigate("/issue/create")} />
-        )}
+        <SearchBar onSearch={setSearchQuery} placeholder="검색" />
       </PageHeader>
 
       <ListDataGrid<IssueListItem>

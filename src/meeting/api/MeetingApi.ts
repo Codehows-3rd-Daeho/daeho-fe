@@ -21,10 +21,11 @@ export const getMeetingList = async (
 export const getMeetingListMT = async (
   id: number,
   page: number,
-  size: number = 10
+  size: number = 10,
+  keyword: string
 ): Promise<MeetingListResponse> => {
   const response = await httpClient.get(`/meeting/mytask/${id}`, {
-    params: { page, size },
+    params: { page, size, keyword },
   });
   return response.data; // { content, totalElements }
 };
