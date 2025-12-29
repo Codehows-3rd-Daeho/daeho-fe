@@ -116,13 +116,34 @@ export default function TabSTT({meeting}: TabSTTProp) {
         const response = await getSTTs(meetingId);
         const sttsWithRecordingState = response.map(stt => 
           {
-            if(stt.status === "PROCESSING")
-            return {
-              ...stt,
-              isLoading: true,
-              recordingStatus: 'idle' as RecordingStatus,
-              recordingTime: 0,
-            }
+            if(stt.status === "PROCESSING" || stt.status === "SUMMARIZING") {
+              const sttIntervalId = setInterval( async () => {
+                const res = await getSTT(stt.id);
+                updateSttState(stt.id, {
+                  content: res.content,
+                  summary: res.summary,
+                  status: res.status,
+                  progress: res.progress,
+                })
+                if(res.status === "COMPLETED") {
+                  clearInterval(sttIntervalId);
+                  console.log('stt Interval cleared')
+                  updateSttState(stt.id, { 
+                    content: res.content,
+                    summary: res.summary,
+                    status: res.status,
+                    progress: res.progress,
+                    isLoading: false,
+                  })
+                }
+              }, 1500);
+              return {
+                ...stt,
+                isLoading: true,
+                recordingStatus: 'idle' as RecordingStatus,
+                recordingTime: 0,
+              }
+            } 
             return {
               ...stt,
               recordingStatus: 'idle' as RecordingStatus,
@@ -403,6 +424,26 @@ export default function TabSTT({meeting}: TabSTTProp) {
         recordingTime: 0,
       });
       setSelectedSttId(resStt.id);
+      const sttIntervalId = setInterval( async () => {
+        const res = await getSTT(resStt.id);
+        updateSttState(resStt.id, {
+          content: res.content,
+          summary: res.summary,
+          status: res.status,
+          progress: res.progress,
+        })
+        if(res.status === "COMPLETED") {
+          clearInterval(sttIntervalId);
+          console.log('stt Interval cleared')
+          updateSttState(resStt.id, { 
+            content: res.content,
+            summary: res.summary,
+            status: res.status,
+            progress: res.progress,
+            isLoading: false,
+          })
+        }
+      }, 1500);
     } else {
       alert("음성 변환에 실패했습니다.");
       updateSttState(sttId, { isLoading: false, status: "RECORDING" });
@@ -449,6 +490,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
           variant="scrollable"
           scrollButtons="auto"
           sx={{
+            maxWidth: '800px',
             '& .MuiTab-root': {
               transition: 'all 0.1s ease',
               position: 'relative',
@@ -521,7 +563,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
             <div className="bg-white/50 p-6 rounded-xl shadow-2xl flex flex-col items-center gap-3">
               <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin">
               </div>
-              {findSttById(selectedSttId)?.progress}
+              {`${findSttById(selectedSttId)?.progress ?? 0}%`}
             </div>
           </div>
         ) : <></>}
