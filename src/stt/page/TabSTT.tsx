@@ -492,8 +492,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
             },
           }}
         >
-          {stts.filter(stt => stt.memberId === member?.memberId 
-          || stt.status !== "RECORDING").map((stt, index) => (
+          {stts.map((stt, index) => (
             <Tab
               key={stt.id}
               value={stt.id}
@@ -600,7 +599,6 @@ export default function TabSTT({meeting}: TabSTTProp) {
                 </Box>
               );
             } else if (currentStt.status === "RECORDING") {
-              if(member?.memberId !== currentStt.memberId) return null;
               return (
                 <Box sx={{ p: 3, border: '2px dashed #d0d0d0', borderRadius: 2, textAlign: 'center' }}>
                     {(currentStt.recordingTime ?? 0) === 0 && (
