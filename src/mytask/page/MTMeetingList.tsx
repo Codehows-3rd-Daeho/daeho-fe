@@ -14,7 +14,6 @@ import { getMeetingListMT } from "../../meeting/api/MeetingApi";
 export default function MeetingList() {
   const navigate = useNavigate();
   const { member } = useAuthStore();
-  const role = member?.role;
 
   const [page, setPage] = useState(1);
   const [data, setData] = useState<MeetingListItem[]>([]);
@@ -115,9 +114,7 @@ export default function MeetingList() {
 
       <PageHeader>
         <Box />
-        {role === "USER" && (
-          <AddButton onClick={() => navigate("/meeting/create")} />
-        )}
+        <AddButton onClick={() => navigate("/meeting/create")} />
       </PageHeader>
       {/* 리스트 */}
       <ListDataGrid<MeetingListItem>

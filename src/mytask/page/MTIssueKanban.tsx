@@ -15,7 +15,6 @@ export type KanbanData = Record<string, KanbanIssue[]>;
 export default function MTIssueKanban() {
   const navigate = useNavigate();
   const { member } = useAuthStore();
-  const role = member?.role;
   const [data, setData] = useState<KanbanData>({
     pending: [],
     done: [],
@@ -66,9 +65,7 @@ export default function MTIssueKanban() {
           ]}
         />
 
-        {role === "USER" && (
-          <AddButton onClick={() => navigate("/issue/create")} />
-        )}
+        <AddButton onClick={() => navigate("/issue/create")} />
       </PageHeader>
 
       {/* 칸반 */}
