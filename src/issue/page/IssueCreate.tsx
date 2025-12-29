@@ -188,10 +188,10 @@ export default function IssueCreate() {
       setIsSaving(true); // 저장 시작 (중복 클릭 방지)
 
       console.log("보내는 데이터", issueDto);
-      const issueId = await issueCreate(formDataObj);
+      await issueCreate(formDataObj);
 
       alert("이슈가 등록되었습니다!");
-      navigator(`/issue/${issueId}`);
+      navigator(`/issue/list`);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 401) {
         return;
