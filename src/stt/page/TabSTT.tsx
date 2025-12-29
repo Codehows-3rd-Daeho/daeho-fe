@@ -423,7 +423,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
       updateSttState(sttId, {
         ...resStt,
         isEditable: false,
-        isLoading: true,
+        isLoading: false,
         isTemp: false,
         recordingStatus: 'idle',
         recordingTime: 0,
