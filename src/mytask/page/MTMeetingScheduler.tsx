@@ -220,12 +220,10 @@ export default function MTMeetingScheduler() {
                             px: 1,
                             py: 0.75,
                             cursor: "pointer",
-                            // border: "2px solid #bb91ff",
                             backgroundColor: "#4b6485",
                             width: 180,
                             "&:hover": {
                               backgroundColor: "#1a3260",
-                              // borderColor: "#2563eb",
                             },
                           }}
                           onClick={() => navigate(`/meeting/${meeting.id}`)}

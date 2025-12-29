@@ -32,7 +32,7 @@ export function KanbanBoard({
           const hasMore = fullList.length > visibleCount[col.key];
 
           return (
-            <div key={col.key} className="flex-1 min-w-[300px] max-w-[400px]">
+            <div key={col.key} className="flex-1 min-w-[450px] max-w-[500px]">
               <KanbanColumn
                 title={col.title}
                 issues={sliced}

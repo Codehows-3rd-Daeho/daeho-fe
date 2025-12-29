@@ -15,7 +15,6 @@ import type { IssueListItem } from "../../issue/type/type";
 export default function MTIssueList() {
   const navigate = useNavigate();
   const { member } = useAuthStore();
-  const role = member?.role;
 
   // 페이징
   const [page, setPage] = useState(1);
@@ -140,9 +139,7 @@ export default function MTIssueList() {
           ]}
         />
 
-        {role === "USER" && (
-          <AddButton onClick={() => navigate("/issue/create")} />
-        )}
+        <AddButton onClick={() => navigate("/issue/create")} />
       </PageHeader>
 
       <ListDataGrid<IssueListItem>
