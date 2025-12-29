@@ -276,23 +276,28 @@ export default function TabSTT({meeting}: TabSTTProp) {
       })
       setSelectedSttId(newStt.id);
       const sttIntervalId = setInterval( async () => {
-        const res = await getSTT(newStt.id);
-        updateSttState(newStt.id, {
-          content: res.content,
-          summary: res.summary,
-          status: res.status,
-          progress: res.progress,
-        })
-        if(res.status === "COMPLETED") {
-          clearInterval(sttIntervalId);
-          console.log('stt Interval cleared')
-          updateSttState(newStt.id, { 
+        try{
+          const res = await getSTT(newStt.id);
+          updateSttState(newStt.id, {
             content: res.content,
             summary: res.summary,
             status: res.status,
             progress: res.progress,
-            isLoading: false,
           })
+          if(res.status === "COMPLETED") {
+            clearInterval(sttIntervalId);
+            console.log('stt Interval cleared')
+            updateSttState(newStt.id, { 
+              content: res.content,
+              summary: res.summary,
+              status: res.status,
+              progress: res.progress,
+              isLoading: false,
+            })
+          }
+        }catch(error) {
+          if (axios.isAxiosError(error)) 
+            clearInterval(sttIntervalId);
         }
       }, 1500);
     } catch (error) {
@@ -412,35 +417,41 @@ export default function TabSTT({meeting}: TabSTTProp) {
     if (sttId === null) return;
     if (!window.confirm("음성 파일을 등록하시겠습니까?")) return;
 
-    updateSttState(sttId, { isLoading: true, isTemp: false })
+    updateSttState(sttId, { isTemp: false, isLoading: true})
     const resStt = await confirmUpload(sttId);
     if (resStt) {
       updateSttState(sttId, {
         ...resStt,
-        status: resStt.status,
-        file: resStt.file,
+        isEditable: false,
+        isLoading: false,
+        isTemp: false,
         recordingStatus: 'idle',
         recordingTime: 0,
       });
       setSelectedSttId(resStt.id);
       const sttIntervalId = setInterval( async () => {
-        const res = await getSTT(resStt.id);
-        updateSttState(resStt.id, {
-          content: res.content,
-          summary: res.summary,
-          status: res.status,
-          progress: res.progress,
-        })
-        if(res.status === "COMPLETED") {
-          clearInterval(sttIntervalId);
-          console.log('stt Interval cleared')
-          updateSttState(resStt.id, { 
+        try{
+          const res = await getSTT(resStt.id);
+          updateSttState(resStt.id, {
             content: res.content,
             summary: res.summary,
             status: res.status,
             progress: res.progress,
-            isLoading: false,
           })
+          if(res.status === "COMPLETED") {
+            clearInterval(sttIntervalId);
+            console.log('stt Interval cleared')
+            updateSttState(resStt.id, { 
+              content: res.content,
+              summary: res.summary,
+              status: res.status,
+              progress: res.progress,
+              isLoading: false,
+            })
+          }
+        }catch(error) {
+          if (axios.isAxiosError(error)) 
+            clearInterval(sttIntervalId);
         }
       }, 1500);
     } else {
