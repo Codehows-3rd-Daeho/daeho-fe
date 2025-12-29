@@ -132,14 +132,12 @@ export default function TabSTT({meeting}: TabSTTProp) {
         );
           setStts(sttsWithRecordingState);
 
-        //업로드 화면 or 결과 화면
         if (response.length !== 0)
           setSelectedSttId(response[response.length-1].id);
 
-        //자동 선택
         setSelectedSttId((prev) => {
           if (prev && response.some((stt) => stt.id === prev)) {
-            return prev; // 기존 선택 유지
+            return prev; 
           }
           return response[response.length-1]?.id ?? null;
         });
@@ -164,7 +162,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
           recordingStatus: recordingStatus,
           recordingTime: recordingTime,
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setStts(prev => [...prev, newSttEntry]);
         setSelectedSttId(newSttEntry.id);
       } else {
@@ -176,7 +174,6 @@ export default function TabSTT({meeting}: TabSTTProp) {
     }
   }, [recordingStt, recordingStatus, recordingTime]);
 
-  // 파일 입력창 열기
   const openFileInput = () => {
     document.getElementById("fileUpload")?.click();
   };
@@ -217,7 +214,6 @@ export default function TabSTT({meeting}: TabSTTProp) {
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragOver(false);
-
     const file = e.dataTransfer.files?.[0];
     if (!file) return;
 
@@ -225,7 +221,6 @@ export default function TabSTT({meeting}: TabSTTProp) {
       alert("파일은 1개만 등록할 수 있습니다.");
       return;
     }
-
     handleUploadFile(file);
   };
 
