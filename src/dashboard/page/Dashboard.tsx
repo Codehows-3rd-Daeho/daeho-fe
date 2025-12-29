@@ -6,7 +6,7 @@ import type { KanbanData } from "../../mytask/page/MTIssueKanban";
 import KanbanBoard from "../../common/Kanban/KanbanBoard";
 import { useNavigate } from "react-router-dom";
 import {
-  getMeetingList,
+  getMeetingListMT,
   getMeetingMonthMT,
 } from "../../meeting/api/MeetingApi";
 import { getStatusLabel } from "../../common/commonFunction";
@@ -60,7 +60,7 @@ export default function Dashboard() {
 
   //회의 리스트
   useEffect(() => {
-    getMeetingList(0, 3).then((data) => {
+    getMeetingListMT(0, 3).then((data) => {
       const list = (data.content ?? data).map((item: MeetingListItem) => ({
         ...item,
         status: getStatusLabel(item.status),
@@ -376,7 +376,6 @@ export default function Dashboard() {
                           ? "3px solid #2563EB"
                           : "2px solid #eef2f7",
                       p: 1,
-                      // position: "relative",
                       backgroundColor: "#fff",
                       minWidth: 100, // 카드 최소 너비
                       flexShrink: 0, // 줄어들지 않게

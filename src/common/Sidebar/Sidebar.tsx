@@ -87,6 +87,7 @@ export default function Sidebar({
       <Toolbar
         sx={{
           px: 0,
+          py: 2,
           minHeight: collapsed ? 64 : undefined,
           display: "flex",
           justifyContent: "center",
