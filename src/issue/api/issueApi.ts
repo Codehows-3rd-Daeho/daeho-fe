@@ -21,15 +21,28 @@ export const getIssueList = async (
   return response.data;
 };
 
+// 이슈 목록 조회 + 검색 추가
+export const getIssueListSrc = async (
+  page: number,
+  size: number = 10,
+  keyword: string
+): Promise<IssueListResponse> => {
+  const response = await httpClient.get(`/issue/list`, {
+    params: { page, size, keyword },
+  });
+  return response.data;
+};
+
 //나의 업무 - 리스트
 export const getIssueListMT = async (
   id: number,
   page: number,
-  size: number = 10
+  size: number = 10,
+  keyword: string
 ): Promise<IssueListResponse> => {
   console.log("getIssueListMT id: ", id);
   const response = await httpClient.get(`/issue/list/mytask/${id}`, {
-    params: { page, size },
+    params: { page, size, keyword },
   });
   console.log("response.data: ", response.data);
   return response.data;
@@ -67,13 +80,26 @@ type temp = {
 
 //칸반 전체
 export const getKanbanIssues = async (): Promise<temp> => {
-  const response = await httpClient.get("/issue/kanban");
+  const response = await httpClient.get(`/issue/kanban`);
+  return response.data;
+};
+
+// 칸반 전체 + 검색 추가
+export const getKanbanIssuesSrc = async (keyword: string): Promise<temp> => {
+  const response = await httpClient.get(`/issue/kanban`, {
+    params: { keyword },
+  });
   return response.data;
 };
 
 //나의 업무 칸반
-export const getKanbanIssuesMT = async (id: number): Promise<temp> => {
-  const response = await httpClient.get(`/issue/kanban/mytask/${id}`);
+export const getKanbanIssuesMT = async (
+  id: number,
+  keyword: string
+): Promise<temp> => {
+  const response = await httpClient.get(`/issue/kanban/mytask/${id}`, {
+    params: { keyword },
+  });
   return response.data;
 };
 

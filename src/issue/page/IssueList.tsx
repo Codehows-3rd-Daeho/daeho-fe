@@ -8,8 +8,8 @@ import { useNavigate } from "react-router-dom";
 import { PageHeader } from "../../common/PageHeader/PageHeader";
 import { Toggle } from "../../common/PageHeader/Toggle/Toggle";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
-import { Box, TextField, Typography } from "@mui/material";
-import { getIssueList } from "../api/issueApi";
+import { Box, Typography } from "@mui/material";
+import { getIssueListSrc } from "../api/issueApi";
 import { getStatusLabel } from "../../common/commonFunction";
 import { SearchBar } from "../../common/SearchBar/SearchBar";
 import Filter from "../../common/PageHeader/Filter";
@@ -17,6 +17,7 @@ import DateFilter from "../../common/PageHeader/DateFilter";
 
 export default function IssueList() {
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
 
   // 페이징
   const [page, setPage] = useState(1);
@@ -29,7 +30,7 @@ export default function IssueList() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await getIssueList(page - 1, 10);
+        const data = await getIssueListSrc(page - 1, 10, searchQuery);
         const list = (data.content ?? data).map((item: IssueListItem) => ({
           ...item,
           status: getStatusLabel(item.status),
@@ -43,7 +44,7 @@ export default function IssueList() {
     };
 
     fetchData();
-  }, [page]);
+  }, [page, searchQuery]);
 
   // 리스트 컬럼
   const allColumns: GridColDef[] = [
@@ -149,29 +150,6 @@ export default function IssueList() {
     },
   ];
 
-  // 검색 필터
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const filteredData = data.filter((item) => {
-    const query = searchQuery.toLowerCase();
-    const itemStart = new Date(item.startDate);
-    const itemEnd = new Date(item.endDate);
-    const start = startDate ? new Date(startDate) : null;
-    const end = endDate ? new Date(endDate) : null;
-
-    const matchesDate =
-      (!start || itemEnd >= start) && (!end || itemStart <= end);
-
-    return (
-      matchesDate &&
-      (item.title.toLowerCase().includes(query) ||
-        item.status.toLowerCase().includes(query) ||
-        item.categoryName.toLowerCase().includes(query) ||
-        item.hostName.toLowerCase().includes(query) ||
-        item.departmentName.some((dept) => dept.toLowerCase().includes(query)))
-    );
-  });
-
   return (
     <>
       {/* 타이틀 */}
@@ -192,6 +170,7 @@ export default function IssueList() {
         </Typography>
         <AddButton onClick={() => navigate("/issue/create")} />
       </Box>
+
       <PageHeader>
         {/* 왼쪽: 토글 */}
         <Toggle
@@ -220,7 +199,7 @@ export default function IssueList() {
       </PageHeader>
 
       <ListDataGrid<IssueListItem>
-        rows={filteredData}
+        rows={data}
         columns={allColumns}
         rowIdField="id"
       />

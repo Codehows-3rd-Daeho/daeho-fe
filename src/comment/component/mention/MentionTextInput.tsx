@@ -147,7 +147,6 @@ export default function MentionTextInput({
         onChange={(e) => handleChange(e.target.value)}
         sx={{
           "& textarea": {
-            color: "transparent",
             caretColor: "#000",
             ...textStyle,
           },

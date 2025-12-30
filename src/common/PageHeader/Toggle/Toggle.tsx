@@ -20,7 +20,7 @@ export const Toggle = ({ options }: Props) => {
   };
 
   return (
-    <Box>
+    <Box sx={{ display: "flex" }}>
       <ToggleButtonGroup
         value={currentValue}
         exclusive
@@ -30,11 +30,13 @@ export const Toggle = ({ options }: Props) => {
           backgroundColor: "transparent",
           border: "1px solid #e2e8f0",
           borderRadius: "12px",
+          height: "40px",
           "& .MuiToggleButton-root": {
             border: "none",
             borderRadius: "8px",
             px: 3,
-            py: 1.2,
+            py: 0,
+            height: "100%",
             gap: 1,
             color: "#94a3b8",
             fontWeight: 600,

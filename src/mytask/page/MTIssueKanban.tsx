@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import type { KanbanIssue } from "../../common/Kanban/type";
 import type { IssueListItem } from "../../issue/type/type";
 import { getKanbanIssuesMT } from "../../issue/api/issueApi";
+import { SearchBar } from "../../common/SearchBar/SearchBar";
 
 export type KanbanData = Record<string, KanbanIssue[]>;
 
@@ -21,9 +22,12 @@ export default function MTIssueKanban() {
     done: [],
     delay: [],
   });
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    getKanbanIssuesMT(member!.memberId).then(
+    if (!member?.memberId) return;
+
+    getKanbanIssuesMT(member.memberId, searchQuery).then(
       (res: {
         inProgress: IssueListItem[];
         completed: IssueListItem[];
@@ -41,12 +45,17 @@ export default function MTIssueKanban() {
         });
       }
     );
-  }, []);
+  }, [searchQuery, member?.memberId]);
 
   return (
     <>
       {/* 타이틀 */}
-      <Box mb={2}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="flex-end"
+        mb={3}
+      >
         {/* 아래 여백 */}
         <Typography
           variant="h4" // 글자 크기
@@ -56,6 +65,9 @@ export default function MTIssueKanban() {
         >
           이슈
         </Typography>
+        {role === "USER" && (
+          <AddButton onClick={() => navigate("/issue/create")} />
+        )}
       </Box>
       {/* 헤더 */}
       <PageHeader>
@@ -65,10 +77,7 @@ export default function MTIssueKanban() {
             { label: "칸반", value: "kanban", path: "/mytask/issue/kanban" },
           ]}
         />
-
-        {role === "USER" && (
-          <AddButton onClick={() => navigate("/issue/create")} />
-        )}
+        <SearchBar onSearch={setSearchQuery} placeholder="검색" />
       </PageHeader>
 
       {/* 칸반 */}
