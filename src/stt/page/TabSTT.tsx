@@ -519,7 +519,6 @@ export default function TabSTT({
       <Box display="flex" alignItems="center" mb={1} gap={1}>
         {/* STT 버튼들 */}
         <Tabs
-          key={`${selectedSttId}-${stts.length}`} 
           value={selectedSttId}
           onChange={handleTabChange}
           variant="scrollable"
@@ -595,10 +594,16 @@ export default function TabSTT({
       <div className="relative">
         {findSttById(selectedSttId)?.isLoading && !findSttById(selectedSttId)?.isTemp ? (
           <div className="absolute inset-0 bg-black/20 backdrop-blur-none z-40 flex items-center justify-center rounded-lg">
-            <div className="bg-white/50 p-6 rounded-xl shadow-2xl flex flex-col items-center gap-3">
+            <div className="bg-white/50 px-6 py-3 rounded-xl shadow-2xl flex flex-col items-center gap-1">
               <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin">
               </div>
-              {`${findSttById(selectedSttId)?.progress ?? 0}%`}
+              {findSttById(selectedSttId)?.status === "PROCESSING" &&
+              <Typography padding={0} margin={0}>변환중..</Typography>
+              }
+              {findSttById(selectedSttId)?.status === "SUMMARIZING" &&
+              <Typography padding={0} margin={0}>요약중..</Typography>
+              }
+              <Typography>{`${findSttById(selectedSttId)?.progress ?? 0}%`}</Typography>
             </div>
           </div>
         ) : <></>}
