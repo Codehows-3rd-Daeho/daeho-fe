@@ -15,12 +15,15 @@ const formatTime = (seconds: number) => {
 };
 
 const RecordingIndicator = () => {
-  const { isRecording, recordingTime, recordingStatus, meetingId } = useRecordingStore();
+  const { getActiveRecordingDetails } = useRecordingStore();
+  const activeRecording = getActiveRecordingDetails();
   const navigate = useNavigate();
 
-  if (!isRecording()) {
+  if (!activeRecording) {
     return null;
   }
+
+  const { recordingTime, recordingStatus, meetingId } = activeRecording;
 
   const handleClick = () => {
     if (meetingId) {

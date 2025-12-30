@@ -46,6 +46,7 @@ interface RecordingState {
   cancelRecording: (sttId: number) => Promise<void>;
   getSessionState: (sttId: number) => SessionState | undefined;
   handleLastChunk: () => Promise<void>;
+  getActiveRecordingDetails: () => (SessionState & { meetingId: string }) | null;
 }
 
 const useRecordingStore = create<RecordingState>((set, get) => {
@@ -290,6 +291,22 @@ const useRecordingStore = create<RecordingState>((set, get) => {
         console.log(`Handling last chunk for active recording session: ${activeSttId}`);
         await stopRecording(activeSttId);
       }
+    },
+
+    getActiveRecordingDetails: () => {
+      const { sessionStates } = get();
+      for (const sessionState of sessionStates.values()) {
+        if (sessionState.recordingStatus === "recording" || sessionState.recordingStatus === "paused") {
+          const session = sessions.get(sessionState.sttId);
+          if (session) {
+            return {
+              ...sessionState,
+              meetingId: session.stt.meetingId,
+            };
+          }
+        }
+      }
+      return null;
     },
   };
 });
