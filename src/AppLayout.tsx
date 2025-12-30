@@ -11,13 +11,14 @@ type AppLayoutProps = {
   children: ReactNode;
 };
 
-function usePreventPageLeave(shouldPrevent: boolean, message: string) {
+function usePreventPageLeave(shouldPrevent: boolean, message: string, handleLastChunk: () => void) {
   useEffect(() => {
     if (!shouldPrevent) return;
 
     const handleBeforeUnload = (e: { preventDefault: () => void; returnValue: string; }) => {
       e.preventDefault();
       e.returnValue = message;
+      handleLastChunk();
       return message;
     };
 
@@ -29,7 +30,7 @@ function usePreventPageLeave(shouldPrevent: boolean, message: string) {
   }, [message, shouldPrevent]);
 }
 
-function useBlockRouterNavigation(shouldBlock: boolean, message: string) {
+function useBlockRouterNavigation(shouldBlock: boolean, message: string, handleLastChunk: () => void) {
   const isBlockingRef = useRef(false);
 
   useEffect(() => {
@@ -51,6 +52,7 @@ function useBlockRouterNavigation(shouldBlock: boolean, message: string) {
           e.stopPropagation();
           
           if (window.confirm(message)) {
+            handleLastChunk();
             isBlockingRef.current = false;
             link.click();
           }
@@ -67,7 +69,7 @@ function useBlockRouterNavigation(shouldBlock: boolean, message: string) {
   }, [shouldBlock, message]);
 }
 
-function useBlockNavigation(shouldBlock: boolean, message: string) {
+function useBlockNavigation(shouldBlock: boolean, message: string, handleLastChunk: () => void) {
   useEffect(() => {
     if (!shouldBlock) return;
 
@@ -82,6 +84,8 @@ function useBlockNavigation(shouldBlock: boolean, message: string) {
         isNavigating = true;
         window.history.pushState(null, '', window.location.href);
         isNavigating = false;
+      }else {
+        handleLastChunk();
       }
     };
 
@@ -95,17 +99,17 @@ function useBlockNavigation(shouldBlock: boolean, message: string) {
 }
 
 
-export function AppLayout({ children }: AppLayoutProps) {
+export default function AppLayout({ children }: AppLayoutProps) {
   const { member } = useAuthStore();
   const [collapsed, setCollapsed] = useState(false); // 사이드바 접기 상태
 
-  const { isRecording } = useRecordingStore();
+  const { isRecording, handleLastChunk } = useRecordingStore();
   const isCurrentlyRecording = isRecording();
   const confirmationMessage = "페이지를 벗어나면 녹음이 중단됩니다. 계속하시겠습니까?";
 
-  usePreventPageLeave(isCurrentlyRecording, confirmationMessage);
-  useBlockRouterNavigation(isCurrentlyRecording, confirmationMessage);
-  useBlockNavigation(isCurrentlyRecording, confirmationMessage);
+  usePreventPageLeave(isCurrentlyRecording, confirmationMessage, handleLastChunk);
+  useBlockRouterNavigation(isCurrentlyRecording, confirmationMessage, handleLastChunk);
+  useBlockNavigation(isCurrentlyRecording, confirmationMessage, handleLastChunk);
 
   const handleToggleSidebar = () => setCollapsed((prev) => !prev);
 
