@@ -30,7 +30,7 @@ export default function Header({ name, jobPosition }: HeaderProps) {
       position="fixed"
       sx={{
         backgroundColor: "#fff",
-        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+        boxShadow: "none",
       }}
     >
       <Toolbar sx={{ justifyContent: "flex-end", gap: 2 }}>

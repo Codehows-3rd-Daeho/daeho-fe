@@ -145,12 +145,14 @@ export default function Breadcrumb() {
           });
 
           return (
-            <li key={to} className="flex items-center">
+            <li key={to} className="flex items-center  min-w-[30px]">
               {index !== 0 && <span className="mx-2">/</span>}
               {isLast || !isValidLink ? (
-                <span className="text-gray-700 font-semibold">{name}</span>
+                <span className="text-gray-700 font-semibold min-w-[30px]">
+                  {name}
+                </span>
               ) : (
-                <Link to={to} className="hover:text-gray-700">
+                <Link to={to} className="hover:text-gray-700 min-w-[30px]">
                   {name}
                 </Link>
               )}

@@ -114,6 +114,7 @@ export default function MeetingList() {
           component="h1"
           textAlign="left"
           fontWeight="bold"
+          minWidth={100}
         >
           회의
         </Typography>

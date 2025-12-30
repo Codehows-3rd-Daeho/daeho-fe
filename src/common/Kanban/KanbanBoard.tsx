@@ -47,7 +47,7 @@ export function KanbanBoard({
       </div>
 
       {/* 하단 설명 툴팁 박스 */}
-      <div className="mt-4 p-2 text-center text-xs text-gray-600 bg-gray-200 rounded-lg max-w-lg mx-auto">
+      <div className="mt-4 p-2 text-center text-xs text-gray-600 bg-gray-200 rounded-lg min-w-30 max-w-lg mx-auto ">
         최근등록 기준으로 표기됩니다
       </div>
     </div>

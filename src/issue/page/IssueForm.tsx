@@ -137,7 +137,8 @@ export default function IssueForm({
           gap: 3,
           p: 3,
           bgcolor: "#f5f5f5",
-          minWidth: "1000px",
+          minWidth: "400px",
+          flexDirection: { xs: "column-reverse", md: "row" }, // 모바일: 세로(2,1), 데스크탑: 가로(1,2)
         }}
       >
         {/* 왼쪽 섹션 */}

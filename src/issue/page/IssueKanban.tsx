@@ -83,6 +83,7 @@ export default function IssueKanban() {
           component="h1"
           textAlign="left" // 왼쪽 정렬
           fontWeight="bold" // 볼드
+          minWidth={100}
         >
           이슈
         </Typography>

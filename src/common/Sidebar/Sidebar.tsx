@@ -83,304 +83,317 @@ export default function Sidebar({
         },
       }}
     >
-      {/* 로고 */}
-      <Toolbar
+      <Box
         sx={{
-          px: 0,
-          py: 2,
-          minHeight: collapsed ? 64 : undefined,
-          display: "flex",
-          justifyContent: "center",
+          flexGrow: 1, //Drawer 높이에 맞춰 남은 공간을 메뉴 리스트가 채움
+          overflowY: "auto", //자동 스크롤
+          "&::-webkit-scrollbar": { display: "none" }, // 웹킷 브라우저용 스크롤바 스타일
+          scrollbarWidth: "none", //스크롤바 숨김
         }}
       >
-        {!collapsed ? (
-          <Box
-            display="flex"
-            alignItems="center"
-            sx={{ cursor: "pointer", py: 3.7 }}
-            onClick={() => navigate("/")}
-          >
-            <img
-              src="/daehologo.gif"
-              alt="로고"
-              style={{ width: 244, height: 50 }}
-            />
-          </Box>
-        ) : (
-          <Box
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            sx={{ height: 110 }}
-          >
-            <IconButton onClick={() => navigate("/")}>
-              <HomeIcon />
-            </IconButton>
-          </Box>
-        )}
-        <IconButton
-          onClick={onToggle}
+        {/* 로고 */}
+        <Toolbar
           sx={{
-            position: "absolute",
-            right: -20,
-            top: "50%",
-            transform: "translateY(-50%)",
-            backgroundColor: "#fff",
-            border: "1px solid #ccc",
-            "&:hover": { backgroundColor: "#f0f0f0" },
-            zIndex: 10,
+            px: 0,
+            py: 2,
+            minHeight: collapsed ? 64 : undefined,
+            display: "flex",
+            justifyContent: "center",
           }}
         >
-          {collapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-        </IconButton>
-      </Toolbar>
-      <Divider />
-      {/* 일반 메뉴 */}
-      <List>
-        {userMenu.map((item) => {
-          const children = item.children || [];
-          const hasChildren = children.length > 0;
-          const isParentSelected =
-            hasChildren && children.some((child) => child.id === selectedId);
-          return (
-            <React.Fragment key={item.id}>
-              <ListItemButton
-                disabled={item.disabled}
-                selected={selectedId === item.id || isParentSelected}
-                onClick={() => {
-                  if (hasChildren) handleToggle(item.id);
-                  else if (item.href) navigate(item.href);
-                }}
-                sx={{
-                  minHeight: 48,
-                  py: 2,
-                  px: 2,
-                }}
-              >
-                <ListItemIcon
+          {!collapsed ? (
+            <Box
+              display="flex"
+              alignItems="center"
+              sx={{ cursor: "pointer", py: 3.7 }}
+              onClick={() => navigate("/")}
+            >
+              <img
+                src="/daehologo.gif"
+                alt="로고"
+                style={{ width: 244, height: 50 }}
+              />
+            </Box>
+          ) : (
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              sx={{ height: 110 }}
+            >
+              <IconButton onClick={() => navigate("/")}>
+                <HomeIcon />
+              </IconButton>
+            </Box>
+          )}
+          <IconButton
+            onClick={onToggle}
+            sx={{
+              position: "absolute",
+              right: -20,
+              top: "50%",
+              transform: "translateY(-50%)",
+              backgroundColor: "#fff",
+              border: "1px solid #ccc",
+              "&:hover": { backgroundColor: "#f0f0f0" },
+              zIndex: 10,
+            }}
+          >
+            {collapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+          </IconButton>
+        </Toolbar>
+        <Divider />
+        {/* 일반 메뉴 */}
+
+        <List>
+          {userMenu.map((item) => {
+            const children = item.children || [];
+            const hasChildren = children.length > 0;
+            const isParentSelected =
+              hasChildren && children.some((child) => child.id === selectedId);
+            return (
+              <React.Fragment key={item.id}>
+                <ListItemButton
+                  disabled={item.disabled}
+                  selected={selectedId === item.id || isParentSelected}
+                  onClick={() => {
+                    if (hasChildren) handleToggle(item.id);
+                    else if (item.href) navigate(item.href);
+                  }}
                   sx={{
-                    minWidth: 40,
-                    mr: 1.5,
-                    justifyContent: "center",
+                    minHeight: 48,
+                    py: 2,
+                    px: 2,
                   }}
                 >
-                  <Tooltip
-                    title={item.label}
-                    placement="right"
-                    arrow
-                    disableInteractive={!collapsed}
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 40,
+                      mr: 1.5,
+                      justifyContent: "center",
+                    }}
                   >
-                    <Box display="inline-flex">
-                      {item.badge ? (
-                        <Badge badgeContent={item.badge} color="primary">
-                          {item.icon ?? <HomeIcon />}
-                        </Badge>
-                      ) : (
-                        item.icon ?? <HomeIcon />
-                      )}
-                    </Box>
-                  </Tooltip>
-                </ListItemIcon>
+                    <Tooltip
+                      title={item.label}
+                      placement="right"
+                      arrow
+                      disableInteractive={!collapsed}
+                    >
+                      <Box display="inline-flex">
+                        {item.badge ? (
+                          <Badge badgeContent={item.badge} color="primary">
+                            {item.icon ?? <HomeIcon />}
+                          </Badge>
+                        ) : (
+                          item.icon ?? <HomeIcon />
+                        )}
+                      </Box>
+                    </Tooltip>
+                  </ListItemIcon>
 
-                <ListItemText
-                  primary={item.label}
-                  sx={{
-                    opacity: collapsed ? 0 : 1,
-                    pointerEvents: collapsed ? "none" : "auto",
-                    width: collapsed ? 0 : "auto",
-                    transition: "opacity 0.2s ease",
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                  }}
-                  slotProps={{
-                    primary: {
-                      sx: {
-                        fontWeight:
-                          selectedId === item.id || isParentSelected
-                            ? 700
-                            : 500,
+                  <ListItemText
+                    primary={item.label}
+                    sx={{
+                      opacity: collapsed ? 0 : 1,
+                      pointerEvents: collapsed ? "none" : "auto",
+                      width: collapsed ? 0 : "auto",
+                      transition: "opacity 0.2s ease",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                    }}
+                    slotProps={{
+                      primary: {
+                        sx: {
+                          fontWeight:
+                            selectedId === item.id || isParentSelected
+                              ? 700
+                              : 500,
+                        },
                       },
-                    },
-                  }}
-                />
+                    }}
+                  />
 
-                <Box
-                  sx={{
-                    width: 24,
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    opacity: collapsed ? 0 : 1,
-                    pointerEvents: collapsed ? "none" : "auto",
-                    transition: "opacity 0.2s ease",
-                  }}
-                >
-                  {hasChildren &&
-                    (open[item.id] ? <ExpandLess /> : <ExpandMore />)}
-                </Box>
-              </ListItemButton>
-              {hasChildren && (
-                <Collapse in={open[item.id]} timeout="auto">
-                  <List component="div" disablePadding>
-                    {children.map((child) => (
-                      <ListItemButton
-                        key={child.id}
-                        sx={{ pl: 4 }}
-                        selected={child.id === selectedId}
-                        onClick={() => {
-                          onSelect?.(child.id);
-                          if (child.href) navigate(child.href);
-                        }}
-                      >
-                        <ListItemIcon
-                          sx={{
-                            minWidth: 40,
-                            mr: 1.5,
-                            justifyContent: "center",
+                  <Box
+                    sx={{
+                      width: 24,
+                      display: "flex",
+                      justifyContent: "center",
+                      alignItems: "center",
+                      opacity: collapsed ? 0 : 1,
+                      pointerEvents: collapsed ? "none" : "auto",
+                      transition: "opacity 0.2s ease",
+                    }}
+                  >
+                    {hasChildren &&
+                      (open[item.id] ? <ExpandLess /> : <ExpandMore />)}
+                  </Box>
+                </ListItemButton>
+                {hasChildren && (
+                  <Collapse in={open[item.id]} timeout="auto">
+                    <List component="div" disablePadding>
+                      {children.map((child) => (
+                        <ListItemButton
+                          key={child.id}
+                          sx={{ pl: 4 }}
+                          selected={child.id === selectedId}
+                          onClick={() => {
+                            onSelect?.(child.id);
+                            if (child.href) navigate(child.href);
                           }}
                         >
-                          {child.icon ?? null}
-                        </ListItemIcon>
-
-                        <ListItemText
-                          primary={child.label}
-                          sx={{
-                            opacity: collapsed ? 0 : 1,
-                            pointerEvents: collapsed ? "none" : "auto",
-                            width: collapsed ? 0 : "auto",
-                            transition: "opacity 0.2s ease",
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                          }}
-                          slotProps={{
-                            primary: {
-                              sx: {
-                                fontWeight: child.id === selectedId ? 700 : 500,
-                              },
-                            },
-                          }}
-                        />
-                      </ListItemButton>
-                    ))}
-                  </List>
-                </Collapse>
-              )}
-            </React.Fragment>
-          );
-        })}
-      </List>
-      {/* 관리자 메뉴 */}
-      {adminMenu && role === "ADMIN" && (
-        <>
-          <Divider />
-          <List>
-            {(() => {
-              const adminChildren = adminMenu.children || [];
-              const isAdminParentSelected = adminChildren.some(
-                (child) => child.id === selectedId
-              );
-              return (
-                <React.Fragment key={adminMenu.id}>
-                  <ListItemButton
-                    selected={
-                      selectedId === adminMenu.id || isAdminParentSelected
-                    }
-                    onClick={() => {
-                      if (adminChildren.length > 0) handleToggle(adminMenu.id);
-                      else if (adminMenu.href) navigate(adminMenu.href);
-                    }}
-                    sx={{ px: 2 }}
-                  >
-                    <ListItemIcon
-                      sx={{
-                        minWidth: 40,
-                        mr: 1.5,
-                        justifyContent: "center",
-                      }}
-                    >
-                      {adminMenu.icon ?? <HomeIcon />}
-                    </ListItemIcon>
-
-                    <ListItemText
-                      primary={adminMenu.label}
-                      sx={{
-                        opacity: collapsed ? 0 : 1,
-                        pointerEvents: collapsed ? "none" : "auto",
-                        width: collapsed ? 0 : "auto",
-                        transition: "opacity 0.2s ease",
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                      }}
-                      slotProps={{
-                        primary: {
-                          sx: {
-                            fontWeight:
-                              selectedId === adminMenu.id ||
-                              isAdminParentSelected
-                                ? 700
-                                : 500,
-                          },
-                        },
-                      }}
-                    />
-
-                    {!collapsed &&
-                      adminChildren.length > 0 &&
-                      (open[adminMenu.id] ? <ExpandLess /> : <ExpandMore />)}
-                  </ListItemButton>
-                  {adminChildren.length > 0 && (
-                    <Collapse in={open[adminMenu.id]} timeout="auto">
-                      <List component="div" disablePadding>
-                        {adminChildren.map((child) => (
-                          <ListItemButton
-                            key={child.id}
-                            sx={{ pl: 4 }}
-                            selected={child.id === selectedId}
-                            onClick={() => {
-                              onSelect?.(child.id);
-                              if (child.href) navigate(child.href);
+                          <ListItemIcon
+                            sx={{
+                              minWidth: 40,
+                              mr: 1.5,
+                              justifyContent: "center",
                             }}
                           >
-                            <ListItemIcon
-                              sx={{
-                                minWidth: 40,
-                                mr: 1.5,
-                                justifyContent: "center",
+                            {child.icon ?? null}
+                          </ListItemIcon>
+
+                          <ListItemText
+                            primary={child.label}
+                            sx={{
+                              opacity: collapsed ? 0 : 1,
+                              pointerEvents: collapsed ? "none" : "auto",
+                              width: collapsed ? 0 : "auto",
+                              transition: "opacity 0.2s ease",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                            }}
+                            slotProps={{
+                              primary: {
+                                sx: {
+                                  fontWeight:
+                                    child.id === selectedId ? 700 : 500,
+                                },
+                              },
+                            }}
+                          />
+                        </ListItemButton>
+                      ))}
+                    </List>
+                  </Collapse>
+                )}
+              </React.Fragment>
+            );
+          })}
+        </List>
+
+        {/* 관리자 메뉴 */}
+        {adminMenu && role === "ADMIN" && (
+          <>
+            <Divider />
+            <List>
+              {(() => {
+                const adminChildren = adminMenu.children || [];
+                const isAdminParentSelected = adminChildren.some(
+                  (child) => child.id === selectedId
+                );
+                return (
+                  <React.Fragment key={adminMenu.id}>
+                    <ListItemButton
+                      selected={
+                        selectedId === adminMenu.id || isAdminParentSelected
+                      }
+                      onClick={() => {
+                        if (adminChildren.length > 0)
+                          handleToggle(adminMenu.id);
+                        else if (adminMenu.href) navigate(adminMenu.href);
+                      }}
+                      sx={{ px: 2 }}
+                    >
+                      <ListItemIcon
+                        sx={{
+                          minWidth: 40,
+                          mr: 1.5,
+                          justifyContent: "center",
+                        }}
+                      >
+                        {adminMenu.icon ?? <HomeIcon />}
+                      </ListItemIcon>
+
+                      <ListItemText
+                        primary={adminMenu.label}
+                        sx={{
+                          opacity: collapsed ? 0 : 1,
+                          pointerEvents: collapsed ? "none" : "auto",
+                          width: collapsed ? 0 : "auto",
+                          transition: "opacity 0.2s ease",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                        }}
+                        slotProps={{
+                          primary: {
+                            sx: {
+                              fontWeight:
+                                selectedId === adminMenu.id ||
+                                isAdminParentSelected
+                                  ? 700
+                                  : 500,
+                            },
+                          },
+                        }}
+                      />
+
+                      {!collapsed &&
+                        adminChildren.length > 0 &&
+                        (open[adminMenu.id] ? <ExpandLess /> : <ExpandMore />)}
+                    </ListItemButton>
+                    {adminChildren.length > 0 && (
+                      <Collapse in={open[adminMenu.id]} timeout="auto">
+                        <List component="div" disablePadding>
+                          {adminChildren.map((child) => (
+                            <ListItemButton
+                              key={child.id}
+                              sx={{ pl: 4 }}
+                              selected={child.id === selectedId}
+                              onClick={() => {
+                                onSelect?.(child.id);
+                                if (child.href) navigate(child.href);
                               }}
                             >
-                              {child.icon ?? null}
-                            </ListItemIcon>
+                              <ListItemIcon
+                                sx={{
+                                  minWidth: 40,
+                                  mr: 1.5,
+                                  justifyContent: "center",
+                                }}
+                              >
+                                {child.icon ?? null}
+                              </ListItemIcon>
 
-                            <ListItemText
-                              primary={child.label}
-                              sx={{
-                                opacity: collapsed ? 0 : 1,
-                                pointerEvents: collapsed ? "none" : "auto",
-                                width: collapsed ? 0 : "auto",
-                                transition: "opacity 0.2s ease",
-                                whiteSpace: "nowrap",
-                                overflow: "hidden",
-                              }}
-                              slotProps={{
-                                primary: {
-                                  sx: {
-                                    fontWeight:
-                                      child.id === selectedId ? 700 : 500,
+                              <ListItemText
+                                primary={child.label}
+                                sx={{
+                                  opacity: collapsed ? 0 : 1,
+                                  pointerEvents: collapsed ? "none" : "auto",
+                                  width: collapsed ? 0 : "auto",
+                                  transition: "opacity 0.2s ease",
+                                  whiteSpace: "nowrap",
+                                  overflow: "hidden",
+                                }}
+                                slotProps={{
+                                  primary: {
+                                    sx: {
+                                      fontWeight:
+                                        child.id === selectedId ? 700 : 500,
+                                    },
                                   },
-                                },
-                              }}
-                            />
-                          </ListItemButton>
-                        ))}
-                      </List>
-                    </Collapse>
-                  )}
-                </React.Fragment>
-              );
-            })()}
-          </List>
-        </>
-      )}
+                                }}
+                              />
+                            </ListItemButton>
+                          ))}
+                        </List>
+                      </Collapse>
+                    )}
+                  </React.Fragment>
+                );
+              })()}
+            </List>
+          </>
+        )}
+      </Box>
       {/* Logout */}
       <Box flexGrow={1} />
       <Divider />

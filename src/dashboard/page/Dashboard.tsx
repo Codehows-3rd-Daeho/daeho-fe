@@ -242,7 +242,7 @@ export default function Dashboard() {
       }}
     >
       {/* 헤더 */}
-      <Box className="flex gap-6 mb-6 text-sm">
+      <Box className="flex gap-6 mb-6 text-sm w-100">
         <Box>
           전체 진행중인 이슈 <strong>{issueCount}</strong>개
         </Box>
@@ -258,6 +258,7 @@ export default function Dashboard() {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          minWidth: 300,
         }}
       >
         <Typography variant="h5" sx={{ fontWeight: "bold" }}>
@@ -287,6 +288,7 @@ export default function Dashboard() {
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          minWidth: 300,
         }}
       >
         <Typography variant="h5" sx={{ fontWeight: "bold" }}>
@@ -312,6 +314,7 @@ export default function Dashboard() {
           flexDirection: { xs: "column", sm: "row" },
           gap: 1.5,
           py: 1,
+          minWidth: 300,
         }}
       >
         <Typography variant="h5" sx={{ fontWeight: "bold" }}>
@@ -342,6 +345,7 @@ export default function Dashboard() {
             justifyContent: "center",
             alignItems: "center",
             mb: 2,
+            minWidth: 300,
           }}
         >
           <Typography fontSize={20} fontWeight={600}>
@@ -355,6 +359,7 @@ export default function Dashboard() {
               display: "grid",
               gridTemplateColumns: "repeat(7, 1fr)",
               mb: 1,
+              minWidth: 1200,
             }}
           >
             {days.map((d) => (
