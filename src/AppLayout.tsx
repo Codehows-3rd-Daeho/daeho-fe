@@ -54,10 +54,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
       </div>
 
       <div className="flex flex-col flex-1 overflow-hidden">
-        <header className="h-[62px] shrink-0 ">
+        <header className="h-[60px] shrink-0 ">
           <Header
             name={member?.name ?? ""}
             jobPosition={member?.jobPosition ?? ""}
+            profileUrl={member?.profileUrl ?? ""}
             notifications={[]}
           />
         </header>

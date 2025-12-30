@@ -1,12 +1,19 @@
-import { AppBar, Toolbar, IconButton, Typography, Box } from "@mui/material";
+import {
+  AppBar,
+  Toolbar,
+  IconButton,
+  Typography,
+  Box,
+  Avatar,
+} from "@mui/material";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import type { HeaderProps } from "./type";
 import NotificationDropdown from "../../webpush/page/NotificationDropdown";
 import { useEffect, useState } from "react";
 import { getUnreadNotificationCount } from "../../webpush/api/notificationApi";
-import type { ApiError } from "../../config/httpClient";
+import { BASE_URL, type ApiError } from "../../config/httpClient";
 
-export default function Header({ name, jobPosition }: HeaderProps) {
+export default function Header({ name, jobPosition, profileUrl }: HeaderProps) {
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -75,7 +82,13 @@ export default function Header({ name, jobPosition }: HeaderProps) {
           sx={{ color: "#333" }}
           onClick={() => (window.location.href = "/mypage")}
         >
-          <AccountCircleIcon fontSize="large" />
+          <Avatar
+            src={profileUrl ? `${BASE_URL}${profileUrl}` : undefined}
+            sx={{ width: 40, height: 40 }}
+          >
+            {/* 이미지 없을 때 fallback 아이콘 */}
+            <AccountCircleIcon fontSize="large" />
+          </Avatar>
         </IconButton>
       </Toolbar>
     </AppBar>

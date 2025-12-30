@@ -49,6 +49,7 @@ export default function Login() {
         memberId: res.memberId,
         name: res.name,
         jobPosition: res.jobPosition,
+        profileUrl: res.profileUrl,
         role: res.role,
       });
 

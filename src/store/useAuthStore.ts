@@ -11,6 +11,7 @@ type MemberInfo = {
   memberId: number;
   name: string;
   jobPosition: string;
+  profileUrl: string;
   role: string;
 };
 
@@ -27,6 +28,7 @@ export const useAuthStore = create<AuthStore>((set) => {
       localStorage.setItem("jwt", token);
       localStorage.setItem("member", JSON.stringify(member));
       set({ token, isAuthenticated: true, member });
+      console.log("member: ", member);
     },
     logout: () => {
       localStorage.removeItem("jwt");
