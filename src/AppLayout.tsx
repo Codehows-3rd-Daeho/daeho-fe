@@ -98,13 +98,11 @@ function useBlockNavigation(shouldBlock: boolean, message: string, handleLastChu
   }, [shouldBlock, message]);
 }
 
-
 export default function AppLayout({ children }: AppLayoutProps) {
   const { member } = useAuthStore();
   const [collapsed, setCollapsed] = useState(false); // 사이드바 접기 상태
-
-  const { isRecording, handleLastChunk } = useRecordingStore();
-  const isCurrentlyRecording = isRecording();
+  const { isAnyRecordingActive, handleLastChunk } = useRecordingStore();
+  const isCurrentlyRecording = isAnyRecordingActive();
   const confirmationMessage = "페이지를 벗어나면 녹음이 중단됩니다. 계속하시겠습니까?";
 
   usePreventPageLeave(isCurrentlyRecording, confirmationMessage, handleLastChunk);

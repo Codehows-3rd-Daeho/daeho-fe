@@ -45,6 +45,7 @@ interface RecordingState {
   confirmUpload: (sttId: number) => Promise<STT | null>;
   cancelRecording: (sttId: number) => Promise<void>;
   getSessionState: (sttId: number) => SessionState | undefined;
+  handleLastChunk: () => Promise<void>;
 }
 
 const useRecordingStore = create<RecordingState>((set, get) => {
@@ -271,6 +272,23 @@ const useRecordingStore = create<RecordingState>((set, get) => {
         await deleteSTT(sttId);
       } catch (error) {
         console.error("Failed to delete STT on cancel:", error);
+      }
+    },
+
+    handleLastChunk: async () => {
+      const { sessionStates, stopRecording } = get();
+      let activeSttId: number | null = null;
+  
+      for (const sessionState of sessionStates.values()) {
+        if (sessionState.recordingStatus === "recording" || sessionState.recordingStatus === "paused") {
+          activeSttId = sessionState.sttId;
+          break;
+        }
+      }
+  
+      if (activeSttId !== null) {
+        console.log(`Handling last chunk for active recording session: ${activeSttId}`);
+        await stopRecording(activeSttId);
       }
     },
   };
