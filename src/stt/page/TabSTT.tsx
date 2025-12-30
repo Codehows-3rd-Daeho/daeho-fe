@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type SetStateAction } from "react";
+import { useCallback, useEffect, useRef, useState, type SetStateAction } from "react";
 import { getSTT, getSTTs, updateSummary, uploadSTT } from "../api/sttApi";
 import {
   Box,
@@ -82,16 +82,34 @@ export default function TabSTT({
   const { member } = useAuthStore();
   const role = member?.role;
 
+  const { 
+    stt: recordingStt, 
+    recordingStatus, 
+    recordingTime,
+    startRecording,
+    pauseRecording,
+    resumeRecording,
+    stopRecording,
+    confirmUpload,
+    cancelRecording,
+    isRecording,
+  } = useRecordingStore();
+  const isCurrentlyRecording = isRecording();
+  
+  const [stts, setStts] = useState<STTWithRecording[]>([]);
+  const [selectedSttId, setSelectedSttId] = useState<number | null>(null);
+  const sttPollingIntervalRef = useRef<Map<number, number>>(new Map());
+  const deletingIds = useRef<Set<number>>(new Set());
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+
   const handleError = (error: unknown, msg: string) => {
     if (axios.isAxiosError(error) && error.response?.status === 401) return;
     alert(msg);
   };
   
   {/* STT */}
-  const [stts, setStts] = useState<STTWithRecording[]>([]);
-  const [selectedSttId, setSelectedSttId] = useState<number | null>(null);
-  const sttPollingIntervalRef = useRef<Map<number, number>>(new Map());
-  
   const startSttPolling = (sttId: number, pollingRate: number) => {
     if(!meetingId) return;
     sttPollingIntervalRef.current.set(sttId, setInterval( async () => {
@@ -171,49 +189,32 @@ export default function TabSTT({
     fetch();
   }, [meetingId]);
 
-  const handleDelete = async (sttId: number) => {
-    if(!meetingId) return;
-    const sttToDelete = findSttById(sttId);
-    if (!sttToDelete || !window.confirm("음성 파일을 삭제하시겠습니까?")) return;
-    if (sttToDelete.id === recordingStt?.id && isCurrentlyRecording) {
-      alert("녹음 중인 파일은 삭제할 수 없습니다.");
-      return;
-    }
-    try {
-      stopSttPolling(sttToDelete.id);
-      if (sttToDelete.isTemp && sttToDelete.id !== recordingStt?.id) {
-          setStts((prev) => prev.filter((stt) => stt.id !== sttId));
-          setSelectedSttId(stts[0]?.id ?? null);
-          return;
+  const handleDelete = useCallback(async (sttId: number) => {
+    if (!meetingId || deletingIds.current.has(sttId)) return;
+    
+    setStts((prev) => {
+      if (!prev.some(stt => stt.id === sttId)) return prev;
+      const sttToDelete = prev.find(stt => stt.id === sttId);
+      if (!sttToDelete || sttToDelete.id === recordingStt?.id && isCurrentlyRecording) {
+        return prev;
       }
-      if (!sttToDelete.isTemp) await cancelRecording(sttToDelete.id);
-      setStts((prev) => {
-        const updated = prev.filter((stt) => stt.id !== sttId);
-        setSelectedSttId((current) => current === sttId ? updated[0]?.id ?? null : current);
-        return updated;
-      });
-      if (!sttToDelete.isTemp) alert("음성 파일이 삭제되었습니다.");
-      fetchMeetingDetail(meetingId);
+      deletingIds.current.add(sttId);
+      stopSttPolling(sttId);
+      return prev.filter(stt => stt.id !== sttId);
+    });
+    
+    try {
+      await cancelRecording(sttId);
+      if (!sttId) alert("음성 파일이 삭제되었습니다.");
     } catch (error) {
-      handleError(error, "삭제 중 오류가 발생했습니다.")
+      fetchMeetingDetail(meetingId);
+      handleError(error, "삭제 중 오류가 발생했습니다.");
+    } finally {
+      deletingIds.current.delete(sttId);
     }
-  };
+  }, [meetingId, recordingStt?.id, isCurrentlyRecording]);
 
   {/* Recording */}
-  const { 
-    stt: recordingStt, 
-    recordingStatus, 
-    recordingTime,
-    startRecording,
-    pauseRecording,
-    resumeRecording,
-    stopRecording,
-    confirmUpload,
-    cancelRecording,
-    isRecording,
-  } = useRecordingStore();
-  const isCurrentlyRecording = isRecording();
-  
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -246,6 +247,10 @@ export default function TabSTT({
   const handleConfirmUpload = async (sttId: number | null) => {
     if (!sttId || !window.confirm("음성 파일을 등록하시겠습니까?")) return;
 
+    updateSttState(sttId, {
+      isLoading: true,
+      isTemp: false,
+    });
     try{
       const newStt = await confirmUpload(sttId);
       if (newStt) {
@@ -297,9 +302,6 @@ export default function TabSTT({
   }, [recordingStt, recordingStatus, recordingTime]);
 
   {/* File */}
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isDragOver, setIsDragOver] = useState(false);
-
   const openFileInput = () => {
     fileInputRef.current?.click();
   };
@@ -325,6 +327,10 @@ export default function TabSTT({
       !window.confirm("음성 파일을 등록하시겠습니까?")
     ) return;
 
+    updateSttState(selectedSttId, {
+      isLoading: true,
+      isTemp: false,
+    });
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -340,6 +346,10 @@ export default function TabSTT({
       startSttPolling(newStt.id, 2000);
     } catch (error) {
       handleError(error, "음성 파일 등록 중 오류가 발생했습니다.");
+      updateSttState(selectedSttId, {
+        isLoading: false,
+        isTemp: true,
+      });
     }
   };
   
@@ -398,7 +408,7 @@ export default function TabSTT({
 
   {/* Tabs */}
   const addTempSttTab = () => {
-    if(!meetingId || stts.some(stt => stt.isTemp || stt.isLoading)) return;
+    if(!meetingId) return;
     
     const NEW_STT_ID = Date.now();
     const newTempStt: STTWithRecording = {
@@ -522,11 +532,11 @@ export default function TabSTT({
         </Tabs>
       </Box>
       
-      <div className="relative">
+      <div className="relative p-3">
         {findSttById(selectedSttId)?.isLoading && !findSttById(selectedSttId)?.isTemp ? (
-          <div className="absolute inset-0 bg-black/20 backdrop-blur-none z-40 flex items-center justify-center rounded-lg">
+          <div className="absolute inset-0 bg-black/10 backdrop-blur-none z-40 flex items-center justify-center rounded-lg">
             <div className="bg-white/50 px-6 py-3 rounded-xl shadow-2xl flex flex-col items-center gap-1">
-              <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin">
+              <div className="w-10 h-10 mb-1 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin">
               </div>
               {findSttById(selectedSttId)?.status === "PROCESSING" &&
               <Typography padding={0} margin={0}>변환중..</Typography>
@@ -632,7 +642,7 @@ export default function TabSTT({
             } else {
               return (
                 <Box>
-                  <Box sx={{ display: "flex", gap: 2, alignItems: "start", mt: 3 }}>
+                  <Box sx={{ display: "flex", gap: 2, alignItems: "start" }}>
                     <Box sx={{ flex: 1 }}>
                       <Box sx={{ px: 2, pt: 2, mb: 2, bgcolor: "#fafafa", borderRadius: 1.5, "&::-webkit-scrollbar": { width: 6 }, "&::-webkit-scrollbar-thumb": { backgroundColor: "#ccc", borderRadius: 3 } }}>
                         <Box key={currentStt.file?.fileId} sx={{ display: "grid", gridTemplateColumns: "1fr 85px 120px 35px", alignItems: "center" }}>
@@ -698,7 +708,6 @@ export default function TabSTT({
                       <Box
                           sx={{
                             mt: 1,
-                            mb: 2,
                             p: 2,
                             borderRadius: 1.5,
                             bgcolor: "#fafafa",
