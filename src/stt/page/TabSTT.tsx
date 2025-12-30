@@ -698,7 +698,7 @@ export default function TabSTT({
                 <Box>
                   <Box sx={{ display: "flex", gap: 2, alignItems: "start", mt: 3 }}>
                     <Box sx={{ flex: 1 }}>
-                      <Box sx={{ px: 2, pt: 2, bgcolor: "#fafafa", borderRadius: 1.5, "&::-webkit-scrollbar": { width: 6 }, "&::-webkit-scrollbar-thumb": { backgroundColor: "#ccc", borderRadius: 3 } }}>
+                      <Box sx={{ px: 2, pt: 2, mb: 2, bgcolor: "#fafafa", borderRadius: 1.5, "&::-webkit-scrollbar": { width: 6 }, "&::-webkit-scrollbar-thumb": { backgroundColor: "#ccc", borderRadius: 3 } }}>
                         <Box key={currentStt.file?.fileId} sx={{ display: "grid", gridTemplateColumns: "1fr 85px 120px 35px", alignItems: "center" }}>
                           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                             <Box sx={{ width: 32, height: 32, bgcolor: 'gray', borderRadius: 1, display: "flex", justifyContent: "center", alignItems: "center", color: "#fff", fontSize: "0.7rem", fontWeight: 700, flexShrink: 0 }}>
@@ -716,7 +716,7 @@ export default function TabSTT({
                         </Box>
                         <AudioPlayer stts={stts} sttId={selectedSttId} />
                       </Box>
-                      <Typography>
+                      <Typography fontWeight="bold" fontSize="1.2rem">
                         요약 결과
                         {((meeting.isEditPermitted && meeting.status !== "COMPLETED") ||
                           role === "ADMIN") &&(
@@ -755,7 +755,10 @@ export default function TabSTT({
                           />
                         </Box>
                       )}
-                      <Typography>회의 내용</Typography>
+                      
+                      <Typography fontWeight="bold" fontSize="1.2rem">
+                        회의 내용
+                      </Typography>
                       <Box
                           sx={{
                             mt: 1,
