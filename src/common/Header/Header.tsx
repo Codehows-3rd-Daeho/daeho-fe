@@ -1,68 +1,38 @@
-import React, { useState } from "react";
-import {
-  AppBar,
-  Toolbar,
-  IconButton,
-  Typography,
-  Box,
-  Badge,
-  Menu,
-  MenuItem,
-} from "@mui/material";
-import NotificationsIcon from "@mui/icons-material/Notifications";
+import { AppBar, Toolbar, IconButton, Typography, Box } from "@mui/material";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import type { HeaderProps } from "./type";
+import NotificationDropdown from "../../webpush/page/NotificationDropdown";
+import { useEffect, useState } from "react";
+import { getUnreadNotificationCount } from "../../webpush/api/notificationApi";
 
-export default function Header({
-  name,
-  jobPosition,
-  notifications,
-}: HeaderProps) {
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const open = Boolean(anchorEl);
+export default function Header({ name, jobPosition }: HeaderProps) {
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  const handleClick = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-  const handleClose = () => setAnchorEl(null);
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      const count = await getUnreadNotificationCount();
+      setUnreadCount(count);
+    };
+
+    fetchUnreadCount();
+  }, []);
 
   return (
     <AppBar
       position="fixed"
       sx={{
         backgroundColor: "#fff",
-        boxShadow: "none", // 그림자 제거 (선택 사항)
+        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
       }}
     >
       <Toolbar sx={{ justifyContent: "flex-end", gap: 2 }}>
-        {/* 1️⃣ 알림 */}
-        <IconButton sx={{ color: "#333" }} onClick={handleClick}>
-          {/* 알림 있으면 빨간불 표시 */}
-          <Badge
-            variant="dot"
-            color="error"
-            invisible={notifications.length === 0}
-          >
-            <NotificationsIcon />
-          </Badge>
-        </IconButton>
-        <Menu
-          anchorEl={anchorEl}
-          open={open}
-          onClose={handleClose}
-          anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-          transformOrigin={{ vertical: "top", horizontal: "right" }}
-        >
-          {notifications.length === 0 ? (
-            <MenuItem>알림이 없습니다.</MenuItem>
-          ) : (
-            notifications.map((msg, idx) => (
-              <MenuItem key={idx}>{msg}</MenuItem>
-            ))
-          )}
-        </Menu>
+        {/* 알림 */}
+        <NotificationDropdown
+          unreadCount={unreadCount}
+          onReadNotification={() => setUnreadCount((prev) => prev - 1)}
+        />
 
-        {/* 2️⃣ 이름 + 직책 */}
+        {/* 이름 + 직책 */}
         <Box
           display="inline-flex" // inline-flex로 텍스트 길이에 맞게 가로 늘어나게
           alignItems="center"
@@ -89,11 +59,10 @@ export default function Header({
             color="text.primary"
             sx={{ whiteSpace: "nowrap" }}
           >
-            | {jobPosition}
+            {jobPosition}
           </Typography>
         </Box>
-
-        {/* 3️⃣ 마이페이지 아이콘 */}
+        {/* 마이페이지 아이콘 */}
         <IconButton
           sx={{ color: "#333" }}
           onClick={() => (window.location.href = "/mypage")}

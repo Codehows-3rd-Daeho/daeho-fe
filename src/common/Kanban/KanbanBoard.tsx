@@ -23,7 +23,7 @@ export function KanbanBoard({
   };
 
   return (
-    <div className="h-full flex flex-col bg-white p-6">
+    <div className="h-full flex flex-col pb-6 pt-6">
       <div className="mx-auto w-full flex flex-col">
         <div className="flex flex-1 gap-8">
           {columns.map((col) => {
@@ -32,13 +32,14 @@ export function KanbanBoard({
             const hasMore = fullList.length > visibleCount[col.key];
 
             return (
-              <div key={col.key} className="flex-1 min-w-[250px]">
+              <div key={col.key} className="flex-1 min-w-[300px]">
                 <KanbanColumn
                   title={col.title}
                   issues={sliced}
                   hasMore={hasMore}
                   onLoadMore={() => handleLoadMore(col.key)}
                   onClickIssue={onClickIssue}
+                  isDoneColumn={col.key === "done"}
                 />
               </div>
             );

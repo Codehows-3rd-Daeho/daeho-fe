@@ -27,11 +27,12 @@ import {
   getMeetingDtl,
   updateMeetingReadStatus,
 } from "../api/MeetingApi";
-import TabComment from "../../issue/page/component/TabComment";
-import TabLog from "../../issue/page/component/TabLog";
-import TabMeeting from "../../issue/page/component/TabMeeting";
+
 import ParticipantListModal from "../../issue/page/component/ParticipantListModal";
-import FileUploadModal from "../component/FileUploadModal";
+import FileUploadModal from "./component/FileUploadModal";
+import TabSTT from "../../stt/page/TabSTT";
+import TabComment from "./component/TabComment";
+import TabLog from "./component/TabLog";
 
 export default function MeetingDtl() {
   const { meetingId } = useParams();
@@ -204,13 +205,15 @@ export default function MeetingDtl() {
         {/* 본문 */}
         <Box
           sx={{
-            p: 3,
+            p: 2,
             bgcolor: "#fafafa",
             borderRadius: 2,
             mb: 3,
             minHeight: 200,
             lineHeight: 1.7,
-            color: "text.secondary",
+            border: "1px solid",
+            borderColor: "divider",
+            whiteSpace: "pre-line",
           }}
         >
           {meeting.content}
@@ -241,6 +244,11 @@ export default function MeetingDtl() {
           </Box>
 
           {/* 파일 리스트 */}
+          {meeting.fileList.length == 0 && (
+            <Box sx={{ textAlign: "center", color: "text.disabled", my: 2 }}>
+              등록된 파일이 없습니다.
+            </Box>
+          )}
           {meeting.fileList.map((file) => {
             const { label, color } = getFileInfo(file.originalName);
 
@@ -272,6 +280,7 @@ export default function MeetingDtl() {
                       color: "#fff",
                       fontSize: "0.7rem",
                       fontWeight: 700,
+                      flexShrink: 0,
                     }}
                   >
                     {label}
@@ -317,14 +326,14 @@ export default function MeetingDtl() {
             sx={{ mb: 2 }}
           >
             <Tab label="댓글" />
-            <Tab label="STT" />
+            <Tab label="회의 내용" />
             <Tab label="로그" />
           </Tabs>
 
           <Box p={2}>
-            {tabValue === 0 && <TabComment />}
-            {tabValue === 1 && <TabMeeting />}
-            {tabValue === 2 && <TabLog />}
+            {tabValue === 0 && <TabComment meetingId={Number(meetingId)} />}
+            {tabValue === 1 && <TabSTT />}
+            {tabValue === 2 && <TabLog meetingId={meetingId!} />}
           </Box>
         </Box>
       </Box>
@@ -583,7 +592,8 @@ export default function MeetingDtl() {
         </Box>
 
         {/* 버튼 */}
-        {(meeting.isEditPermitted || role === "ADMIN") &&
+        {((meeting.isEditPermitted && meeting.status !== "COMPLETED") ||
+          role === "ADMIN") &&
           meeting.isDel === false && (
             <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
               <Button

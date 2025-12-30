@@ -6,6 +6,7 @@ import {
   Select,
   MenuItem,
   FormControl,
+  IconButton,
 } from "@mui/material";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -14,24 +15,21 @@ import type { MasterDataType } from "../../admin/setting/type/SettingType";
 import { StaticDateTimePicker } from "@mui/x-date-pickers";
 import dayjs, { Dayjs } from "dayjs";
 import type { MeetingFormValues, MeetingMemberDto } from "../type/type";
-import type { IssueIdTitle } from "../../issue/type/type";
-import { useState } from "react";
+import type { FileDto, IssueIdTitle } from "../../issue/type/type";
+import React, { useEffect, useRef, useState } from "react";
+import { formatFileSize, getFileInfo } from "../../common/commonFunction";
+import { useNavigate } from "react-router-dom";
 
 interface MeetingFormProps {
-  //useState로 관리 됐던 애들
   formData: MeetingFormValues;
   issues: IssueIdTitle[];
   categories: MasterDataType[];
   departments: MasterDataType[];
-  // range: { startDate: Date; endDate: Date; key: string }[];
   isSaving: boolean;
   maxFileSize: number | null;
   allowedExtensions: string[] | null;
-
-  //핸들러로 관리됐던 애들
-  //   <K>: 제네릭 타입 변수
-  // keyof: IssueFormValues 타입의 키들이 문자열 리터럴 유니온 타입으로 변환 "title" | "department"
-  // extends keyof IssueFormValues → K는 반드시 IssueFormValues 속성 중 하나여야 함
+  meetingFiles?: FileDto[];
+  initialMembers?: MeetingMemberDto[];
   onChangeFormData: <K extends keyof MeetingFormValues>(
     key: K,
     value: MeetingFormValues[K]
@@ -39,6 +37,7 @@ interface MeetingFormProps {
   onIssueSelect: (selectedId: string) => void;
   onFileUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onFileRemove: (idx: number) => void;
+  onRemoveExistingFile?: (fileId: number) => void;
   onOpenFileInput: () => void;
   onDepartmentChange: (selected: string[]) => void;
   onChangeMembers: (members: MeetingMemberDto[]) => void;
@@ -56,21 +55,33 @@ export default function MeetingForm({
   isSaving,
   maxFileSize,
   allowedExtensions,
+  meetingFiles,
   onIssueSelect,
   onChangeFormData,
   onFileUpload,
   onFileRemove,
   onOpenFileInput,
+  onRemoveExistingFile,
   onDepartmentChange,
   onChangeMembers,
   onSelectDateTime,
   onSubmit,
   mode,
 }: MeetingFormProps) {
-  // ================================================================================
-  //                                     시간
-  // ================================================================================
+  const navigate = useNavigate();
 
+  // 파일 개수 변화를 감지해 새로 추가된 파일만 강조하고, 파일 목록은 항상 최신 항목이 보이도록 자동 스크롤 처리
+  const listRef = useRef<HTMLDivElement>(null);
+  const fileLength = formData.file?.length ?? 0;
+  const prevLengthRef = useRef<number>(fileLength);
+
+  useEffect(() => {
+    if (!listRef.current) return;
+    listRef.current.scrollTop = listRef.current.scrollHeight;
+    prevLengthRef.current = fileLength;
+  }, [fileLength]);
+
+  // ===================================  시간  =========================================
   const selected = dayjs(formData.startDate);
 
   const [selectedDay, setSelectedDay] = useState(selected.format("YYYY-MM-DD"));
@@ -94,6 +105,48 @@ export default function MeetingForm({
 
     // 부모에게 전달
     onSelectDateTime(value);
+  };
+
+  // 드래그 오버 시 브라우저 기본 동작 막기
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+  };
+
+  // 드롭 시 파일 처리
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (!e.dataTransfer.files || e.dataTransfer.files.length === 0) return;
+    const filesArray = Array.from(e.dataTransfer.files);
+
+    // 각 파일 검증 후 부모로 전달
+    filesArray.forEach((file) => {
+      if (
+        allowedExtensions &&
+        !allowedExtensions.includes(
+          file.name.split(".").pop()?.toLowerCase() || ""
+        )
+      ) {
+        alert(`허용되지 않은 확장자입니다: ${file.name}`);
+        return;
+      }
+      const sizeMB = file.size / 1024 / 1024;
+      if (maxFileSize && file.size / 1024 / 1024 > maxFileSize) {
+        alert(
+          `${
+            file.name
+          } 파일의 크기가 ${maxFileSize}MB를 초과했습니다.\n(현재: ${sizeMB.toFixed(
+            2
+          )}MB)`
+        );
+        return;
+      }
+
+      // 부모의 onFileUpload 호출
+      const event = {
+        target: { files: [file] },
+      } as unknown as React.ChangeEvent<HTMLInputElement>;
+      onFileUpload(event);
+    });
   };
 
   return (
@@ -160,6 +213,7 @@ export default function MeetingForm({
               id="fileUpload"
               style={{ display: "none" }}
               onChange={onFileUpload}
+              accept={allowedExtensions?.map((e) => `.${e}`).join(",") ?? ""}
             />
 
             <Box
@@ -176,6 +230,8 @@ export default function MeetingForm({
                 },
               }}
               onClick={onOpenFileInput}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
             >
               <UploadFileIcon sx={{ fontSize: 48, color: "#9e9e9e", mb: 1 }} />
               <Typography
@@ -186,64 +242,202 @@ export default function MeetingForm({
               <Typography
                 sx={{ fontSize: "0.875rem", fontWeight: 500, mb: 0.5 }}
               >
-                최대 파일 크기: {maxFileSize}MB, 허용 확장자:{" "}
-                {allowedExtensions?.join(", ")}
+                최대 파일 크기: {maxFileSize}MB <br />
+                허용 확장자: {allowedExtensions?.join(", ")}
               </Typography>
             </Box>
 
-            {formData.file && formData.file.length > 0 && (
+            {meetingFiles && meetingFiles.length > 0 && (
               <Box sx={{ mt: 2 }}>
-                {formData.file.map((file, idx) => (
-                  <Box
-                    key={idx}
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      p: 1.5,
-                      bgcolor: "#f5f5f5",
-                      borderRadius: 1.5,
-                      mb: 1,
-                    }}
-                  >
-                    <Box
-                      sx={{ display: "flex", alignItems: "center", gap: 1.5 }}
-                    >
+                <Typography
+                  sx={{ fontSize: "0.875rem", fontWeight: 600, mb: 1 }}
+                >
+                  기존 파일
+                </Typography>
+                <Box
+                  sx={{
+                    maxHeight: 300,
+                    overflowY: "auto",
+                    pr: 1,
+                    "&::-webkit-scrollbar": {
+                      width: 6,
+                    },
+                    "&::-webkit-scrollbar-thumb": {
+                      backgroundColor: "#ccc",
+                      borderRadius: 3,
+                    },
+                  }}
+                >
+                  {meetingFiles.map((file) => {
+                    const { label, color } = getFileInfo(file.originalName);
+
+                    return (
                       <Box
+                        key={file.fileId}
                         sx={{
-                          width: 40,
-                          height: 40,
-                          bgcolor: "#e0e0e0",
-                          borderRadius: 1,
                           display: "flex",
                           alignItems: "center",
-                          justifyContent: "center",
+                          justifyContent: "space-between",
+                          p: 1.5,
+                          bgcolor: "#fafafa",
+                          borderRadius: 1.5,
+                          mb: 1,
                         }}
                       >
-                        <Typography sx={{ fontSize: "1.2rem" }}>📄</Typography>
-                      </Box>
-                      <Box>
-                        <Typography
-                          sx={{ fontSize: "0.875rem", fontWeight: 500 }}
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1.5,
+                          }}
                         >
-                          {file.name}
-                        </Typography>
-                        <Typography
-                          sx={{ fontSize: "0.75rem", color: "text.secondary" }}
+                          {/* 확장자 라벨 */}
+                          <Box
+                            sx={{
+                              width: 35,
+                              height: 35,
+                              bgcolor: color,
+                              borderRadius: 1,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              color: "#fff",
+                              fontWeight: 700,
+                              fontSize: "0.75rem",
+                              flexShrink: 0,
+                            }}
+                          >
+                            {label}
+                          </Box>
+
+                          <Box>
+                            <Typography
+                              sx={{ fontSize: "0.875rem", fontWeight: 500 }}
+                            >
+                              {file.originalName}
+                            </Typography>
+                            <Typography
+                              sx={{
+                                fontSize: "0.75rem",
+                                color: "text.secondary",
+                              }}
+                            >
+                              {file.size}
+                            </Typography>
+                          </Box>
+                        </Box>
+
+                        <IconButton
+                          size="small"
+                          onClick={() =>
+                            onRemoveExistingFile
+                              ? onRemoveExistingFile(file.fileId)
+                              : null
+                          }
                         >
-                          {(file.size / 1024 / 1024).toFixed(1)}MB · Uploading
-                        </Typography>
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
                       </Box>
-                    </Box>
-                    <Button
-                      size="small"
-                      onClick={() => onFileRemove(idx)}
-                      sx={{ minWidth: "auto", p: 1 }}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </Button>
-                  </Box>
-                ))}
+                    );
+                  })}
+                </Box>
+              </Box>
+            )}
+
+            {formData.file && formData.file.length > 0 && (
+              <Box sx={{ mt: 2 }}>
+                {mode === "update" && (
+                  <Typography
+                    sx={{ fontSize: "0.875rem", fontWeight: 600, mb: 1 }}
+                  >
+                    새로 추가된 파일
+                  </Typography>
+                )}
+
+                <Box
+                  ref={listRef}
+                  sx={{
+                    maxHeight: 300,
+                    overflowY: "auto",
+                    pr: 1,
+                    "&::-webkit-scrollbar": {
+                      width: 6,
+                    },
+                    "&::-webkit-scrollbar-thumb": {
+                      backgroundColor: "#ccc",
+                      borderRadius: 3,
+                    },
+                  }}
+                >
+                  {formData.file.map((file, idx) => {
+                    const { label, color } = getFileInfo(file.name);
+
+                    return (
+                      <Box
+                        key={idx}
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          p: 1.5,
+                          bgcolor: "#f5f5f5",
+                          borderRadius: 1.5,
+                          mb: 1,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1.5,
+                          }}
+                        >
+                          {/* 확장자 라벨 */}
+                          <Box
+                            sx={{
+                              width: 35,
+                              height: 35,
+                              bgcolor: color,
+                              borderRadius: 1,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              color: "#fff",
+                              fontWeight: 700,
+                              fontSize: "0.75rem",
+                              flexShrink: 0,
+                            }}
+                          >
+                            {label}
+                          </Box>
+
+                          <Box>
+                            <Typography
+                              sx={{ fontSize: "0.875rem", fontWeight: 500 }}
+                            >
+                              {file.name}
+                            </Typography>
+                            <Typography
+                              sx={{
+                                fontSize: "0.75rem",
+                                color: "text.secondary",
+                              }}
+                            >
+                              {formatFileSize(file.size)}
+                            </Typography>
+                          </Box>
+                        </Box>
+
+                        <IconButton
+                          size="small"
+                          onClick={() => onFileRemove(idx)}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    );
+                  })}
+                </Box>
               </Box>
             )}
           </Box>
@@ -346,7 +540,7 @@ export default function MeetingForm({
                   value={formData.issue ?? ""}
                   displayEmpty
                   onChange={(e) => {
-                    onIssueSelect(e.target.value); // 상위 컴포넌트에 숫자로 전달
+                    onIssueSelect(e.target.value);
                   }}
                 >
                   {issues.map((i) => (
@@ -359,17 +553,7 @@ export default function MeetingForm({
             </Box>
 
             {/* 시작일/마감일 + 달력 */}
-            <Box sx={{ borderRadius: 2, p: 2 }}>
-              <Box sx={{ mt: 2 }}>
-                {/* 달력 (항상 표시) */}
-                <StaticDateTimePicker
-                  ampm={false}
-                  value={dayjs(`${selectedDay} ${selectedTime}`)}
-                  onChange={handleDateTimeChange}
-                  slots={{ toolbar: () => null }}
-                  slotProps={{ actionBar: { actions: [] } }}
-                />
-              </Box>
+            <Box sx={{ borderRadius: 2, p: 2, pb: 0 }}>
               <Box
                 sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
               >
@@ -411,33 +595,16 @@ export default function MeetingForm({
                   />
                 </Box>
               </Box>
-            </Box>
-
-            {/* 마감일 */}
-            <Box
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 2,
-                borderRadius: 2,
-                px: 2,
-              }}
-            >
-              <Typography
-                sx={{ fontWeight: 600, fontSize: "0.875rem", width: "80px" }}
-              >
-                마감일
-              </Typography>
-              <TextField
-                disabled
-                fullWidth
-                size="small"
-                placeholder="진행 완료 시 작성"
-                value={formData.endDate ?? ""}
-                onChange={(e) => onChangeFormData("endDate", e.target.value)}
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
-              />
+              <Box sx={{ mt: 2 }}>
+                {/* 달력 (항상 표시) */}
+                <StaticDateTimePicker
+                  ampm={false}
+                  value={dayjs(`${selectedDay} ${selectedTime}`)}
+                  onChange={handleDateTimeChange}
+                  slots={{ toolbar: () => null }}
+                  slotProps={{ actionBar: { actions: [] } }}
+                />
+              </Box>
             </Box>
 
             {/* 카테고리 */}
@@ -500,7 +667,7 @@ export default function MeetingForm({
                   sx={{ borderRadius: 1.5 }}
                 >
                   {departments.map((dep) => (
-                    <MenuItem key={dep.id} value={dep.id}>
+                    <MenuItem key={dep.id} value={String(dep.id)}>
                       {dep.name}
                     </MenuItem>
                   ))}
@@ -533,21 +700,46 @@ export default function MeetingForm({
           </Box>
 
           {/* 등록 버튼 */}
-          <Box sx={{ display: "flex" }}>
-            <Box sx={{ width: 250 }}></Box>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "flex-end",
+              width: 380,
+              gap: 1,
+            }}
+          >
             <Button
-              variant="contained"
-              onClick={onSubmit}
+              variant="outlined"
+              onClick={() => navigate(-1)}
               sx={{
+                mt: 3,
                 width: 100,
-                p: 2,
-                m: 3,
                 fontWeight: 600,
                 borderRadius: 1.5,
                 "&:hover": { boxShadow: 3 },
               }}
             >
-              {isSaving ? "등록 중..." : "등록"}
+              취소
+            </Button>
+            <Button
+              variant="contained"
+              onClick={onSubmit}
+              disabled={isSaving}
+              sx={{
+                mt: 3,
+                width: 100,
+                fontWeight: 600,
+                borderRadius: 1.5,
+                "&:hover": { boxShadow: 3 },
+              }}
+            >
+              {mode === "create"
+                ? isSaving
+                  ? "등록 중..."
+                  : "등록"
+                : isSaving
+                ? "수정 중..."
+                : "수정"}
             </Button>
           </Box>
         </Box>

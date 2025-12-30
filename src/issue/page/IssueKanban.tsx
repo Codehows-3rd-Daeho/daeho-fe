@@ -3,8 +3,7 @@ import KanbanBoard from "../../common/Kanban/KanbanBoard";
 import { PageHeader } from "../../common/PageHeader/PageHeader";
 import { Toggle } from "../../common/PageHeader/Toggle/Toggle";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
-import { Box, Typography } from "@mui/material";
-import { useAuthStore } from "../../store/useAuthStore";
+import { Box, CircularProgress, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { getKanbanIssues } from "../api/issueApi";
 import type { IssueListItem } from "../type/type";
@@ -14,8 +13,8 @@ export type KanbanData = Record<string, KanbanIssue[]>;
 
 export default function IssueKanban() {
   const navigate = useNavigate();
-  const { member } = useAuthStore();
-  const role = member?.role;
+  const [isLoading, setIsLoading] = useState(false);
+
   const [data, setData] = useState<KanbanData>({
     pending: [],
     done: [],
@@ -23,13 +22,15 @@ export default function IssueKanban() {
   });
 
   useEffect(() => {
-    getKanbanIssues().then(
-      (res: {
-        inProgress: IssueListItem[];
-        completed: IssueListItem[];
-        delayed: IssueListItem[];
-      }) => {
-        // pending에서 delay에 포함된 애 제거
+    const fetchIssues = async () => {
+      try {
+        setIsLoading(true);
+        const res: {
+          inProgress: IssueListItem[];
+          completed: IssueListItem[];
+          delayed: IssueListItem[];
+        } = await getKanbanIssues();
+
         const delayIds = new Set(res.delayed.map((item) => item.id));
         const filteredPending = res.inProgress.filter(
           (item) => !delayIds.has(item.id)
@@ -40,9 +41,32 @@ export default function IssueKanban() {
           done: res.completed,
           delay: res.delayed,
         });
+      } catch (error) {
+        console.error("칸반 이슈 조회 실패", error);
+      } finally {
+        setIsLoading(false);
       }
-    );
+    };
+
+    fetchIssues();
   }, []);
+
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "80vh",
+          width: "100%",
+          minWidth: "1000px",
+        }}
+      >
+        <CircularProgress color="primary" />
+      </Box>
+    );
+  }
 
   return (
     <>
@@ -67,9 +91,7 @@ export default function IssueKanban() {
           ]}
         />
 
-        {role === "USER" && (
-          <AddButton onClick={() => navigate("/issue/create")} />
-        )}
+        <AddButton onClick={() => navigate("/issue/create")} />
       </PageHeader>
 
       {/* 칸반 */}

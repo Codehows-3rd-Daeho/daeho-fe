@@ -66,12 +66,12 @@ export default function IssueUpdate() {
         );
         const categoryId = selectedCategory ? String(selectedCategory.id) : "";
         // 부서 이름 배열로 ID 배열 찾기
-        const departmentIds = issue.departmentName
+        const departmentIds: string[] = issue.departmentName
           .map((name) => {
             const dept = dpt.find((d) => d.name === name);
-            return dept ? dept.id + "" : null;
+            return dept ? String(dept.id) : undefined;
           })
-          .filter((id) => id !== null); // null 제거 및 타입 정리
+          .filter((id): id is string => Boolean(id));
 
         // formData 초기화
         setFormData({
@@ -79,7 +79,7 @@ export default function IssueUpdate() {
           content: issue.content,
           file: [],
           status: issue.status,
-          host: `${issue.hostName ?? ""} ${issue.hostJPName ?? ""}`.trim(),
+          host: `${issue.hostName ?? ""} ${issue.hostJPName ?? ""}`,
           startDate: issue.startDate,
           endDate: issue.endDate,
           category: categoryId,
@@ -108,7 +108,7 @@ export default function IssueUpdate() {
         }
         console.error("이슈 데이터 로딩 중 오류 발생:", error);
         alert("이슈 데이터 로딩 중 오류가 발생했습니다.");
-        navigate("/issue/list");
+        navigate(`/issue/${issueId}`);
       } finally {
         setIsLoading(false);
       }
@@ -131,6 +131,9 @@ export default function IssueUpdate() {
     fetchFileConfig();
   }, []);
 
+  const isValidDateFormat = (date: string) =>
+    dayjs(date, "YYYY-MM-DD", true).isValid();
+
   const handleSubmit = async () => {
     if (!formData.title.trim()) {
       alert("제목을 입력해주세요.");
@@ -148,6 +151,13 @@ export default function IssueUpdate() {
       alert("마감일을 선택해주세요.");
       return;
     }
+    if (
+      !isValidDateFormat(formData.startDate) ||
+      !isValidDateFormat(formData.endDate)
+    ) {
+      alert("날짜 형식은 YYYY-MM-DD 형식으로 입력해주세요.");
+      return;
+    }
     if (!formData.category) {
       alert("카테고리를 선택해주세요.");
       return;
@@ -155,6 +165,17 @@ export default function IssueUpdate() {
     if (!formData.department || formData.department.length === 0) {
       alert("관련 부서를 선택해주세요.");
       return;
+    }
+
+    if (formData.status === "COMPLETED") {
+      const isConfirmed = window.confirm(
+        "이슈 상태를 진행 완료로 변경하면, 이후 관리자만 수정할 수 있게 됩니다. 수정하시겠습니까?"
+      );
+      if (!isConfirmed) {
+        return;
+      }
+    } else {
+      if (!window.confirm("수정하시겠습니까?")) return;
     }
 
     const formDataObj = new FormData();
@@ -224,11 +245,7 @@ export default function IssueUpdate() {
       // 1) 확장자 체크
       const isAllowed = ext != null && allowedExtensions.includes(ext);
       if (!isAllowed) {
-        alert(
-          `허용되지 않은 파일입니다: ${
-            file.name
-          }\n허용 확장자: ${allowedExtensions.join(", ")}`
-        );
+        alert(`허용되지 않은 확장자입니다: ${file.name}`);
         return;
       }
 
@@ -239,8 +256,11 @@ export default function IssueUpdate() {
 
       if (sizeMB > maxFileSize) {
         alert(
-          `${file.name} 파일의 크기가 ${maxFileSize}MB를 초과했습니다.
-             (현재: ${sizeMB.toFixed(2)}MB)`
+          `${
+            file.name
+          } 파일의 크기가 ${maxFileSize}MB를 초과했습니다.\n(현재: ${sizeMB.toFixed(
+            2
+          )}MB)`
         );
         return;
       }

@@ -1,24 +1,66 @@
-import type { MeetingDto, MeetingListResponse } from "../type/type";
+import type {
+  MeetingDto,
+  MeetingListItem,
+  MeetingListResponse,
+} from "../type/type";
 import httpClient from "../../config/httpClient";
 
-// 회의 목록 조회
+// 회의 목록 조회(페이징)
 export const getMeetingList = async (
   page: number,
   size: number = 10
 ): Promise<MeetingListResponse> => {
-  const response = await httpClient.get(`/meeting`, {
+  const response = await httpClient.get(`/meeting/list`, {
     params: { page, size },
+  });
+  return response.data; // { content, totalElements }
+};
+
+//나의 업무 회의 목록
+export const getMeetingListMT = async (
+  id: number,
+  page: number,
+  size: number = 10
+): Promise<MeetingListResponse> => {
+  const response = await httpClient.get(`/meeting/mytask/${id}`, {
+    params: { page, size },
+  });
+  return response.data; // { content, totalElements }
+};
+
+//회의 캘린더 조회
+export const getMeetingMonth = async (
+  year: number,
+  month: number
+): Promise<MeetingListItem[]> => {
+  const response = await httpClient.get(`/meeting/scheduler`, {
+    params: { year, month },
+  });
+  return response.data; // { content, totalElements }
+};
+
+//나의 업무 회의 캘린더
+//회의 캘린더 조회
+export const getMeetingMonthMT = async (
+  id: number,
+  year: number,
+  month: number
+): Promise<MeetingListItem[]> => {
+  console.log("getMeetingMonthMT id: ", id);
+  const response = await httpClient.get(`/meeting/scheduler/mytask/${id}`, {
+    params: { year, month },
   });
   return response.data; // { content, totalElements }
 };
 
 //등록
 export const meetingCreate = async (formData: FormData) => {
-  await httpClient.post(`/meeting/create`, formData, {
+  const response = await httpClient.post(`/meeting/create`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
   });
+  return response.data;
 };
 
 // 상세 조회

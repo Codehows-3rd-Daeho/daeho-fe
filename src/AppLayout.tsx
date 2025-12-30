@@ -1,9 +1,10 @@
-// AppLayout.tsx
 import Sidebar from "./common/Sidebar/Sidebar";
 import Header from "./common/Header/Header";
 import { sidebarItems } from "./common/Sidebar/SidebarItems";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useAuthStore } from "./store/useAuthStore";
+import { usePushNotification } from "./webpush/usePushNotification";
+import Breadcrumb from "./common/PageHeader/Breadcrumb";
 
 type AppLayoutProps = {
   children: ReactNode;
@@ -11,14 +12,24 @@ type AppLayoutProps = {
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const { member } = useAuthStore();
+  const [collapsed, setCollapsed] = useState(false); // 사이드바 접기 상태
+
+  const handleToggleSidebar = () => setCollapsed((prev) => !prev);
+
+  usePushNotification(member?.memberId ? String(member.memberId) : "");
+
   return (
-    <div className="flex h-screen bg-gray-50">
-      <aside className="w-[300px] shrink-0 border-r bg-white">
-        <Sidebar items={sidebarItems} selectedId="dashboard" />
-      </aside>
+    <div className="flex h-screen">
+      <Sidebar
+        items={sidebarItems}
+        selectedId="dashboard"
+        collapsed={collapsed}
+        onToggle={handleToggleSidebar}
+        width={300} // 접힐 때 72px 사용
+      />
 
       <div className="flex flex-col flex-1 overflow-hidden">
-        <header className="h-[62px] border-b shrink-0 bg-white">
+        <header className="h-[62px] border-b shrink-0 ">
           <Header
             name={member?.name ?? ""}
             jobPosition={member?.jobPosition ?? ""}
@@ -26,8 +37,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
           />
         </header>
 
-        <main className="flex-1 overflow-auto bg-gray-50 p-6 flex justify-center">
-          <div className="w-full max-w-[1500px]">{children}</div>
+        <main className="flex-1 overflow-auto  p-6 flex-col">
+          {/* 브레드크럼 */}
+          <div className="w-full max-w-[1500px] mx-auto mb-4">
+            <Breadcrumb />
+          </div>
+          <div className="w-full max-w-[1500px]  mx-auto">{children}</div>
         </main>
       </div>
     </div>

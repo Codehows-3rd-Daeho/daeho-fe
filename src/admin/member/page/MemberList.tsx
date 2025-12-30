@@ -112,6 +112,14 @@ export default function MemberList() {
       width: 100,
       renderCell: (params) => (params.value ? "재직중" : "퇴사"),
     },
+    {
+      field: "isAdmin",
+      headerName: "관리자",
+      headerAlign: "center",
+      align: "center",
+      width: 100,
+      renderCell: (params) => (params.value ? "관리자" : ""),
+    },
   ];
 
   return (

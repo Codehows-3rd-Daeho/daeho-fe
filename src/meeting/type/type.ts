@@ -5,11 +5,11 @@ export type MeetingListItem = {
   id: number;
   title: string;
   status: string; // 상태
-  startDate: Date;
-  endDate: Date;
-  category: string; // 주제
-  department: string[]; // 부서
-  isHost: string; // 주관자
+  startDate: string;
+  endDate: string;
+  categoryName: string; // 주제
+  departmentName: string[]; // 부서
+  hostName: string; // 주관자
   isDel?: boolean; // 삭제상태
 };
 

@@ -8,6 +8,7 @@ export type IssueListItem = {
   categoryName: string; // 주제
   departmentName: string[]; // 부서
   hostName: string; // 주관자
+  hostJPName: string;
   isDel?: boolean; // 삭제상태
 };
 
@@ -26,7 +27,7 @@ export interface IssueFormValues {
   startDate: string; // 시작일
   endDate?: string; // 종료일 (선택)
   category: string; // 카테고리
-  department: (string | null)[]; // 관련 부서 (다중)
+  department: string[]; // 관련 부서 (다중)
   members: IssueMemberDto[]; // 관련 멤버 (다중)
   isDel?: boolean;
 }

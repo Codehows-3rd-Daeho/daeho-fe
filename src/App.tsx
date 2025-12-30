@@ -5,26 +5,26 @@ import { lazy } from "react";
 import MeetingCreate from "./meeting/page/MeetingCreate";
 import AppLayout from "./AppLayout";
 import MeetingScheduler from "./meeting/page/MeetingScheduler";
+import MTIssueKanban from "./mytask/page/MTIssueKanban";
+import MTIssueList from "./mytask/page/MTIssueList";
+import MTMeetingList from "./mytask/page/MTMeetingList";
+import MTMeetingScheduler from "./mytask/page/MTMeetingScheduler";
+import MyPage from "./mypage/MyPage";
+import Dashboard from "./dashboard/page/Dashboard";
 
-const IssueList = lazy(() => import("./issue/page/IssueList"));
-const IssueCreate = lazy(() => import("./issue/page/IssueCreate"));
-const AdminSetting = lazy(() => import("./admin/setting/page/AdminSetting"));
-const MemberList = lazy(() => import("./admin/member/page/MemberList"));
-const MeetingList = lazy(() => import("./meeting/page/MeetingList"));
 const Login = lazy(() => import("./login/page/Login"));
+const IssueList = lazy(() => import("./issue/page/IssueList"));
+const IssueKanban = lazy(() => import("./issue/page/IssueKanban"));
+const IssueCreate = lazy(() => import("./issue/page/IssueCreate"));
 const IssueUpdate = lazy(() => import("./issue/page/IssueUpdate"));
 const IssueDtl = lazy(() => import("./issue/page/IssueDtl"));
+const MeetingList = lazy(() => import("./meeting/page/MeetingList"));
 const MeetingDtl = lazy(() => import("./meeting/page/MeetingDtl"));
-const IssueKanban = lazy(() => import("./issue/page/IssueKanban"));
+const MeetingUpdate = lazy(() => import("./meeting/page/MeetingUpdate"));
+const AdminSetting = lazy(() => import("./admin/setting/page/AdminSetting"));
+const MemberList = lazy(() => import("./admin/member/page/MemberList"));
+const AdminLog = lazy(() => import("./admin/log/page/LogList"));
 
-/*===============================
-  PrivateRoute 사용 안내
-  ===============================
-  1. 로그인만 필요하면:
-    <PrivateRoute>컴포넌트</PrivateRoute>
-  2. 관리자 전용 페이지면:
-    <PrivateRoute isAdmin>컴포넌트</PrivateRoute>
-  ===============================*/
 type PrivateRouteProps = {
   children: JSX.Element;
   isAdmin?: boolean;
@@ -33,10 +33,6 @@ type PrivateRouteProps = {
 function PrivateRoute({ children, isAdmin = false }: PrivateRouteProps) {
   const { isAuthenticated, member } = useAuthStore();
   const role = member?.role;
-
-  console.log(`isAuthentication : ${isAuthenticated}`);
-  console.log(`role : ${role}`);
-
   // 로그인 안 했으면 로그인 페이지로
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 
@@ -57,7 +53,7 @@ export default function App() {
           path="/login"
           element={
             isAuthenticated ? (
-              <Navigate to="/issue/list" replace />
+              <Navigate to="/" replace />
             ) : (
               <div className="flex justify-center items-center min-h-screen">
                 <Login />
@@ -73,22 +69,45 @@ export default function App() {
             <PrivateRoute>
               <AppLayout>
                 <Routes>
-                  <Route path="/issue/create" element={<IssueCreate />} />
+                  {/* 대시보드 */}
+                  <Route path="/" element={<Dashboard />} />
+
+                  {/* 마이페이지 */}
+                  <Route path="/mypage" element={<MyPage />} />
+
+                  {/* 사이드바 */}
                   <Route path="/issue/list" element={<IssueList />} />
                   <Route path="/issue/kanban" element={<IssueKanban />} />
+                  <Route path="/issue/create" element={<IssueCreate />} />
                   <Route
                     path="/issue/:issueId/update"
                     element={<IssueUpdate />}
                   />
                   <Route path="/issue/:issueId" element={<IssueDtl />} />
 
-                  <Route path="/meeting/create" element={<MeetingCreate />} />
                   <Route path="/meeting/list" element={<MeetingList />} />
                   <Route
                     path="/meeting/schedule"
                     element={<MeetingScheduler />}
                   />
+                  <Route path="/meeting/create" element={<MeetingCreate />} />
                   <Route path="/meeting/:meetingId" element={<MeetingDtl />} />
+                  <Route
+                    path="/meeting/:meetingId/update"
+                    element={<MeetingUpdate />}
+                  />
+
+                  {/* 나의 업무 */}
+                  <Route
+                    path="/mytask/issue/kanban"
+                    element={<MTIssueKanban />}
+                  />
+                  <Route path="/mytask/issue/list" element={<MTIssueList />} />
+                  <Route path="/mytask/meeting" element={<MTMeetingList />} />
+                  <Route
+                    path="/mytask/schedule"
+                    element={<MTMeetingScheduler />}
+                  />
 
                   {/* 관리자 */}
                   <Route
@@ -104,6 +123,14 @@ export default function App() {
                     element={
                       <PrivateRoute isAdmin>
                         <AdminSetting />
+                      </PrivateRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/log"
+                    element={
+                      <PrivateRoute isAdmin>
+                        <AdminLog />
                       </PrivateRoute>
                     }
                   />

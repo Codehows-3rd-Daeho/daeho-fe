@@ -5,7 +5,10 @@ import type {
   IssueListResponse,
 } from "../type/type";
 import httpClient from "../../config/httpClient";
-import type { IssueInMeeting } from "../../meeting/type/type";
+import type {
+  IssueInMeeting,
+  MeetingListResponse,
+} from "../../meeting/type/type";
 
 // 이슈 목록 조회
 export const getIssueList = async (
@@ -18,13 +21,28 @@ export const getIssueList = async (
   return response.data;
 };
 
+//나의 업무 - 리스트
+export const getIssueListMT = async (
+  id: number,
+  page: number,
+  size: number = 10
+): Promise<IssueListResponse> => {
+  console.log("getIssueListMT id: ", id);
+  const response = await httpClient.get(`/issue/list/mytask/${id}`, {
+    params: { page, size },
+  });
+  console.log("response.data: ", response.data);
+  return response.data;
+};
+
 //등록
 export const issueCreate = async (formData: FormData) => {
-  await httpClient.post(`/issue/create`, formData, {
+  const response = await httpClient.post(`/issue/create`, formData, {
     headers: {
       "Content-Type": "multipart/form-data",
     },
   });
+  return response.data;
 };
 
 //이슈 리스트
@@ -47,8 +65,15 @@ type temp = {
   delayed: IssueListItem[];
 };
 
+//칸반 전체
 export const getKanbanIssues = async (): Promise<temp> => {
   const response = await httpClient.get("/issue/kanban");
+  return response.data;
+};
+
+//나의 업무 칸반
+export const getKanbanIssuesMT = async (id: number): Promise<temp> => {
+  const response = await httpClient.get(`/issue/kanban/mytask/${id}`);
   return response.data;
 };
 
@@ -63,6 +88,19 @@ export const getIssueDtl = async (issueId: string): Promise<IssueDto> => {
 export const updateReadStatus = async (issueId: string): Promise<void> => {
   await httpClient.put(`/issue/${issueId}/readStatus`);
   console.log(`API: 이슈 ${issueId}의 읽음 상태를 '확인'으로 업데이트`);
+};
+
+// 상세 조회 - 해당 이슈의 관련 회의 list받아오기
+export const getMeetingRelatedIssue = async (
+  issueId: string,
+  page: number,
+  size: number = 5
+): Promise<MeetingListResponse> => {
+  const response = await httpClient.get(`/issue/${issueId}/meeting`, {
+    params: { page, size },
+  });
+  console.log(response);
+  return response.data;
 };
 
 // 수정

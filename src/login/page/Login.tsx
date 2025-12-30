@@ -13,6 +13,8 @@ import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/useAuthStore";
 import { loginAndGetToken } from "../api/LoginApi";
+import { usePushNotification } from "../../webpush/usePushNotification";
+import axios from "axios";
 
 export default function Login() {
   const [loginId, setLoginId] = useState("");
@@ -21,7 +23,7 @@ export default function Login() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
   const { login } = useAuthStore();
-
+  const { requestPermission } = usePushNotification("");
   const handleLogin = async () => {
     setError("");
 
@@ -41,10 +43,12 @@ export default function Login() {
 
     try {
       const res = await loginAndGetToken({ loginId, password });
+
       if (!res) {
         setError("아이디 또는 비밀번호가 올바르지 않습니다.");
         return;
       }
+
       // 토큰 + 유저정보 store 저장
       login(res.token, {
         memberId: res.memberId,
@@ -53,9 +57,21 @@ export default function Login() {
         role: res.role,
       });
 
-      navigate("/issue/create");
-    } catch {
-      setError("아이디 또는 비밀번호가 올바르지 않습니다.");
+      // 권한 요청
+      console.log("2. 현재 권한 상태:", Notification.permission);
+      await requestPermission();
+
+      navigate("/");
+    } catch (error: unknown) {
+      //퇴사 메세지
+      let message = "아이디 또는 비밀번호가 올바르지 않습니다.";
+
+      if (axios.isAxiosError(error)) {
+        message =
+          (error.response?.data as { message?: string })?.message ?? message;
+      }
+
+      setError(message);
     }
   };
 
@@ -68,12 +84,17 @@ export default function Login() {
 
   return (
     <Paper sx={{ p: 4, width: 380, textAlign: "center" }}>
-      {/* Company Logo */}
-      <Box sx={{ mb: 5 }}>
+      <Box
+        sx={{
+          mb: 5,
+          display: "flex",
+          justifyContent: "center",
+        }}
+      >
         <img
           src="/daehologo.gif"
           alt="로고"
-          style={{ width: 244, height: 50 }}
+          style={{ width: 244, height: 50, display: "block" }}
         />
       </Box>
 

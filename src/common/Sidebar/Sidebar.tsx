@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import HomeIcon from "@mui/icons-material/Home";
 import LogoutIcon from "@mui/icons-material/Logout";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import {
   Badge,
   Box,
@@ -8,11 +10,13 @@ import {
   Collapse,
   Divider,
   Drawer,
+  IconButton,
   List,
   ListItemButton,
   ListItemIcon,
   ListItemText,
   Toolbar,
+  Tooltip,
 } from "@mui/material";
 import ExpandLess from "@mui/icons-material/ExpandLess";
 import ExpandMore from "@mui/icons-material/ExpandMore";
@@ -23,6 +27,7 @@ export default function Sidebar({
   items,
   collapsed = false,
   onSelect,
+  onToggle,
   width = 300,
 }: SidebarProps & { isAdmin?: boolean }) {
   const navigate = useNavigate();
@@ -68,28 +73,49 @@ export default function Sidebar({
       sx={{
         width: collapsed ? 72 : width,
         flexShrink: 0,
+        overflow: "visible",
+        transition: "width 0.3s ease",
         "& .MuiDrawer-paper": {
           width: collapsed ? 72 : width,
           boxSizing: "border-box",
+          overflow: "visible",
+          transition: "width 0.3s ease",
         },
       }}
     >
       {/* 로고 */}
-      <Toolbar>
-        <Box
-          display="flex"
-          alignItems="center"
-          gap={1}
-          sx={{ cursor: "pointer", py: 3.7 }}
-          onClick={() => navigate("/")}
-        >
-          <img
-            src="/daehologo.gif"
-            alt="로고"
-            style={{ width: 244, height: 50 }}
-          />
-        </Box>
+      <Toolbar
+        sx={{
+          px: 2,
+          minHeight: 64,
+          display: "flex",
+          justifyContent: collapsed ? "center" : "space-between",
+          alignItems: "center",
+          py: 3.7,
+        }}
+      >
+        {/* 로고 (펼침 상태에서만) */}
+        {!collapsed && (
+          <Box
+            display="flex"
+            alignItems="center"
+            sx={{ cursor: "pointer" }}
+            onClick={() => navigate("/")}
+          >
+            <img
+              src="/daehologo.gif"
+              alt="로고"
+              style={{ width: 200, height: 45 }}
+            />
+          </Box>
+        )}
+
+        {/* 메뉴 토글 버튼 (항상 존재) */}
+        <IconButton onClick={onToggle}>
+          {collapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+        </IconButton>
       </Toolbar>
+
       <Divider />
       {/* 일반 메뉴 */}
       <List>
@@ -107,23 +133,76 @@ export default function Sidebar({
                   if (hasChildren) handleToggle(item.id);
                   else if (item.href) navigate(item.href);
                 }}
+                sx={{
+                  minHeight: 48,
+                  py: 2,
+                  px: 2,
+                }}
               >
-                <ListItemIcon>
-                  {item.badge ? (
-                    <Badge badgeContent={item.badge} color="primary">
-                      {item.icon ?? <HomeIcon />}
-                    </Badge>
-                  ) : (
-                    item.icon ?? <HomeIcon />
-                  )}
+                <ListItemIcon
+                  sx={{
+                    minWidth: 40,
+                    mr: 1.5,
+                    justifyContent: "center",
+                  }}
+                >
+                  <Tooltip
+                    title={item.label}
+                    placement="right"
+                    arrow
+                    disableInteractive={!collapsed}
+                  >
+                    <Box display="inline-flex">
+                      {item.badge ? (
+                        <Badge badgeContent={item.badge} color="primary">
+                          {item.icon ?? <HomeIcon />}
+                        </Badge>
+                      ) : (
+                        item.icon ?? <HomeIcon />
+                      )}
+                    </Box>
+                  </Tooltip>
                 </ListItemIcon>
-                {!collapsed && <ListItemText primary={item.label} />}
-                {!collapsed &&
-                  hasChildren &&
-                  (open[item.id] ? <ExpandLess /> : <ExpandMore />)}
+
+                <ListItemText
+                  primary={item.label}
+                  sx={{
+                    opacity: collapsed ? 0 : 1,
+                    pointerEvents: collapsed ? "none" : "auto",
+                    width: collapsed ? 0 : "auto",
+                    transition: "opacity 0.2s ease",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                  }}
+                  slotProps={{
+                    primary: {
+                      sx: {
+                        fontWeight:
+                          selectedId === item.id || isParentSelected
+                            ? 700
+                            : 500,
+                      },
+                    },
+                  }}
+                />
+
+                <Box
+                  sx={{
+                    width: 24,
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    opacity: collapsed ? 0 : 1,
+                    pointerEvents: collapsed ? "none" : "auto",
+                    transition: "opacity 0.2s ease",
+                  }}
+                >
+                  {hasChildren &&
+                    (open[item.id] ? <ExpandLess /> : <ExpandMore />)}
+                </Box>
               </ListItemButton>
               {hasChildren && (
-                <Collapse in={open[item.id]} timeout="auto" unmountOnExit>
+                <Collapse in={open[item.id]} timeout="auto">
                   <List component="div" disablePadding>
                     {children.map((child) => (
                       <ListItemButton
@@ -135,8 +214,34 @@ export default function Sidebar({
                           if (child.href) navigate(child.href);
                         }}
                       >
-                        <ListItemIcon>{child.icon ?? null}</ListItemIcon>
-                        <ListItemText primary={child.label} />
+                        <ListItemIcon
+                          sx={{
+                            minWidth: 40,
+                            mr: 1.5,
+                            justifyContent: "center",
+                          }}
+                        >
+                          {child.icon ?? null}
+                        </ListItemIcon>
+
+                        <ListItemText
+                          primary={child.label}
+                          sx={{
+                            opacity: collapsed ? 0 : 1,
+                            pointerEvents: collapsed ? "none" : "auto",
+                            width: collapsed ? 0 : "auto",
+                            transition: "opacity 0.2s ease",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                          }}
+                          slotProps={{
+                            primary: {
+                              sx: {
+                                fontWeight: child.id === selectedId ? 700 : 500,
+                              },
+                            },
+                          }}
+                        />
                       </ListItemButton>
                     ))}
                   </List>
@@ -147,7 +252,6 @@ export default function Sidebar({
         })}
       </List>
       {/* 관리자 메뉴 */}
-      {/* 관리자일경우만 보이게 */}
       {adminMenu && role === "ADMIN" && (
         <>
           <Divider />
@@ -167,21 +271,47 @@ export default function Sidebar({
                       if (adminChildren.length > 0) handleToggle(adminMenu.id);
                       else if (adminMenu.href) navigate(adminMenu.href);
                     }}
+                    sx={{ px: 2 }}
                   >
-                    <ListItemIcon>
+                    <ListItemIcon
+                      sx={{
+                        minWidth: 40,
+                        mr: 1.5,
+                        justifyContent: "center",
+                      }}
+                    >
                       {adminMenu.icon ?? <HomeIcon />}
                     </ListItemIcon>
-                    {!collapsed && <ListItemText primary={adminMenu.label} />}
+
+                    <ListItemText
+                      primary={adminMenu.label}
+                      sx={{
+                        opacity: collapsed ? 0 : 1,
+                        pointerEvents: collapsed ? "none" : "auto",
+                        width: collapsed ? 0 : "auto",
+                        transition: "opacity 0.2s ease",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                      }}
+                      slotProps={{
+                        primary: {
+                          sx: {
+                            fontWeight:
+                              selectedId === adminMenu.id ||
+                              isAdminParentSelected
+                                ? 700
+                                : 500,
+                          },
+                        },
+                      }}
+                    />
+
                     {!collapsed &&
                       adminChildren.length > 0 &&
                       (open[adminMenu.id] ? <ExpandLess /> : <ExpandMore />)}
                   </ListItemButton>
                   {adminChildren.length > 0 && (
-                    <Collapse
-                      in={open[adminMenu.id]}
-                      timeout="auto"
-                      unmountOnExit
-                    >
+                    <Collapse in={open[adminMenu.id]} timeout="auto">
                       <List component="div" disablePadding>
                         {adminChildren.map((child) => (
                           <ListItemButton
@@ -193,8 +323,35 @@ export default function Sidebar({
                               if (child.href) navigate(child.href);
                             }}
                           >
-                            <ListItemIcon>{child.icon ?? null}</ListItemIcon>
-                            <ListItemText primary={child.label} />
+                            <ListItemIcon
+                              sx={{
+                                minWidth: 40,
+                                mr: 1.5,
+                                justifyContent: "center",
+                              }}
+                            >
+                              {child.icon ?? null}
+                            </ListItemIcon>
+
+                            <ListItemText
+                              primary={child.label}
+                              sx={{
+                                opacity: collapsed ? 0 : 1,
+                                pointerEvents: collapsed ? "none" : "auto",
+                                width: collapsed ? 0 : "auto",
+                                transition: "opacity 0.2s ease",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                              }}
+                              slotProps={{
+                                primary: {
+                                  sx: {
+                                    fontWeight:
+                                      child.id === selectedId ? 700 : 500,
+                                  },
+                                },
+                              }}
+                            />
                           </ListItemButton>
                         ))}
                       </List>
@@ -221,7 +378,7 @@ export default function Sidebar({
           }}
           onClick={handleLogout}
         >
-          Logout
+          {!collapsed && "Logout"}
         </Button>
       </Box>
     </Drawer>
