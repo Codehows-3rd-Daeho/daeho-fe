@@ -1,7 +1,6 @@
 import { Box, Button, Card, Typography } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { getKanbanIssues } from "../../issue/api/issueApi";
-import type { IssueListItem } from "../../issue/type/type";
 import type { KanbanData } from "../../mytask/page/MTIssueKanban";
 import KanbanBoard from "../../common/Kanban/KanbanBoard";
 import { useNavigate } from "react-router-dom";
@@ -29,61 +28,8 @@ export default function Dashboard() {
   const [imminentCount, setImminentCount] = useState(0);
   //회의
   const [meetingData, setMeetingData] = useState<MeetingListItem[]>([]);
-
-  useEffect(() => {
-    getKanbanIssues()
-      .then(
-        (res: {
-          inProgress: IssueListItem[];
-          completed: IssueListItem[];
-          delayed: IssueListItem[];
-        }) => {
-          const inProgressCount = res.inProgress.length; //진행중인 이슈 개수
-          const imminentCount = res.inProgress.filter((issue) => {
-            const { isImminent } = calculateDDay(issue.endDate);
-            return isImminent;
-          }).length;
-          const delayIds = new Set(res.delayed.map((item) => item.id));
-          const filteredPending = res.inProgress.filter(
-            (item) => !delayIds.has(item.id)
-          );
-
-          setIssueData({
-            pending: filteredPending.slice(0, 1), //최대 1개만 표시
-            done: res.completed.slice(0, 1),
-            delay: res.delayed.slice(0, 1),
-          });
-
-          setIssueCount(inProgressCount);
-          setImminentCount(imminentCount);
-        }
-      )
-      .catch((error) => {
-        const apiError = error as ApiError;
-        const response = apiError.response?.data?.message;
-        alert(response ?? "오류가 발생했습니다.");
-      });
-  }, []);
-
-  //회의 리스트
-
-  useEffect(() => {
-    getMeetingListMT(member!.memberId, 0, 3)
-      .then((data) => {
-        const list = (data.content ?? data).map((item: MeetingListItem) => ({
-          ...item,
-          status: getStatusLabel(item.status),
-        }));
-        console.log("list: ", list);
-
-        setMeetingData(list);
-      })
-      .catch((error) => {
-        const apiError = error as ApiError;
-        const response = apiError.response?.data?.message;
-        alert(response ?? "오류가 발생했습니다.");
-      });
-  }, []);
+  //캘린더 회의 조회용
+  const [meetings, setMeetings] = useState<MeetingListItem[]>([]);
 
   const allColumns: GridColDef[] = [
     {
@@ -190,51 +136,6 @@ export default function Dashboard() {
     date.getMonth() === today.getMonth() &&
     date.getFullYear() === today.getFullYear();
 
-  //회의 조회용
-  const [meetings, setMeetings] = useState<MeetingListItem[]>([]);
-
-  useEffect(() => {
-    if (!member) return;
-
-    const fetchMeetings = async () => {
-      const startMonth = startOfWeek.getMonth() + 1;
-      const endMonth = endOfWeek.getMonth() + 1;
-      const startYear = startOfWeek.getFullYear();
-      const endYear = endOfWeek.getFullYear();
-
-      let meetings: MeetingListItem[] = [];
-      try {
-        if (startMonth === endMonth && startYear === endYear) {
-          meetings = await getMeetingMonthMT(
-            member.memberId,
-            startYear,
-            startMonth
-          );
-        } else {
-          const res1 = await getMeetingMonthMT(
-            member.memberId,
-            startYear,
-            startMonth
-          );
-          const res2 = await getMeetingMonthMT(
-            member.memberId,
-            endYear,
-            endMonth
-          );
-          meetings = [...res1, ...res2];
-        }
-      } catch (error) {
-        const apiError = error as ApiError;
-        const response = apiError.response?.data?.message;
-        alert(response ?? "오류가 발생했습니다.");
-      } finally {
-        setMeetings(meetings);
-      }
-    };
-
-    fetchMeetings();
-  }, [member]);
-
   //날짜별로 회의 묶음
   const meetingsByDay = useMemo(() => {
     const map = new Map<number, MeetingListItem[]>();
@@ -257,6 +158,79 @@ export default function Dashboard() {
       return newSet;
     });
   };
+
+  useEffect(() => {
+    if (!member) return;
+
+    const fetchData = async () => {
+      try {
+        // 1. 이슈 데이터==============================================================
+        const issueRes = await getKanbanIssues();
+        const inProgressCount = issueRes.inProgress.length;
+        const imminentCount = issueRes.inProgress.filter(
+          (issue) => calculateDDay(issue.endDate).isImminent
+        ).length;
+        const delayIds = new Set(issueRes.delayed.map((item) => item.id));
+        const filteredPending = issueRes.inProgress.filter(
+          (item) => !delayIds.has(item.id)
+        );
+
+        setIssueData({
+          pending: filteredPending.slice(0, 1),
+          done: issueRes.completed.slice(0, 1),
+          delay: issueRes.delayed.slice(0, 1),
+        });
+        setIssueCount(inProgressCount);
+        setImminentCount(imminentCount);
+
+        // 2. 회의 리스트============================================================
+        const meetingList = await getMeetingListMT(member.memberId, 0, 3);
+        const list = (meetingList.content ?? meetingList).map(
+          (item: MeetingListItem) => ({
+            ...item,
+            status: getStatusLabel(item.status),
+          })
+        );
+        setMeetingData(list);
+
+        // 3. 회의 캘린더===========================================================
+        const startMonth = startOfWeek.getMonth() + 1;
+        const endMonth = endOfWeek.getMonth() + 1;
+        const startYear = startOfWeek.getFullYear();
+        const endYear = endOfWeek.getFullYear();
+
+        let calendarMeetings: MeetingListItem[] = [];
+        if (startMonth === endMonth && startYear === endYear) {
+          calendarMeetings = await getMeetingMonthMT(
+            member.memberId,
+            startYear,
+            startMonth
+          );
+        } else {
+          const res1 = await getMeetingMonthMT(
+            member.memberId,
+            startYear,
+            startMonth
+          );
+          const res2 = await getMeetingMonthMT(
+            member.memberId,
+            endYear,
+            endMonth
+          );
+          calendarMeetings = [...res1, ...res2];
+        }
+        setMeetings(calendarMeetings);
+      } catch (error) {
+        const apiError = error as ApiError;
+        const message =
+          apiError.response?.data?.message ??
+          `대시보드 데이터 조회 중 오류가 발생했습니다.\n잠시후 다시 시도해주세요.`;
+        alert(message);
+      }
+    };
+
+    fetchData();
+  }, [member]);
 
   return (
     <Box

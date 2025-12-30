@@ -61,7 +61,7 @@ export default function Login() {
       const apiError = error as ApiError;
       const response = apiError.response?.data?.message;
 
-      setError(response ?? "아이디 또는 비밀번호가 올바르지 않습니다.");
+      setError(response ?? "시스템 오류가 발생했습니다.");
     }
   };
 

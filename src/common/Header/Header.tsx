@@ -18,7 +18,7 @@ export default function Header({ name, jobPosition }: HeaderProps) {
         const apiError = error as ApiError;
         const response = apiError.response?.data?.message;
 
-        alert(response ?? "오류가 발생했습니다.");
+        alert(response ?? "알림 조회 중 오류가 발생했습니다.");
       }
     };
 
