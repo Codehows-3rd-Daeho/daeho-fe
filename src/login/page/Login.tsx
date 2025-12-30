@@ -53,7 +53,6 @@ export default function Login() {
       });
 
       // 권한 요청
-      console.log("2. 현재 권한 상태:", Notification.permission);
       await requestPermission();
 
       navigate("/");

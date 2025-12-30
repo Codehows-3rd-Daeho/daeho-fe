@@ -53,7 +53,6 @@ export default function MasterData({
     (async () => {
       try {
         const response = await apiFunction(payload);
-        console.log(response);
 
         // 부모 컴포넌트의 상태 (departments) 갱신
         const newTag: TagItem = {

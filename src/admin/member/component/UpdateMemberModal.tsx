@@ -70,7 +70,6 @@ export default function UpdateMemberModal({
           setMember(memberData);
           setOriginalLoginId(memberData.loginId); // 기존 아이디 저장.
           setProfileFileId(memberData.profileFileId ?? null);
-          console.log(memberData.profileFileId);
           // 사진 URL 설정
           setProfileUrl(
             memberData.profileUrl ? `${BASE_URL}${memberData.profileUrl}` : ""
@@ -80,7 +79,6 @@ export default function UpdateMemberModal({
           const response = apiError.response?.data?.message;
 
           alert(response ?? "데이터를 불러오는 중 오류가 발생했습니다.");
-          console.log("데이터를 불러오는 중 오류 발생", error);
         }
       }
       fetchData();

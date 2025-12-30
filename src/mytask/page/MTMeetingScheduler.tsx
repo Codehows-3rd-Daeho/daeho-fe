@@ -64,7 +64,6 @@ export default function MTMeetingScheduler() {
           month + 1
         );
         setMeetings(response);
-        console.log("response: ", response);
       } catch (error) {
         const apiError = error as ApiError;
         const response = apiError.response?.data?.message;

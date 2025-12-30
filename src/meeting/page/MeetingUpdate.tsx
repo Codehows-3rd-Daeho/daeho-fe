@@ -167,8 +167,6 @@ export default function MeetingUpdate() {
 
       // 2) 용량 체크
       const sizeMB = file.size / 1024 / 1024; //바이트 단위 → MB로 변환
-      console.log("sizeMB: ", sizeMB);
-      console.log("maxFileSize: ", maxFileSize);
 
       if (sizeMB > maxFileSize) {
         alert(
@@ -234,10 +232,8 @@ export default function MeetingUpdate() {
   const onIssueSelect = async (selectedId: string) => {
     try {
       const idNumber = Number(selectedId);
-      console.log("number로 변환된 ID:", idNumber);
       // 1. 선택된 이슈 상세 데이터 가져오기
       const issue: IssueInMeeting = await getSelectedINM(idNumber);
-      console.log("issue(getSelectedINM) :", issue);
       // 2.  formData 동기화
       setFormData((prev) => {
         const updatedFormData = {
@@ -253,7 +249,6 @@ export default function MeetingUpdate() {
       });
 
       setMeetingMembers(issue.members);
-      console.log("업데이트 후 meetingMembers:", issue.members);
       alert("이슈의 카테고리, 부서, 참여자 정보를 불러왔습니다.");
     } catch (error) {
       const apiError = error as ApiError;
@@ -267,13 +262,6 @@ export default function MeetingUpdate() {
     dayjs(value).format("YYYY-MM-DD HH:mm");
 
   const handleSubmit = async () => {
-    console.log(
-      "startDate raw:",
-      JSON.stringify(formData.startDate),
-      "length:",
-      formData.startDate.length
-    );
-
     if (!formData.title.trim()) {
       alert("제목을 입력해주세요.");
       return;
@@ -347,7 +335,6 @@ export default function MeetingUpdate() {
     try {
       setIsSaving(true);
       await updateMeeting(meetingId as string, formDataObj);
-      console.log(formDataObj);
       alert("회의가 수정되었습니다.");
       navigate(`/meeting/${meetingId}`);
     } catch (error) {

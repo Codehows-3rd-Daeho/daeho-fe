@@ -108,7 +108,6 @@ export default function MeetingCreate() {
         const response = apiError.response?.data?.message;
 
         alert(response ?? "데이터를 불러오는 중 오류가 발생했습니다.");
-        console.log("데이터를 불러오는 중 오류 발생", error);
       } finally {
         setIsLoading(false);
       }
@@ -213,8 +212,7 @@ export default function MeetingCreate() {
 
     //============================전송============================
     try {
-      setIsSaving(true); // 저장 시작 (중복 클릭 방지)
-      console.log("보내는 데이터", meetingDto);
+      setIsSaving(true); // 저장 시작 (중복 클릭 방지
       await meetingCreate(formDataObj);
 
       alert("회의가 등록되었습니다!");
@@ -322,16 +320,11 @@ export default function MeetingCreate() {
   //                          이슈 선택시 카테고리,부서,멤버 자동선택
 
   const onIssueSelect = async (selectedId: string) => {
-    console.log("onIssueSelect 실행");
-    console.log("선택된 ID:", selectedId);
-
     try {
       //string => number
       const idNumber = Number(selectedId);
-      console.log("number로 변환된 ID:", idNumber);
       // 1. 선택된 이슈 상세 데이터 가져오기
       const issue: IssueInMeeting = await getSelectedINM(idNumber);
-      console.log("issue(getSelectedINM) :", issue);
       // 2.  formData 동기화
       setFormData((prev) => {
         const updatedFormData = {
@@ -343,14 +336,11 @@ export default function MeetingCreate() {
             : [],
           members: issue.members, // IssueMemberDto[]
         };
-        console.log("업데이트 전 formData(prev):", prev);
-        console.log("업데이트 후 formData(updatedFormData):", updatedFormData);
         return updatedFormData;
       });
 
       // 3️⃣ PartMember UI 업데이트 (선택된 멤버 표시 등)
       setMeetingMembers(issue.members);
-      console.log("업데이트 후 meetingMembers:", issue.members);
       alert("이슈의 카테고리, 부서, 참여자 정보를 불러왔습니다.");
     } catch (error) {
       const apiError = error as ApiError;

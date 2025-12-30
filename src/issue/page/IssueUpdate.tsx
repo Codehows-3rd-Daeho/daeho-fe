@@ -218,7 +218,6 @@ export default function IssueUpdate() {
     try {
       setIsSaving(true);
       await updateIssue(issueId as string, formDataObj);
-      console.log(formData);
       alert("이슈가 수정되었습니다!");
       navigate(`/issue/${issueId}`);
     } catch (error) {
@@ -226,7 +225,6 @@ export default function IssueUpdate() {
       const response = apiError.response?.data?.message;
 
       alert(response ?? "이슈 수정 중 오류가 발생했습니다.");
-      console.error("이슈 수정 실패:", error);
     } finally {
       setIsSaving(false);
     }
@@ -255,8 +253,6 @@ export default function IssueUpdate() {
 
       // 2) 용량 체크
       const sizeMB = file.size / 1024 / 1024; //바이트 단위 → MB로 변환
-      console.log("sizeMB: ", sizeMB);
-      console.log("maxFileSize: ", maxFileSize);
 
       if (sizeMB > maxFileSize) {
         alert(

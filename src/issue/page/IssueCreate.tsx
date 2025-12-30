@@ -77,9 +77,6 @@ export default function IssueCreate() {
           e.name.toLowerCase()
         );
 
-        console.log("maxFileSize", maxFileSize);
-        console.log("allowedExtensions", allowedExtensions);
-
         setMaxFileSize(maxFileSize);
         setAllowedExtensions(allowedExtensions);
 
@@ -126,7 +123,6 @@ export default function IssueCreate() {
       alert("본문을 입력해주세요.");
       return;
     }
-    console.log(formData.content);
     if (!formData.startDate) {
       alert("시작일을 선택해주세요.");
       return;
@@ -170,7 +166,6 @@ export default function IssueCreate() {
       members: issueMembers, //PartMember에서 전달받은 객체
       isDel: false,
     };
-    console.log(issueDto);
 
     // 2. issueDto를 JSON 문자열로 변환하여 "data" 파트에 추가
     // 백엔드의 @RequestPart("data")와 매칭
@@ -187,7 +182,6 @@ export default function IssueCreate() {
     try {
       setIsSaving(true); // 저장 시작 (중복 클릭 방지)
 
-      console.log("보내는 데이터", issueDto);
       await issueCreate(formDataObj);
 
       alert("이슈가 등록되었습니다!");
@@ -240,8 +234,6 @@ export default function IssueCreate() {
 
       // 2) 용량 체크
       const sizeMB = file.size / 1024 / 1024; //바이트 단위 → MB로 변환
-      console.log("sizeMB: ", sizeMB);
-      console.log("maxFileSize: ", maxFileSize);
 
       if (sizeMB > maxFileSize) {
         alert(

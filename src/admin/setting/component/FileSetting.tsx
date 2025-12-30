@@ -36,7 +36,6 @@ export default function FileSetting({
         const response = apiError.response?.data?.message;
 
         alert(response ?? "파일 설정 불러오기에 실패 하였습니다.");
-        console.log("파일 설정 불러오기 실패 ", error);
       }
     };
     fetchData();
