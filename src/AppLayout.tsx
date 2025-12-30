@@ -11,14 +11,14 @@ type AppLayoutProps = {
   children: ReactNode;
 };
 
-function usePreventPageLeave(shouldPrevent: boolean) {
+function usePreventPageLeave(shouldPrevent: boolean, message: string) {
   useEffect(() => {
     if (!shouldPrevent) return;
 
     const handleBeforeUnload = (e: { preventDefault: () => void; returnValue: string; }) => {
       e.preventDefault();
-      e.returnValue = '';
-      return '';
+      e.returnValue = message;
+      return message;
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -26,7 +26,7 @@ function usePreventPageLeave(shouldPrevent: boolean) {
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [shouldPrevent]);
+  }, [message, shouldPrevent]);
 }
 
 function useBlockRouterNavigation(shouldBlock: boolean, message: string) {
@@ -95,14 +95,15 @@ function useBlockNavigation(shouldBlock: boolean, message: string) {
 }
 
 
-export default function AppLayout({ children }: AppLayoutProps) {
+export function AppLayout({ children }: AppLayoutProps) {
   const { member } = useAuthStore();
   const [collapsed, setCollapsed] = useState(false); // 사이드바 접기 상태
+
   const { isRecording } = useRecordingStore();
   const isCurrentlyRecording = isRecording();
-  const confirmationMessage = "현재 음성 녹음이 진행 중입니다. 페이지를 벗어나면 녹음이 중단될 수 있습니다. 정말로 이동하시겠습니까?";
+  const confirmationMessage = "페이지를 벗어나면 녹음이 중단됩니다. 계속하시겠습니까?";
 
-  usePreventPageLeave(isCurrentlyRecording);
+  usePreventPageLeave(isCurrentlyRecording, confirmationMessage);
   useBlockRouterNavigation(isCurrentlyRecording, confirmationMessage);
   useBlockNavigation(isCurrentlyRecording, confirmationMessage);
 

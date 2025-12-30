@@ -7,7 +7,7 @@ import {
 } from "../stt/api/sttApi";
 import type { STT } from "../stt/type/type";
 
-export type RecordingStatus = "idle" | "recording" | "paused" | "finished";
+export type RecordingStatus = "idle" | "recording" | "paused" | "encoding" | "finished";
 
 interface RecordingState {
   stt: STT | null;
@@ -26,6 +26,7 @@ interface RecordingState {
   confirmUpload: (sttId: number) => Promise<STT | null>;
   cancelRecording: (sttId: number) => Promise<void>;
   isRecording: () => boolean;
+  handleLastChunk: () => void;
 }
 
 let recordTimeTimer: number | null = null;
@@ -101,7 +102,7 @@ const useRecordingStore = create<RecordingState>((set, get) => {
           if (chunkTimer) clearInterval(chunkTimer);
           recordTimeTimer = null;
           chunkTimer = null;
-          set({ recordingStatus: "finished" });
+          set({ recordingStatus: "encoding" });
         };
 
         recorder.start(1000);
@@ -120,6 +121,8 @@ const useRecordingStore = create<RecordingState>((set, get) => {
               await uploadAudioChunk(get().stt!.id, formData);
             } catch (e) {
               console.error("Chunk upload failed:", e);
+              alert("네트워크가 불안정합니다. 확인 후 재시도바랍니다.");
+              cleanup();
             }
           }
         }, 10000);
@@ -171,6 +174,8 @@ const useRecordingStore = create<RecordingState>((set, get) => {
               await uploadAudioChunk(stt.id, formData);
             } catch (e) {
               console.error("Chunk upload failed:", e);
+              alert("네트워크가 불안정합니다. 확인 후 재시도바랍니다.");
+              cleanup();
             }
           }
         }, 10000);
@@ -189,9 +194,14 @@ const useRecordingStore = create<RecordingState>((set, get) => {
           audioChunks = [];
           const formData = new FormData();
           formData.append("file", finalChunk, "final.wav");
-          uploadAudioChunk(stt.id, formData).catch((e) =>
+          formData.append("finish", String(true));
+          uploadAudioChunk(stt.id, formData).then(() => {
+            set({ recordingStatus: "finished" });
+          }).catch((e) => {
             console.error("Final chunk upload failed:", e)
-          );
+            alert("네트워크가 불안정합니다. 확인 후 재시도바랍니다.");
+            cleanup();
+          });
         }
       }
     },
@@ -215,6 +225,29 @@ const useRecordingStore = create<RecordingState>((set, get) => {
       }
       cleanup();
     },
+
+    handleLastChunk: async () => {
+      const { mediaRecorder, stt } = get();
+      if (mediaRecorder && mediaRecorder.state !== "inactive") {
+        mediaRecorder.stop();
+        const remainingChunks = audioChunks;
+        if (remainingChunks.length > 0 && stt) {
+          const finalChunk = new Blob(remainingChunks, { type: "audio/wav" });
+          audioChunks = [];
+          const formData = new FormData();
+          formData.append("file", finalChunk, "final.wav");
+          formData.append("finish", String(true));
+          uploadAudioChunk(stt.id, formData).then(() => {
+            set({ recordingStatus: "finished" });
+          }).catch((e) => {
+            console.error("Final chunk upload failed:", e)
+            alert("네트워크가 불안정합니다. 확인 후 재시도바랍니다.");
+            cleanup();
+          });
+        }
+      }
+      cleanup();
+    }
   };
 });
 

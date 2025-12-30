@@ -1,4 +1,4 @@
-import { useEffect, useState, type SetStateAction } from "react";
+import { useEffect, useRef, useState, type SetStateAction } from "react";
 import { getSTT, getSTTs, updateSummary, uploadSTT } from "../api/sttApi";
 import {
   Box,
@@ -93,7 +93,15 @@ export default function TabSTT({meeting}: TabSTTProp) {
 
   const [stts, setStts] = useState<STTWithRecording[]>([]);
   const [selectedSttId, setSelectedSttId] = useState<number | null>(null);
+  const sttPollingIntervalRef = useRef<Map<number, number>>(new Map());
 
+  const stopSttPolling = (sttId: number) => {
+    const intervalId = sttPollingIntervalRef.current.get(sttId);
+    if (intervalId) {
+      clearInterval(intervalId);
+      sttPollingIntervalRef.current.delete(sttId);
+    }
+  };
 
   const findSttById = (sttId: number | null): STTWithRecording | null => {
     return stts.find(s => s.id === sttId) ?? null;
@@ -117,26 +125,31 @@ export default function TabSTT({meeting}: TabSTTProp) {
         const sttsWithRecordingState = response.map(stt => 
           {
             if(stt.status === "PROCESSING" || stt.status === "SUMMARIZING") {
-              const sttIntervalId = setInterval( async () => {
-                const res = await getSTT(stt.id);
-                updateSttState(stt.id, {
-                  content: res.content,
-                  summary: res.summary,
-                  status: res.status,
-                  progress: res.progress,
-                })
-                if(res.status === "COMPLETED") {
-                  clearInterval(sttIntervalId);
-                  console.log('stt Interval cleared')
-                  updateSttState(stt.id, { 
+              sttPollingIntervalRef.current.set(stt.id, setInterval( async () => {
+                try{
+                  const res = await getSTT(stt.id);
+                  updateSttState(stt.id, {
                     content: res.content,
                     summary: res.summary,
                     status: res.status,
                     progress: res.progress,
-                    isLoading: false,
                   })
+                  if(res.status === "COMPLETED") {
+                    stopSttPolling(stt.id);
+                    console.log('stt Interval cleared')
+                    updateSttState(stt.id, { 
+                      content: res.content,
+                      summary: res.summary,
+                      status: res.status,
+                      progress: res.progress,
+                      isLoading: false,
+                    })
+                  }
+                }catch(error) {
+                  if (axios.isAxiosError(error)) 
+                    stopSttPolling(stt.id);
                 }
-              }, 1500);
+              }, 1500));
               return {
                 ...stt,
                 isLoading: true,
@@ -275,7 +288,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
         file: newStt.file,
       })
       setSelectedSttId(newStt.id);
-      const sttIntervalId = setInterval( async () => {
+      sttPollingIntervalRef.current.set(newStt.id, setInterval( async () => {
         try{
           const res = await getSTT(newStt.id);
           updateSttState(newStt.id, {
@@ -285,7 +298,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
             progress: res.progress,
           })
           if(res.status === "COMPLETED") {
-            clearInterval(sttIntervalId);
+            stopSttPolling(newStt.id);
             console.log('stt Interval cleared')
             updateSttState(newStt.id, { 
               content: res.content,
@@ -297,9 +310,9 @@ export default function TabSTT({meeting}: TabSTTProp) {
           }
         }catch(error) {
           if (axios.isAxiosError(error)) 
-            clearInterval(sttIntervalId);
+            stopSttPolling(newStt.id);
         }
-      }, 1500);
+      }, 1500));
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 401) return;
       alert("음성 파일 등록 중 오류가 발생했습니다.");
@@ -429,7 +442,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
         recordingTime: 0,
       });
       setSelectedSttId(resStt.id);
-      const sttIntervalId = setInterval( async () => {
+      sttPollingIntervalRef.current.set(resStt.id, setInterval( async () => {
         try{
           const res = await getSTT(resStt.id);
           updateSttState(resStt.id, {
@@ -439,7 +452,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
             progress: res.progress,
           })
           if(res.status === "COMPLETED") {
-            clearInterval(sttIntervalId);
+            stopSttPolling(resStt.id);
             console.log('stt Interval cleared')
             updateSttState(resStt.id, { 
               content: res.content,
@@ -451,9 +464,9 @@ export default function TabSTT({meeting}: TabSTTProp) {
           }
         }catch(error) {
           if (axios.isAxiosError(error)) 
-            clearInterval(sttIntervalId);
+            stopSttPolling(resStt.id);
         }
-      }, 1500);
+      }, 1500));
     } else {
       alert("음성 변환에 실패했습니다.");
       updateSttState(sttId, { isLoading: false, status: "RECORDING" });
@@ -627,7 +640,14 @@ export default function TabSTT({meeting}: TabSTTProp) {
                     )}
                     <AudioPlayer stts={stts} sttId={selectedSttId} />
                     <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 2 }}>
-                        <Button variant="contained" color="primary" onClick={() => handleConfirmUpload(selectedSttId)}>음성 변환 시작</Button>
+                        <Button 
+                          variant="contained" 
+                          color="primary" 
+                          disabled={currentRecordingStatus === "encoding"}
+                          onClick={() => handleConfirmUpload(selectedSttId)}
+                        >
+                          {currentRecordingStatus === "encoding" ? "인코딩중" : "음성 변환 시작"}
+                        </Button>
                         <Button variant="outlined" color="secondary" onClick={() => handleDelete(currentStt.id)}>취소</Button>
                     </Box>
                 </Box>
