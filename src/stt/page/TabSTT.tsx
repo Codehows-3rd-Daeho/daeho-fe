@@ -43,7 +43,7 @@ type TabSTTProp = {
 
 //daglo 최대 업로드 용량, 허용 확장자
 const chunkingRate = 10;
-const maxFileSizeMB = 2 * 1024;
+const maxFileSize = 2 * 1024 * 1024 * 1024; // 2GB
 const allowedExtensions = [
   // audio
   "3gp",
@@ -81,6 +81,125 @@ export default function TabSTT({
   const { meetingId } = useParams();  
   const { member } = useAuthStore();
   const role = member?.role;
+
+  const handleError = (error: unknown, msg: string) => {
+    if (axios.isAxiosError(error) && error.response?.status === 401) return;
+    alert(msg);
+  };
+  
+  {/* STT */}
+  const [stts, setStts] = useState<STTWithRecording[]>([]);
+  const [selectedSttId, setSelectedSttId] = useState<number | null>(null);
+  const sttPollingIntervalRef = useRef<Map<number, number>>(new Map());
+  
+  const startSttPolling = (sttId: number, pollingRate: number) => {
+    if(!meetingId) return;
+    sttPollingIntervalRef.current.set(sttId, setInterval( async () => {
+      try{
+        const res = await getSTT(sttId);
+        updateSttState(sttId, {
+          content: res.content,
+          summary: res.summary,
+          status: res.status,
+          progress: res.progress,
+        })
+        if(res.status === "COMPLETED") {
+          stopSttPolling(sttId);
+          console.log('stt Interval cleared')
+          updateSttState(sttId, { 
+            content: res.content,
+            summary: res.summary,
+            status: res.status,
+            progress: res.progress,
+            isLoading: false,
+          })
+          fetchMeetingDetail(meetingId)
+        }
+      }catch(error) {
+        handleError(error, "회의 내용을 불러오는데 실패했습니다.");
+        stopSttPolling(sttId);
+      }
+    }, pollingRate));
+  }
+
+  const stopSttPolling = (sttId: number) => {
+    const intervalId = sttPollingIntervalRef.current.get(sttId);
+    if (intervalId) {
+      clearInterval(intervalId);
+      sttPollingIntervalRef.current.delete(sttId);
+    }
+  };
+
+  const findSttById = (sttId: number | null): STTWithRecording | null => stts.find(s => s.id === sttId) ?? null;
+
+  const updateSttState = (sttId: number | null, newProps: Partial<STTWithRecording>) => {
+    if (sttId === null) return;
+    setStts(prevStts =>
+      prevStts.map(stt =>
+        stt.id === sttId ? { 
+          ...stt, 
+          ...newProps 
+        } : stt
+      )
+    );
+  };
+  
+  useEffect(() => {
+    if (!meetingId) return;
+    const fetch = async () => {
+      try {
+        const response = await getSTTs(meetingId);
+        setStts(response.map(stt => {
+            if(stt.status === "PROCESSING" || stt.status === "SUMMARIZING") {
+              startSttPolling(stt.id, 2000);
+              return {
+                ...stt,
+                isLoading: true,
+              }
+            } 
+            return { ...stt }
+        }));
+        if (response.length !== 0) setSelectedSttId(response[response.length-1].id);
+        setSelectedSttId((prev) => {
+          if (prev && response.some((stt) => stt.id === prev)) return prev; 
+          return response[response.length-1]?.id ?? null;
+        });
+      } catch (error) {
+        handleError(error, "회의 내용을 불러오는데 실패했습니다.");
+      }
+    };
+    fetch();
+  }, [meetingId]);
+
+  const handleDelete = async (sttId: number) => {
+    if(!meetingId) return;
+    const sttToDelete = findSttById(sttId);
+    if (!sttToDelete || !window.confirm("음성 파일을 삭제하시겠습니까?")) return;
+    if (sttToDelete.id === recordingStt?.id && isCurrentlyRecording) {
+      alert("녹음 중인 파일은 삭제할 수 없습니다.");
+      return;
+    }
+    try {
+      stopSttPolling(sttToDelete.id);
+      if (sttToDelete.isTemp && sttToDelete.id !== recordingStt?.id) {
+          setStts((prev) => prev.filter((stt) => stt.id !== sttId));
+          setSelectedSttId(stts[0]?.id ?? null);
+          return;
+      }
+      if (!sttToDelete.isTemp) await cancelRecording(sttToDelete.id);
+      setStts((prev) => {
+        const updated = prev.filter((stt) => stt.id !== sttId);
+        setSelectedSttId((current) => current === sttId ? updated[0]?.id ?? null : current);
+        return updated;
+      });
+      if (!sttToDelete.isTemp) alert("음성 파일이 삭제되었습니다.");
+      fetchMeetingDetail(meetingId);
+    } catch (error) {
+      handleError(error, "삭제 중 오류가 발생했습니다.")
+    }
+  };
+
+  {/* Recording */}
   const { 
     stt: recordingStt, 
     recordingStatus, 
@@ -94,107 +213,71 @@ export default function TabSTT({
     isRecording,
   } = useRecordingStore();
   const isCurrentlyRecording = isRecording();
+  
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+  };
 
-  const [stts, setStts] = useState<STTWithRecording[]>([]);
-  const [selectedSttId, setSelectedSttId] = useState<number | null>(null);
-  const sttPollingIntervalRef = useRef<Map<number, number>>(new Map());
+  const handleStartRecording = async () => {
+    if (!meetingId) return;
+    if (isCurrentlyRecording) {
+      alert("다른 녹음이 진행 중입니다.");
+      return;
+    }
 
-  const stopSttPolling = (sttId: number) => {
-    const intervalId = sttPollingIntervalRef.current.get(sttId);
-    if (intervalId) {
-      clearInterval(intervalId);
-      sttPollingIntervalRef.current.delete(sttId);
+    try {
+      await startRecording(meetingId, (newStt: STT) => {
+        const newSttEntry: STTWithRecording = {
+          ...newStt,
+          isTemp: true,
+          recordingStatus: 'recording',
+          recordingTime: 0,
+        };
+        setStts(prev => [...prev.filter(s => s.id !== selectedSttId), newSttEntry]);
+        setSelectedSttId(newStt.id);
+      });
+    }catch(error) {
+      handleError(error, "녹음을 시작할 수 없습니다.");
     }
   };
 
-  const findSttById = (sttId: number | null): STTWithRecording | null => {
-    return stts.find(s => s.id === sttId) ?? null;
-  }
+  const handleConfirmUpload = async (sttId: number | null) => {
+    if (!sttId || !window.confirm("음성 파일을 등록하시겠습니까?")) return;
 
-  const updateSttState = (sttId: number | null, newProps: Partial<STTWithRecording>) => {
-    if (sttId === null) return;
-    setStts(prevStts =>
-      prevStts.map(stt =>
-        stt.id === sttId ? { ...stt, ...newProps } : stt
-      )
-    );
+    try{
+      const newStt = await confirmUpload(sttId);
+      if (newStt) {
+        updateSttState(sttId, {
+          ...newStt,
+          isEditable: false,
+          isLoading: true,
+          isTemp: false,
+          recordingStatus: 'idle',
+          recordingTime: 0,
+        });
+        setSelectedSttId(newStt.id);
+        startSttPolling(newStt.id, 2000);
+      }
+    }catch(error) {
+      handleError(error, "음성 변환에 실패했습니다.");
+      updateSttState(sttId, { 
+        isLoading: false, 
+        status: "RECORDING" 
+      });
+    }
   };
   
-  useEffect(() => {
-    if (!meetingId) return;
-
-    const fetch = async () => {
-      try {
-        const response = await getSTTs(meetingId);
-        const sttsWithRecordingState = response.map(stt => 
-          {
-            if(stt.status === "PROCESSING" || stt.status === "SUMMARIZING") {
-              sttPollingIntervalRef.current.set(stt.id, setInterval( async () => {
-                try{
-                  const res = await getSTT(stt.id);
-                  updateSttState(stt.id, {
-                    content: res.content,
-                    summary: res.summary,
-                    status: res.status,
-                    progress: res.progress,
-                  })
-                  if(res.status === "COMPLETED") {
-                    stopSttPolling(stt.id);
-                    console.log('stt Interval cleared')
-                    updateSttState(stt.id, { 
-                      content: res.content,
-                      summary: res.summary,
-                      status: res.status,
-                      progress: res.progress,
-                      isLoading: false,
-                    })
-                    fetchMeetingDetail(meetingId)
-                  }
-                }catch(error) {
-                  if (axios.isAxiosError(error)) 
-                    stopSttPolling(stt.id);
-                }
-              }, 1500));
-              return {
-                ...stt,
-                isLoading: true,
-                recordingStatus: 'idle' as RecordingStatus,
-                recordingTime: 0,
-              }
-            } 
-            return {
-              ...stt,
-              recordingStatus: 'idle' as RecordingStatus,
-              recordingTime: 0,
-            }
-          }
-        );
-          setStts(sttsWithRecordingState);
-
-        if (response.length !== 0)
-          setSelectedSttId(response[response.length-1].id);
-
-        setSelectedSttId((prev) => {
-          if (prev && response.some((stt) => stt.id === prev)) {
-            return prev; 
-          }
-          return response[response.length-1]?.id ?? null;
-        });
-      } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.status === 404) {
-          setStts([]);
-        } else {
-          console.error("STT 불러오기 실패:", error);
-        }
-      }
-    };
-    fetch();
-  }, [meetingId]);
+  const assumeDuration = (cnt: number) => {
+    const min = Math.floor(cnt*chunkingRate/60);
+    if(min < 1) return "1분 미만 녹음 파일"
+    return `약 ${min}분 녹음 파일`
+  }
 
   useEffect(() => {
     if (recordingStt) {
-      const isSttInList = stts.some(s => s.id === recordingStt.id);
-      if (!isSttInList) {
+      if (!stts.some(s => s.id === recordingStt.id)) {
         const newSttEntry: STTWithRecording = {
           ...recordingStt,
           isTemp: true, 
@@ -213,76 +296,35 @@ export default function TabSTT({
     }
   }, [recordingStt, recordingStatus, recordingTime]);
 
+  {/* File */}
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+
   const openFileInput = () => {
-    document.getElementById("fileUpload")?.click();
+    fileInputRef.current?.click();
   };
 
-  // ========================================================================
-  //                               파일 검증
-  // ========================================================================
   const validateFile = (file: File): boolean => {
     const ext = file.name.split(".").pop()?.toLowerCase();
     if (!ext || !allowedExtensions.includes(ext)) {
       alert(`허용되지 않은 파일 형식입니다: ${file.name}`);
       return false;
     }
-    const sizeMB = file.size / 1024 / 1024;
-    if (sizeMB > maxFileSizeMB) {
-      alert(`파일 크기가 ${maxFileSizeMB}MB를 초과했습니다. (현재: ${sizeMB.toFixed(2)}MB)`);
+    if (file.size > maxFileSize) {
+      const sizeGB = (file.size / 1024 / 1024 / 1024).toFixed(2);
+      alert(`파일 크기가 2GB를 초과했습니다. (현재: ${sizeGB}GB)`);
       return false;
     }
     return true;
   };
-  // ========================================================================
-  //                               파일 선택
-  // ========================================================================
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!meetingId) return;
-    const file = e.target.files?.[0];
-    if (!file) return;
-    handleUploadFile(file);
-    e.target.value = "";
-  };
-
-  // ========================================================================
-  //                               드래그 앤 드롭
-  // ========================================================================
-
-
-  const [isDragOver, setIsDragOver] = useState(false);
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    const file = e.dataTransfer.files?.[0];
-    if (!file) return;
-
-    if (e.dataTransfer.files.length > 1) {
-      alert("파일은 1개만 등록할 수 있습니다.");
-      return;
-    }
-    handleUploadFile(file);
-  };
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
-  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  };
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-      setIsDragOver(false);
-    }
-  };
-
-  // ========================================================================
-  //                               등록
-  // ========================================================================
-
+  
   const handleUploadFile = async (file: File) => {
-    if (!meetingId || !validateFile(file)) return;
-    if (!window.confirm("음성 파일을 등록하시겠습니까?")) return;
-    updateSttState(selectedSttId, { isLoading: true, isTemp: false });
+    if (
+      !meetingId || 
+      !validateFile(file) ||
+      !window.confirm("음성 파일을 등록하시겠습니까?")
+    ) return;
+
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -291,90 +333,51 @@ export default function TabSTT({
         id: newStt.id, 
         status: newStt.status,
         file: newStt.file,
+        isLoading: true, 
+        isTemp: false 
       })
       setSelectedSttId(newStt.id);
-      sttPollingIntervalRef.current.set(newStt.id, setInterval( async () => {
-        try{
-          const res = await getSTT(newStt.id);
-          updateSttState(newStt.id, {
-            content: res.content,
-            summary: res.summary,
-            status: res.status,
-            progress: res.progress,
-          })
-          if(res.status === "COMPLETED") {
-            stopSttPolling(newStt.id);
-            console.log('stt Interval cleared');
-            updateSttState(newStt.id, { 
-              content: res.content,
-              summary: res.summary,
-              status: res.status,
-              progress: res.progress,
-              isLoading: false,
-            });
-            fetchMeetingDetail(meetingId);
-          }
-        }catch(error) {
-          if (axios.isAxiosError(error)) 
-            stopSttPolling(newStt.id);
-        }
-      }, 1500));
+      startSttPolling(newStt.id, 2000);
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 401) return;
-      alert("음성 파일 등록 중 오류가 발생했습니다.");
-      updateSttState(selectedSttId, { isLoading: false, isTemp: true });
+      handleError(error, "음성 파일 등록 중 오류가 발생했습니다.");
     }
-  };
-
-  // ========================================================================
-  //                               삭제
-  // ========================================================================
-
-  const handleDelete = async (sttId: number) => {
-    if(!meetingId) return;
-    const sttToDelete = findSttById(sttId);
-    if (!sttToDelete) return;
-
-    if (sttToDelete.id === recordingStt?.id && isCurrentlyRecording) {
-      alert("녹음 중인 파일은 삭제할 수 없습니다.");
-      return;
-    }
-
-    if (!window.confirm("음성 파일을 삭제하시겠습니까?")) return;
-    
-    stopSttPolling(sttToDelete.id);
-    if (sttToDelete.isTemp && sttToDelete.id !== recordingStt?.id) {
-        setStts((prev) => prev.filter((stt) => stt.id !== sttId));
-        setSelectedSttId(stts[0]?.id ?? null);
-        return;
-    }
-
-    try {
-      if (!sttToDelete.isTemp) {
-        await cancelRecording(sttToDelete.id);
-      }
-      setStts((prev) => {
-        const updated = prev.filter((stt) => stt.id !== sttId);
-        setSelectedSttId((current) => {
-          if (current !== sttId) return current;
-          return updated[0]?.id ?? null;
-        });
-        return updated;
-      });
-      if (!sttToDelete.isTemp) alert("음성 파일이 삭제되었습니다.");
-      fetchMeetingDetail(meetingId);
-    } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 401) return;
-      alert("stt 삭제 중 오류가 발생했습니다.");
-    }
-  };
-
-  const handleTabChange = async (_event: unknown, newValue: SetStateAction<number | null>) => {
-    handleSummarySave();
-    setSelectedSttId(newValue);
   };
   
-  const handleSummaryChange = (event: { target: { value: string; }; }) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    handleUploadFile(file);
+    e.target.value = "";
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    if (e.dataTransfer.files.length > 1) {
+      alert("파일은 1개만 등록할 수 있습니다.");
+      return;
+    }
+    handleUploadFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => e.preventDefault();
+
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragOver(false);
+    }
+  };
+
+  {/* Summary */}
+  const handleSummaryChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newSummary = event.target.value;
     updateSttState(selectedSttId, { summary: newSummary });
   };
@@ -382,114 +385,42 @@ export default function TabSTT({
   const handleSummarySave = async () => {
     if(!meetingId) return;
     const currentStt = findSttById(selectedSttId);
-    if (currentStt?.isEditable) {
-      if (window.confirm('변경된 내용을 저장하시겠습니까?')) {
-        await updateSummary(currentStt.id, currentStt.summary);
-        updateSttState(selectedSttId, { isEditable: false });
-        fetchMeetingDetail(meetingId);
-      }
+    if (!currentStt?.isEditable || !window.confirm('변경된 내용을 저장하시겠습니까?')) return;
+
+    try{
+      await updateSummary(currentStt.id, currentStt.summary);
+      updateSttState(selectedSttId, { isEditable: false });
+      fetchMeetingDetail(meetingId);
+    }catch(error) {
+      handleError(error, "회의 요약 수정중 오류가 발생했습니다.");
     }
   }
 
+  {/* Tabs */}
   const addTempSttTab = () => {
-    if(stts.some(stt => stt.isTemp || stt.isLoading)) return;
-    if(!meetingId) return;
+    if(!meetingId || stts.some(stt => stt.isTemp || stt.isLoading)) return;
     
     const NEW_STT_ID = Date.now();
     const newTempStt: STTWithRecording = {
-        id: NEW_STT_ID,
-        meetingId: meetingId,
-        memberId: member!.memberId,
-        content: "",
-        summary: "",
-        isEditable: false,
-        isLoading: false,
-        isTemp: true,
-        recordingStatus: 'idle',
-        recordingTime: 0,
-        // liveSttId: null,
-      };
+      id: NEW_STT_ID,
+      meetingId: meetingId,
+      memberId: member!.memberId,
+      content: "",
+      summary: "",
+      isEditable: false,
+      isLoading: false,
+      isTemp: true,
+      recordingStatus: 'idle',
+      recordingTime: 0,
+    };
     setStts(prev => [...prev, newTempStt]);
     setSelectedSttId(NEW_STT_ID);
   }
 
-  const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+  const handleTabChange = async (_event: unknown, newValue: SetStateAction<number | null>) => {
+    handleSummarySave();
+    setSelectedSttId(newValue);
   };
-
-  const handleStartRecording = async () => {
-    if (isCurrentlyRecording) {
-      alert("다른 녹음이 진행 중입니다.");
-      return;
-    }
-    if (!meetingId) return;
-    await startRecording(meetingId, (newStt: STT) => {
-      const newSttEntry: STTWithRecording = {
-        ...newStt,
-        isTemp: true,
-        recordingStatus: 'recording',
-        recordingTime: 0,
-      };
-      setStts(prev => [...prev.filter(s => s.id !== selectedSttId), newSttEntry]);
-      setSelectedSttId(newStt.id);
-    });
-  };
-
-  const handleConfirmUpload = async (sttId: number | null) => {
-    if (!meetingId || !sttId) return;
-    if (!window.confirm("음성 파일을 등록하시겠습니까?")) return;
-
-    updateSttState(sttId, { isTemp: false, isLoading: true})
-    const resStt = await confirmUpload(sttId);
-    if (resStt) {
-      updateSttState(sttId, {
-        ...resStt,
-        isEditable: false,
-        isLoading: true,
-        isTemp: false,
-        recordingStatus: 'idle',
-        recordingTime: 0,
-      });
-      setSelectedSttId(resStt.id);
-      sttPollingIntervalRef.current.set(resStt.id, setInterval( async () => {
-        try{
-          const res = await getSTT(resStt.id);
-          updateSttState(resStt.id, {
-            content: res.content,
-            summary: res.summary,
-            status: res.status,
-            progress: res.progress,
-          })
-          if(res.status === "COMPLETED") {
-            stopSttPolling(resStt.id);
-            console.log('stt Interval cleared');
-            updateSttState(resStt.id, { 
-              content: res.content,
-              summary: res.summary,
-              status: res.status,
-              progress: res.progress,
-              isLoading: false,
-            });
-            fetchMeetingDetail(meetingId);
-          }
-        }catch(error) {
-          if (axios.isAxiosError(error)) 
-            stopSttPolling(resStt.id);
-        }
-      }, 1500));
-    } else {
-      alert("음성 변환에 실패했습니다.");
-      updateSttState(sttId, { isLoading: false, status: "RECORDING" });
-    }
-  };
-  
-  const assumeDuration = (cnt: number) => {
-    const min = Math.floor(cnt*chunkingRate/60);
-    if(min < 1) return "1분 미만 녹음 파일"
-    return `약 ${min}분 녹음 파일`
-  }
   
   return (
     <>
@@ -673,7 +604,7 @@ export default function TabSTT({
               return (
                 <Box sx={{ mb: 3 }}>
                   <Typography sx={{ fontWeight: 600, fontSize: "0.875rem", mb: 1 }}>첨부 파일</Typography>
-                  <input type="file" multiple id="fileUpload" style={{ display: "none" }} onChange={handleFileSelect} />
+                  <input ref={fileInputRef} type="file" multiple id="fileUpload" style={{ display: "none" }} onChange={handleFileSelect} />
                   <Box
                     sx={{ border: isDragOver ? "3px dashed #007bff" : "2px dashed #d0d0d0", borderRadius: 2, p: 3, textAlign: "center", cursor: "pointer", transition: "all 0.2s ease", bgcolor: isDragOver ? "#e3f2fd" : "transparent", "&:hover": { bgcolor: "#fafafa", borderColor: "#999" } }}
                     onClick={openFileInput} onDrop={handleDrop} onDragOver={handleDragOver} onDragEnter={handleDragEnter} onDragLeave={handleDragLeave}
