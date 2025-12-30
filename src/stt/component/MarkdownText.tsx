@@ -21,7 +21,7 @@ const markdownComponents: Components = {
   ),
   
   p: ({ children, ...props }) => (
-    <Typography sx={{ lineHeight: 1.0 }} {...props}>
+    <Typography sx={{ lineHeight: 1.2 }} {...props}>
       {children}
     </Typography>
   ),
