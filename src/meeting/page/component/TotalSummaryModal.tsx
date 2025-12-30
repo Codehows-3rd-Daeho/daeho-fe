@@ -60,7 +60,7 @@ export default function TotalSummaryModal({
         </DialogTitle>
 
         <DialogContent sx={{ p: 5 }}>
-
+          
           <Box
             sx={{
               mt: 1,
@@ -75,7 +75,13 @@ export default function TotalSummaryModal({
               borderColor: 'divider',
             }}
           >
+            {(content != "") ? (
             <MarkdownText content={content} />
+            ) : (
+            <Box sx={{ textAlign: "center", color: "text.disabled", my: 2 }}>
+              등록된 회의 요약이 없습니다.
+            </Box>
+            )}
           </Box>
         </DialogContent>
       </Dialog>

@@ -38,6 +38,7 @@ export interface STTWithRecording extends STT {
 
 type TabSTTProp = {
   meeting: MeetingDto;
+  fetchMeetingDetail: (meetingId: string) => void;
 }
 
 //daglo 최대 업로드 용량, 허용 확장자
@@ -73,7 +74,10 @@ const allowedExtensions = [
   "wmv",
 ];
 
-export default function TabSTT({meeting}: TabSTTProp) {
+export default function TabSTT({
+  meeting, 
+  fetchMeetingDetail
+}: TabSTTProp) {
   const { meetingId } = useParams();  
   const { member } = useAuthStore();
   const role = member?.role;
@@ -115,7 +119,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
       )
     );
   };
-
+  
   useEffect(() => {
     if (!meetingId) return;
 
@@ -144,6 +148,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
                       progress: res.progress,
                       isLoading: false,
                     })
+                    fetchMeetingDetail(meetingId)
                   }
                 }catch(error) {
                   if (axios.isAxiosError(error)) 
@@ -299,14 +304,15 @@ export default function TabSTT({meeting}: TabSTTProp) {
           })
           if(res.status === "COMPLETED") {
             stopSttPolling(newStt.id);
-            console.log('stt Interval cleared')
+            console.log('stt Interval cleared');
             updateSttState(newStt.id, { 
               content: res.content,
               summary: res.summary,
               status: res.status,
               progress: res.progress,
               isLoading: false,
-            })
+            });
+            fetchMeetingDetail(meetingId);
           }
         }catch(error) {
           if (axios.isAxiosError(error)) 
@@ -325,6 +331,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
   // ========================================================================
 
   const handleDelete = async (sttId: number) => {
+    if(!meetingId) return;
     const sttToDelete = findSttById(sttId);
     if (!sttToDelete) return;
 
@@ -335,6 +342,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
 
     if (!window.confirm("음성 파일을 삭제하시겠습니까?")) return;
     
+    stopSttPolling(sttToDelete.id);
     if (sttToDelete.isTemp && sttToDelete.id !== recordingStt?.id) {
         setStts((prev) => prev.filter((stt) => stt.id !== sttId));
         setSelectedSttId(stts[0]?.id ?? null);
@@ -354,6 +362,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
         return updated;
       });
       if (!sttToDelete.isTemp) alert("음성 파일이 삭제되었습니다.");
+      fetchMeetingDetail(meetingId);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 401) return;
       alert("stt 삭제 중 오류가 발생했습니다.");
@@ -371,11 +380,13 @@ export default function TabSTT({meeting}: TabSTTProp) {
   };
 
   const handleSummarySave = async () => {
+    if(!meetingId) return;
     const currentStt = findSttById(selectedSttId);
     if (currentStt?.isEditable) {
       if (window.confirm('변경된 내용을 저장하시겠습니까?')) {
         await updateSummary(currentStt.id, currentStt.summary);
         updateSttState(selectedSttId, { isEditable: false });
+        fetchMeetingDetail(meetingId);
       }
     }
   }
@@ -427,7 +438,7 @@ export default function TabSTT({meeting}: TabSTTProp) {
   };
 
   const handleConfirmUpload = async (sttId: number | null) => {
-    if (sttId === null) return;
+    if (!meetingId || !sttId) return;
     if (!window.confirm("음성 파일을 등록하시겠습니까?")) return;
 
     updateSttState(sttId, { isTemp: false, isLoading: true})
@@ -453,14 +464,15 @@ export default function TabSTT({meeting}: TabSTTProp) {
           })
           if(res.status === "COMPLETED") {
             stopSttPolling(resStt.id);
-            console.log('stt Interval cleared')
+            console.log('stt Interval cleared');
             updateSttState(resStt.id, { 
               content: res.content,
               summary: res.summary,
               status: res.status,
               progress: res.progress,
               isLoading: false,
-            })
+            });
+            fetchMeetingDetail(meetingId);
           }
         }catch(error) {
           if (axios.isAxiosError(error)) 
