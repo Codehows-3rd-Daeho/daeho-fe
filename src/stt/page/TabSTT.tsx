@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useRef, useState, type SetStateAction } from "react";
-import { getSTT, getSTTs, updateSummary, uploadSTT } from "../api/sttApi";
+import { useEffect, useRef, useState, type SetStateAction } from "react";
+import { deleteSTT, getSTT, getSTTs, updateSummary, uploadSTT } from "../api/sttApi";
 import {
   Box,
   Button,
@@ -82,19 +82,16 @@ export default function TabSTT({
   const { member } = useAuthStore();
   const role = member?.role;
 
-  const { 
-    stt: recordingStt, 
-    activeSessionId,
-    recordingTime,
+  const {
     startRecording,
     pauseRecording,
     resumeRecording,
     stopRecording,
     confirmUpload,
     cancelRecording,
-    isRecording,
+    isAnyRecordingActive,
+    getSessionState,
   } = useRecordingStore();
-  const isCurrentlyRecording = isRecording();
   
   const [stts, setStts] = useState<STTWithRecording[]>([]);
   const [selectedSttId, setSelectedSttId] = useState<number | null>(null);
@@ -112,7 +109,7 @@ export default function TabSTT({
   {/* STT */}
   const startSttPolling = (sttId: number, pollingRate: number) => {
     if(!meetingId) return;
-    sttPollingIntervalRef.current.set(sttId, setInterval( async () => {
+    sttPollingIntervalRef.current.set(sttId, window.setInterval( async () => {
       try{
         const res = await getSTT(sttId);
         updateSttState(sttId, {
@@ -187,36 +184,58 @@ export default function TabSTT({
       }
     };
     fetch();
+
+    return () => {
+      sttPollingIntervalRef.current.forEach(intervalId => clearInterval(intervalId));
+      sttPollingIntervalRef.current.clear();
+    }
   }, [meetingId]);
 
   const handleDelete = async (sttId: number) => {
     if (!sttId || !meetingId || deletingIds.current.has(sttId)) return;
-    const isTemp = findSttById(sttId)?.isTemp;
-    if(!isTemp && !window.confirm("선택한 회의 내용을 삭제하시겠습니까?")) return;
+  
+    const sessionState = getSessionState(sttId);
+    const isThisSttRecording = sessionState?.recordingStatus === 'recording' || sessionState?.recordingStatus === 'paused';
+  
+    if (isThisSttRecording) {
+      if (!window.confirm("녹음이 진행 중입니다. 정말로 삭제하시겠습니까?")) return;
+      await cancelRecording(sttId);
+    } else {
+      const isTemp = findSttById(sttId)?.isTemp;
+      if (!isTemp && !window.confirm("선택한 회의 내용을 삭제하시겠습니까?")) return;
+    }
+    
+    deletingIds.current.add(sttId);
+    stopSttPolling(sttId);
+  
     setStts((prev) => {
-      if (!prev.some(stt => stt.id === sttId)) return prev;
-      const sttToDelete = prev.find(stt => stt.id === sttId);
-      if (!sttToDelete || sttToDelete.id === recordingStt?.id && isCurrentlyRecording) {
-        return prev;
-      }
-      deletingIds.current.add(sttId);
-      stopSttPolling(sttId);
       const current = prev.filter(stt => stt.id !== sttId);
-      setSelectedSttId(current.length === 0 ? null : current[current.length-1].id);
+      setSelectedSttId(current.length === 0 ? null : current[current.length - 1].id);
       return current;
     });
-    if(isTemp) return;
-    
+  
+    const sttToDelete = findSttById(sttId);
+    if (sttToDelete?.isTemp) {
+      deletingIds.current.delete(sttId);
+      return;
+    }
+  
     try {
-      await cancelRecording(sttId);
-      if (!sttId) alert("회의 내용이 삭제되었습니다.");
+      if (!isThisSttRecording) {
+        await deleteSTT(sttId);
+      }
+      alert("회의 내용이 삭제되었습니다.");
     } catch (error) {
       handleError(error, "삭제 중 오류가 발생했습니다.");
+      // Re-add the stt to the list if deletion failed
+      if (sttToDelete) {
+        setStts(prev => [...prev, sttToDelete]);
+      }
     } finally {
       fetchMeetingDetail(meetingId);
       deletingIds.current.delete(sttId);
     }
-  }
+  };
 
   {/* Recording */}
   const formatTime = (seconds: number) => {
@@ -227,22 +246,22 @@ export default function TabSTT({
 
   const handleStartRecording = async () => {
     if (!meetingId) return;
-    if (isCurrentlyRecording) {
+    if (isAnyRecordingActive()) {
       alert("다른 녹음이 진행 중입니다.");
       return;
     }
-
+  
     try {
-      await startRecording(meetingId, (newStt: STT) => {
+      const newStt = await startRecording(meetingId);
+      if (newStt) {
         const newSttEntry: STTWithRecording = {
           ...newStt,
           isTemp: true,
-          recordingStatus: 'recording',  // 세션 상태 사용
-          recordingTime: 0,
+          // recordingStatus and recordingTime will be sourced from the store
         };
         setStts(prev => [...prev.filter(s => s.id !== selectedSttId), newSttEntry]);
         setSelectedSttId(newStt.id);
-      });
+      }
     } catch(error) {
       handleError(error, "녹음을 시작할 수 없습니다.");
     }
@@ -281,26 +300,12 @@ export default function TabSTT({
     if(min < 1) return "1분 미만 녹음 파일"
     return `약 ${min}분 녹음 파일`
   }
-
-  useEffect(() => {
-    if (recordingStt && activeSessionId !== null) {
-      const sessionStatus = useRecordingStore.getState().getSessionStatus(activeSessionId);
-      if (!stts.some(s => s.id === recordingStt.id)) {
-        const newSttEntry: STTWithRecording = {
-          ...recordingStt,
-          isTemp: true, 
-          recordingStatus: sessionStatus,  // 세션 상태 사용
-          recordingTime: 0,  // 임시값 또는 제거
-        };
-        setStts(prev => [...prev, newSttEntry]);
-        setSelectedSttId(newSttEntry.id);
-      } else {
-        updateSttState(recordingStt.id, {
-          recordingStatus: sessionStatus,  // 세션 상태 사용
-        });
-      }
-    }
-  }, [recordingStt, activeSessionId]);  // 의존성 변경
+  
+  const isSttRecordingNow = (sttId: number | null): boolean => {
+    if (sttId === null) return false;
+    const state = getSessionState(sttId);
+    return state?.recordingStatus === 'recording' || state?.recordingStatus === 'paused';
+  }
 
   {/* File */}
   const openFileInput = () => {
@@ -327,26 +332,31 @@ export default function TabSTT({
       || !window.confirm("음성 파일을 등록하시겠습니까?")
     ) return;
 
-    updateSttState(selectedSttId, {
-      isLoading: true,
-      isTemp: false,
-    });
+    const tempSttId = selectedSttId;
+
     try {
       const formData = new FormData();
       formData.append("file", file);
+      
+      updateSttState(tempSttId, {
+        isLoading: true,
+        isTemp: false,
+      });
+
       const newStt = await uploadSTT(meetingId, formData);
-      updateSttState(selectedSttId, {
-        id: newStt.id, 
-        status: newStt.status,
-        file: newStt.file,
-        isLoading: true, 
-        isTemp: false 
-      })
+      
+      // Replace temp stt with real stt from server
+      setStts(prev => prev.map(s => s.id === tempSttId ? {
+        ...newStt,
+        isLoading: true,
+        isTemp: false,
+      } : s));
+
       setSelectedSttId(newStt.id);
       startSttPolling(newStt.id, 2000);
     } catch (error) {
       handleError(error, "음성 파일 등록 중 오류가 발생했습니다.");
-      updateSttState(selectedSttId, {
+      updateSttState(tempSttId, {
         isLoading: false,
         isTemp: true,
       });
@@ -476,7 +486,9 @@ export default function TabSTT({
             }
           }}
         >
-          {stts.map((stt, index) => (
+          {stts.map((stt, index) => {
+            const isThisSttRecording = isSttRecordingNow(stt.id);
+            return (
             <Tab
               key={stt.id}
               value={stt.id}
@@ -489,7 +501,7 @@ export default function TabSTT({
                   alignItems: "center", 
                   textTransform: 'none',
                 }}>
-                  {(stt.id === recordingStt?.id && isCurrentlyRecording) && (
+                  {isThisSttRecording && (
                     <Box sx={{ display: 'flex', alignItems: 'center', mr: 1 }}>
                       <Box 
                         component="span"
@@ -504,7 +516,7 @@ export default function TabSTT({
                             '70%': { transform: 'scale(1)', boxShadow: '0 0 0 8px rgba(255, 82, 82, 0)' },
                             '100%': { transform: 'scale(0.8)', boxShadow: '0 0 0 0 rgba(255, 82, 82, 0)' }
                           },
-                          animation: 'heartbeat 1.5s infinite'  // paused 상태에서도 깜빡임
+                          animation: 'heartbeat 1.5s infinite'
                         }}
                       />
                       <Typography variant="caption" sx={{ color: 'red', fontWeight: 'bold' }}>Live</Typography>
@@ -516,7 +528,7 @@ export default function TabSTT({
                     meeting.isDel === false && (
                     <IconButton
                       size="small"
-                      disabled={stt.id === recordingStt?.id && isCurrentlyRecording}
+                      disabled={isThisSttRecording}
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDelete(stt.id);
@@ -528,7 +540,7 @@ export default function TabSTT({
                 </Box>
               }
             />
-          ))}
+          )})}
         </Tabs>
       </Box>
       
@@ -558,12 +570,10 @@ export default function TabSTT({
               </Box>) : <></>
             );
 
-            const isThisSttRecording = currentStt.id === recordingStt?.id;
-            const currentRecordingStatus = isThisSttRecording && activeSessionId !== null 
-              ? useRecordingStore.getState().getSessionStatus(activeSessionId) 
-              : currentStt.recordingStatus;
-            const currentRecordingTime = isThisSttRecording ? recordingTime : (currentStt.recordingTime || 0);
-
+            const sessionState = getSessionState(currentStt.id);
+            const currentRecordingStatus = sessionState?.recordingStatus ?? currentStt.recordingStatus ?? 'idle';
+            const currentRecordingTime = sessionState?.recordingTime ?? currentStt.recordingTime ?? 0;
+            
             if (currentRecordingStatus === 'recording' || currentRecordingStatus === 'paused') {
               return (
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', p: 3, border: '2px dashed #d0d0d0', borderRadius: 2, minHeight: 300 }}>
@@ -573,26 +583,26 @@ export default function TabSTT({
                   <Box sx={{ display: 'flex', gap: 2 }}>
                     {currentRecordingStatus === 'recording' ? (
                       <Tooltip title="일시정지">
-                        <IconButton size="large" onClick={pauseRecording}>
+                        <IconButton size="large" onClick={() => pauseRecording(currentStt.id)}>
                           <PauseCircleIcon sx={{ fontSize: 40 }} />
                         </IconButton>
                       </Tooltip>
                     ) : (
                       <Tooltip title="다시 시작">
-                        <IconButton size="large" onClick={resumeRecording}>
+                        <IconButton size="large" onClick={() => resumeRecording(currentStt.id)}>
                           <PlayCircleIcon sx={{ fontSize: 40 }} />
                         </IconButton>
                       </Tooltip>
                     )}
                     <Tooltip title="종료">
-                      <IconButton size="large" color="error" onClick={stopRecording}>
+                      <IconButton size="large" color="error" onClick={() => stopRecording(currentStt.id)}>
                         <StopCircleIcon sx={{ fontSize: 40 }} />
                       </IconButton>
                     </Tooltip>
                   </Box>
                 </Box>
               );
-            } else if (currentStt.status === "RECORDING") {
+            } else if (currentStt.status === "RECORDING" || currentRecordingStatus === 'finished' || currentRecordingStatus === 'encoding') {
               return (
                 <Box sx={{ p: 3, border: '2px dashed #d0d0d0', borderRadius: 2, textAlign: 'center' }}>
                     {(currentStt.recordingTime ?? 0) === 0 && (
@@ -633,7 +643,7 @@ export default function TabSTT({
                   </Box>
                   <Box sx={{ textAlign: 'center' }}>
                     <Tooltip title="즉시 녹음 시작">
-                      <IconButton color="primary" sx={{ border: '1px solid', p: 2 }} onClick={handleStartRecording} disabled={isCurrentlyRecording}>
+                      <IconButton color="primary" sx={{ border: '1px solid', p: 2 }} onClick={handleStartRecording} disabled={isAnyRecordingActive()}>
                         <MicIcon sx={{ fontSize: 40 }} />
                       </IconButton>
                     </Tooltip>

@@ -7,268 +7,256 @@ import {
 } from "../stt/api/sttApi";
 import type { STT } from "../stt/type/type";
 
-export type RecordingStatus = "idle" | "recording" | "paused" | "encoding" | "finished";
+export type RecordingStatus =
+  | "idle"
+  | "recording"
+  | "paused"
+  | "encoding"
+  | "finished";
 
+// This will hold the non-serializable parts of a recording session
 interface RecordingSession {
+  stt: STT;
+  mediaRecorder: MediaRecorder;
+  mediaStream: MediaStream;
+  audioChunks: Blob[];
   recordTimeTimer: number;
   chunkTimer: number;
-  audioChunks: Blob[];
-  recordingStatus: RecordingStatus;
-  sessionId: number;
 }
 
-interface RecordingState {
-  stt: STT | null;
-  meetingId: string | null;
-  activeSessionId: number | null;
+// This is the reactive state that components will subscribe to
+export interface SessionState {
+  sttId: number;
+  recordingStatus: RecordingStatus;
   recordingTime: number;
-  mediaRecorder: MediaRecorder | null;
-  mediaStream: MediaStream | null;
-  startRecording: (
-    meetingId: string,
-    onNewStt: (stt: STT) => void
-  ) => Promise<void>;
-  pauseRecording: () => void;
-  resumeRecording: () => Promise<void>;
-  stopRecording: () => Promise<void>;
+}
+
+// Module-level map to hold active sessions with their resources
+const sessions = new Map<number, RecordingSession>();
+
+// Zustand store state
+interface RecordingState {
+  sessionStates: Map<number, SessionState>;
+  isAnyRecordingActive: () => boolean;
+  startRecording: (meetingId: string) => Promise<STT | null>;
+  pauseRecording: (sttId: number) => void;
+  resumeRecording: (sttId: number) => void;
+  stopRecording: (sttId: number) => Promise<void>;
   confirmUpload: (sttId: number) => Promise<STT | null>;
   cancelRecording: (sttId: number) => Promise<void>;
-  isRecording: () => boolean;
-  handleLastChunk: () => void;
-  getSessionStatus: (sessionId: number) => RecordingStatus;
+  getSessionState: (sttId: number) => SessionState | undefined;
 }
 
-// 각 녹음 세션의 리소스를 독립적으로 관리
-const sessions = new Map<number, RecordingSession>();
-let sessionIdCounter = 0;
-
 const useRecordingStore = create<RecordingState>((set, get) => {
-  const cleanup = (sessionId?: number) => {
-    const { mediaRecorder, mediaStream } = get();
-
-    if (mediaRecorder && mediaRecorder.state !== "inactive") {
-      mediaRecorder.stop();
-    }
-    if (mediaStream) {
-      mediaStream.getTracks().forEach((track) => track.stop());
-    }
-
-    if (sessionId !== undefined) {
-      const session = sessions.get(sessionId);
-      if (session) {
-        clearInterval(session.recordTimeTimer);
-        clearInterval(session.chunkTimer);
-        session.audioChunks = [];
-        session.recordingStatus = "idle";
-        sessions.delete(sessionId);
+  const cleanupSession = (sttId: number) => {
+    const session = sessions.get(sttId);
+    if (session) {
+      clearInterval(session.recordTimeTimer);
+      clearInterval(session.chunkTimer);
+      if (session.mediaRecorder && session.mediaRecorder.state !== "inactive") {
+        session.mediaRecorder.stop();
       }
-    } else {
-      sessions.forEach((session) => {
-        clearInterval(session.recordTimeTimer);
-        clearInterval(session.chunkTimer);
-        session.audioChunks = [];
-        session.recordingStatus = "idle";
-      });
-      sessions.clear();
+      session.mediaStream.getTracks().forEach((track) => track.stop());
+      sessions.delete(sttId);
     }
 
-    set({
-      stt: null,
-      meetingId: null,
-      activeSessionId: null,
-      mediaRecorder: null,
-      mediaStream: null,
-      recordingTime: 0,
+    set((state) => {
+      const newSessionStates = new Map(state.sessionStates);
+      if (newSessionStates.has(sttId)) {
+        newSessionStates.delete(sttId);
+        return { sessionStates: newSessionStates };
+      }
+      return state; // Return original state if no change
     });
-    console.log(`Recording resources cleaned up. Session ID: ${sessionId ?? 'all'}`);
+    console.log(`Recording resources cleaned up for STT ID: ${sttId}`);
   };
-  
-  const getActiveSession = () => {
-    const { activeSessionId } = get();
-    return activeSessionId !== null ? sessions.get(activeSessionId) : null;
+
+  const updateSessionState = (sttId: number, props: Partial<SessionState>) => {
+    set((state) => {
+      const newSessionStates = new Map(state.sessionStates);
+      const current = newSessionStates.get(sttId);
+      if (current) {
+        newSessionStates.set(sttId, { ...current, ...props });
+        return { sessionStates: newSessionStates };
+      }
+      return state;
+    });
   };
 
   return {
-    stt: null,
-    meetingId: null,
-    activeSessionId: null,
-    mediaRecorder: null,
-    mediaStream: null,
-    recordingTime: 0,
+    sessionStates: new Map(),
 
-    getSessionStatus: (sessionId: number) => {
-      const session = sessions.get(sessionId);
-      return session?.recordingStatus ?? "idle";
+    isAnyRecordingActive: () => {
+      for (const sessionState of get().sessionStates.values()) {
+        if (
+          sessionState.recordingStatus === "recording" ||
+          sessionState.recordingStatus === "paused"
+        ) {
+          return true;
+        }
+      }
+      return false;
     },
 
-    isRecording: () => {
-      const activeSession = getActiveSession();
-      return !!(activeSession && 
-        (activeSession.recordingStatus === "recording" || 
-         activeSession.recordingStatus === "paused"));
+    getSessionState: (sttId: number) => {
+      return get().sessionStates.get(sttId);
     },
 
-    startRecording: async (meetingId, onNewStt) => {
-      if (get().isRecording()) {
-        console.warn("Recording already in progress.");
-        return;
+    startRecording: async (meetingId: string): Promise<STT | null> => {
+      if (get().isAnyRecordingActive()) {
+        console.warn("Another recording is already in progress.");
+        alert("다른 녹음이 진행 중입니다.");
+        return null;
       }
 
-      const currentSessionId = ++sessionIdCounter;
-      const session: RecordingSession = {
-        recordTimeTimer: 0,
-        chunkTimer: 0,
-        audioChunks: [],
-        recordingStatus: "recording",
-        sessionId: currentSessionId,
-      };
-      sessions.set(currentSessionId, session);
+      let newStt: STT;
+      try {
+        newStt = await apiStartRecording(meetingId);
+      } catch (error) {
+        console.error("Failed to start recording session on API:", error);
+        alert("녹음 세션을 시작하지 못했습니다.");
+        return null;
+      }
+
+      const sttId = newStt.id;
 
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: true,
         });
-        const newStt = await apiStartRecording(meetingId);
-        onNewStt(newStt);
-
         const recorder = new MediaRecorder(stream);
+
+        set((state) => {
+          const newSessionStates = new Map(state.sessionStates);
+          newSessionStates.set(sttId, {
+            sttId: sttId,
+            recordingStatus: "recording",
+            recordingTime: 0,
+          });
+          return { sessionStates: newSessionStates };
+        });
+
+        const recordTimeTimer = window.setInterval(() => {
+          const state = get().sessionStates.get(sttId);
+          if (state && state.recordingStatus === "recording") {
+            updateSessionState(sttId, { recordingTime: state.recordingTime + 1 });
+          }
+        }, 1000);
+
+        const chunkTimer = window.setInterval(async () => {
+          const currentSession = sessions.get(sttId);
+          const sessionState = get().sessionStates.get(sttId);
+          if (
+            currentSession &&
+            sessionState &&
+            sessionState.recordingStatus === "recording" &&
+            currentSession.audioChunks.length > 0
+          ) {
+            const chunkToUpload = new Blob(currentSession.audioChunks, {
+              type: "audio/wav",
+            });
+            currentSession.audioChunks = [];
+            const formData = new FormData();
+            formData.append("file", chunkToUpload, "chunk.wav");
+            try {
+              await uploadAudioChunk(sttId, formData);
+            } catch (e) {
+              console.error("Chunk upload failed:", e);
+              alert("네트워크가 불안정합니다. 확인 후 재시도바랍니다.");
+              cleanupSession(sttId);
+            }
+          }
+        }, 10000);
+
+        const session: RecordingSession = {
+          stt: newStt,
+          mediaRecorder: recorder,
+          mediaStream: stream,
+          audioChunks: [],
+          recordTimeTimer,
+          chunkTimer,
+        };
+        sessions.set(sttId, session);
+
         recorder.ondataavailable = (event) => {
           if (event.data.size > 0) {
-            session.audioChunks.push(event.data);
+            sessions.get(sttId)?.audioChunks.push(event.data);
           }
         };
 
         recorder.onstop = () => {
-          const currentSession = sessions.get(currentSessionId);
-          if (currentSession) {
-            clearInterval(currentSession.recordTimeTimer);
-            clearInterval(currentSession.chunkTimer);
-            currentSession.recordingStatus = "encoding";
+          const onStopSession = sessions.get(sttId);
+          if(onStopSession) {
+            clearInterval(onStopSession.recordTimeTimer);
+            clearInterval(onStopSession.chunkTimer);
+            updateSessionState(sttId, { recordingStatus: "encoding" });
           }
         };
 
         recorder.start(1000);
 
-        session.recordTimeTimer = window.setInterval(() => {
-          set((state) => ({ recordingTime: state.recordingTime + 1 }));
-        }, 1000);
-
-        session.chunkTimer = window.setInterval(async () => {
-          const currentSession = sessions.get(currentSessionId);
-          if (currentSession && 
-              currentSession.audioChunks.length > 0 && 
-              get().stt && 
-              currentSession.recordingStatus === "recording") {
-            const chunk = new Blob(currentSession.audioChunks, { type: "audio/wav" });
-            currentSession.audioChunks = [];
-            const formData = new FormData();
-            formData.append("file", chunk, "chunk.wav");
-            try {
-              await uploadAudioChunk(get().stt!.id, formData);
-            } catch (e) {
-              console.error("Chunk upload failed:", e);
-              alert("네트워크가 불안정합니다. 확인 후 재시도바랍니다.");
-              cleanup(currentSessionId);
-            }
-          }
-        }, 10000);
-
-        set({
-          stt: newStt,
-          meetingId: meetingId,
-          activeSessionId: currentSessionId,
-          mediaRecorder: recorder,
-          mediaStream: stream,
-        });
+        return newStt;
       } catch (error) {
         alert(
           "마이크 권한이 없습니다. 권한 허용 후 다시 시도해주세요. \n(모바일의 경우 앱 설정에서 브라우저 마이크 권한 설정)"
         );
-        cleanup(currentSessionId);
+        cleanupSession(sttId);
+        return null;
       }
     },
 
-    pauseRecording: () => {
-      const activeSession = getActiveSession();
-      if (activeSession && activeSession.recordingStatus === "recording") {
-        const { mediaRecorder } = get();
-        if (mediaRecorder && mediaRecorder.state === "recording") {
-          mediaRecorder.pause();
-          
-          clearInterval(activeSession.recordTimeTimer);
-          clearInterval(activeSession.chunkTimer);
-          activeSession.recordingStatus = "paused";
-        }
+    pauseRecording: (sttId: number) => {
+      const session = sessions.get(sttId);
+      const sessionState = get().sessionStates.get(sttId);
+
+      if (session && sessionState?.recordingStatus === "recording") {
+        session.mediaRecorder.pause();
+        updateSessionState(sttId, { recordingStatus: "paused" });
       }
     },
 
-    resumeRecording: async () => {
-      const activeSession = getActiveSession();
-      if (activeSession && activeSession.recordingStatus === "paused") {
-        const { mediaRecorder, stt } = get();
-        if (mediaRecorder && mediaRecorder.state === "paused") {
-          mediaRecorder.resume();
+    resumeRecording: async (sttId: number) => {
+      const session = sessions.get(sttId);
+      const sessionState = get().sessionStates.get(sttId);
 
-          activeSession.recordTimeTimer = window.setInterval(() => {
-            set((state) => ({ recordingTime: state.recordingTime + 1 }));
-          }, 1000);
-
-          activeSession.chunkTimer = window.setInterval(async () => {
-            const session = sessions.get(activeSession.sessionId);
-            if (session && session.audioChunks.length > 0 && stt && session.recordingStatus === "recording") {
-              const chunk = new Blob(session.audioChunks, { type: "audio/wav" });
-              session.audioChunks = [];
-              const formData = new FormData();
-              formData.append("file", chunk, "chunk.wav");
-              try {
-                await uploadAudioChunk(stt.id, formData);
-              } catch (e) {
-                console.error("Chunk upload failed:", e);
-                alert("네트워크가 불안정합니다. 확인 후 재시도바랍니다.");
-                cleanup(activeSession.sessionId);
-              }
-            }
-          }, 10000);
-          
-          activeSession.recordingStatus = "recording";
-        }
+      if (session && sessionState?.recordingStatus === "paused") {
+        session.mediaRecorder.resume();
+        updateSessionState(sttId, { recordingStatus: "recording" });
       }
     },
 
-    stopRecording: async () => {
-      const { mediaRecorder, stt } = get();
-      const activeSession = getActiveSession();
-      
-      if (mediaRecorder && mediaRecorder.state !== "inactive" && activeSession) {
-        mediaRecorder.stop();
+    stopRecording: async (sttId: number) => {
+      const session = sessions.get(sttId);
+      if (session && session.mediaRecorder.state !== "inactive") {
+        session.mediaRecorder.stop();
 
-        if (activeSession.audioChunks.length > 0 && stt) {
-          const finalChunk = new Blob(activeSession.audioChunks, { type: "audio/wav" });
-          activeSession.audioChunks = [];
+        if (session.audioChunks.length > 0) {
+          const finalChunk = new Blob(session.audioChunks, {
+            type: "audio/wav",
+          });
+          session.audioChunks = [];
           const formData = new FormData();
           formData.append("file", finalChunk, "final.wav");
           formData.append("finish", String(true));
           try {
-            set({ activeSessionId: activeSession.sessionId }); // 상태 업데이트
-            activeSession.recordingStatus = "encoding";
-            await uploadAudioChunk(stt.id, formData);
-            activeSession.recordingStatus = "finished";
+            updateSessionState(sttId, { recordingStatus: "encoding" });
+            await uploadAudioChunk(sttId, formData);
+            updateSessionState(sttId, { recordingStatus: "finished" });
           } catch (e) {
             console.error("Final chunk upload failed:", e);
             alert("네트워크가 불안정합니다. 확인 후 재시도바랍니다.");
-          } finally {
-            cleanup(activeSession.sessionId);
+            cleanupSession(sttId);
           }
         } else {
-          cleanup(activeSession.sessionId);
+          updateSessionState(sttId, { recordingStatus: "finished" });
         }
       }
     },
 
-    confirmUpload: async (sttId: number) => {
+    confirmUpload: async (sttId: number): Promise<STT | null> => {
       try {
         const resStt = await finishRecording(sttId);
-        cleanup(); // 모든 세션 정리
+        cleanupSession(sttId);
         return resStt;
       } catch (e) {
         console.error("Final conversion request failed:", e);
@@ -277,36 +265,12 @@ const useRecordingStore = create<RecordingState>((set, get) => {
     },
 
     cancelRecording: async (sttId: number) => {
+      cleanupSession(sttId);
       try {
+        // This is an API call to delete from the backend
         await deleteSTT(sttId);
       } catch (error) {
         console.error("Failed to delete STT on cancel:", error);
-      }
-      cleanup(); // 모든 세션 정리
-    },
-
-    handleLastChunk: async () => {
-      const { mediaRecorder, stt } = get();
-      const activeSession = getActiveSession();
-      
-      if (mediaRecorder && mediaRecorder.state !== "inactive" && activeSession) {
-        mediaRecorder.stop();
-
-        if (activeSession.audioChunks.length > 0 && stt) {
-          const finalChunk = new Blob(activeSession.audioChunks, { type: "audio/wav" });
-          activeSession.audioChunks = [];
-          const formData = new FormData();
-          formData.append("file", finalChunk, "final.wav");
-          formData.append("finish", String(true));
-          try {
-            await uploadAudioChunk(stt.id, formData);
-            activeSession.recordingStatus = "finished";
-          } catch (e) {
-            console.error("Final chunk upload failed:", e);
-            alert("네트워크가 불안정합니다. 확인 후 재시도바랍니다.");
-          }
-        }
-        cleanup(activeSession.sessionId);
       }
     },
   };
