@@ -607,7 +607,7 @@ export default function TabSTT({
                           disabled={currentRecordingStatus === "encoding"}
                           onClick={() => handleConfirmUpload(selectedSttId)}
                         >
-                          {currentRecordingStatus === "encoding" ? "인코딩중" : "음성 변환 시작"}
+                          {currentRecordingStatus === "encoding" ? "인코딩중.." : "음성 변환 시작"}
                         </Button>
                         <Button variant="outlined" color="secondary" onClick={() => handleDelete(currentStt.id)}>취소</Button>
                     </Box>
