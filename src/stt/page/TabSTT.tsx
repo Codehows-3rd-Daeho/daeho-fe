@@ -189,9 +189,12 @@ export default function TabSTT({
     fetch();
   }, [meetingId]);
 
-  const handleDelete = useCallback(async (sttId: number) => {
-    if (!meetingId || deletingIds.current.has(sttId)) return;
-    
+  const handleDelete = async (sttId: number) => {
+    if (!meetingId 
+      || deletingIds.current.has(sttId) 
+      || !window.confirm("선택한 회의 내용을 삭제하시겠습니까?")
+    ) return;
+    const isTemp = findSttById(sttId)?.isTemp;
     setStts((prev) => {
       if (!prev.some(stt => stt.id === sttId)) return prev;
       const sttToDelete = prev.find(stt => stt.id === sttId);
@@ -200,19 +203,22 @@ export default function TabSTT({
       }
       deletingIds.current.add(sttId);
       stopSttPolling(sttId);
-      return prev.filter(stt => stt.id !== sttId);
+      const current = prev.filter(stt => stt.id !== sttId);
+      setSelectedSttId(current[current.length-1].id);
+      return current;
     });
+    if(isTemp) return;
     
     try {
       await cancelRecording(sttId);
-      if (!sttId) alert("음성 파일이 삭제되었습니다.");
+      if (!sttId) alert("회의 내용이 삭제되었습니다.");
     } catch (error) {
-      fetchMeetingDetail(meetingId);
       handleError(error, "삭제 중 오류가 발생했습니다.");
     } finally {
+      fetchMeetingDetail(meetingId);
       deletingIds.current.delete(sttId);
     }
-  }, [meetingId, recordingStt?.id, isCurrentlyRecording]);
+  }
 
   {/* Recording */}
   const formatTime = (seconds: number) => {
@@ -321,10 +327,9 @@ export default function TabSTT({
   };
   
   const handleUploadFile = async (file: File) => {
-    if (
-      !meetingId || 
-      !validateFile(file) ||
-      !window.confirm("음성 파일을 등록하시겠습니까?")
+    if (!meetingId 
+      || !validateFile(file) 
+      || !window.confirm("음성 파일을 등록하시겠습니까?")
     ) return;
 
     updateSttState(selectedSttId, {
