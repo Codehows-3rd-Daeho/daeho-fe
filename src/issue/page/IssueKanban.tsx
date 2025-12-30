@@ -6,21 +6,33 @@ import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { getKanbanIssuesSrc } from "../api/issueApi";
-import type { IssueListItem } from "../type/type";
+import type { IssueFilter, IssueListItem } from "../type/type";
 import type { KanbanIssue } from "../../common/Kanban/type";
 import { SearchBar } from "../../common/SearchBar/SearchBar";
+import Filter from "../../common/PageHeader/Filter";
+import DateFilter from "../../common/PageHeader/DateFilter";
 
 export type KanbanData = Record<string, KanbanIssue[]>;
 
 export default function IssueKanban() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
 
   const [data, setData] = useState<KanbanData>({
     pending: [],
     done: [],
     delay: [],
+  });
+
+  const [filter, setFilter] = useState<IssueFilter>({
+    keyword: "",
+    departmentIds: [],
+    categoryIds: [],
+    hostIds: [],
+    participantIds: [],
+    statuses: [],
+    startDate: "",
+    endDate: "",
   });
 
   useEffect(() => {
@@ -31,7 +43,7 @@ export default function IssueKanban() {
           inProgress: IssueListItem[];
           completed: IssueListItem[];
           delayed: IssueListItem[];
-        } = await getKanbanIssuesSrc(searchQuery);
+        } = await getKanbanIssuesSrc(filter);
 
         const delayIds = new Set(res.delayed.map((item) => item.id));
         const filteredPending = res.inProgress.filter(
@@ -51,7 +63,17 @@ export default function IssueKanban() {
     };
 
     fetchIssues();
-  }, [searchQuery]);
+  }, [filter]);
+
+  // 검색바 전용 핸들러
+  const handleSearch = (query: string) => {
+    setFilter((prev) => ({ ...prev, keyword: query }));
+  };
+
+  // 필터 컴포넌트 전용 핸들러
+  const handleFilterChange = (newFilter: IssueFilter) => {
+    setFilter(newFilter);
+  };
 
   if (isLoading) {
     return (
@@ -76,15 +98,14 @@ export default function IssueKanban() {
       <Box
         display="flex"
         justifyContent="space-between"
-        alignItems="flex-end" // 타이틀과 버튼 하단 정렬
+        alignItems="flex-end"
         mb={3}
       >
-        {/* 아래 여백 */}
         <Typography
-          variant="h4" // 글자 크기
+          variant="h4"
           component="h1"
-          textAlign="left" // 왼쪽 정렬
-          fontWeight="bold" // 볼드
+          textAlign="left"
+          fontWeight="bold"
         >
           이슈
         </Typography>
@@ -92,15 +113,31 @@ export default function IssueKanban() {
       </Box>
       {/* 헤더 */}
       <PageHeader>
-        <Toggle
-          options={[
-            { label: "리스트", value: "list", path: "/issue/list" },
-            { label: "칸반", value: "kanban", path: "/issue/kanban" },
-          ]}
-        />
-
-        <Box sx={{ height: "40px", display: "flex", alignItems: "center" }}>
-          <SearchBar onSearch={setSearchQuery} placeholder="검색" />
+        <Box sx={{ alignSelf: "center" }}>
+          <Toggle
+            options={[
+              { label: "리스트", value: "list", path: "/issue/list" },
+              { label: "칸반", value: "kanban", path: "/issue/kanban" },
+            ]}
+          />
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <DateFilter
+            startDate={filter.startDate ?? ""}
+            endDate={filter.endDate ?? ""}
+            onStartDateChange={(v) =>
+              setFilter((prev) => ({ ...prev, startDate: v }))
+            }
+            onEndDateChange={(v) =>
+              setFilter((prev) => ({ ...prev, endDate: v }))
+            }
+          />
+          <Filter
+            value={filter}
+            onChange={handleFilterChange}
+            excludeSections={["상태"]}
+          />
+          <SearchBar onSearch={handleSearch} placeholder="검색" />
         </Box>
       </PageHeader>
 

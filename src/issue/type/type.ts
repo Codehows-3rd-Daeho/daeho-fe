@@ -83,3 +83,14 @@ export interface FileDto {
   size: string; //단위포함
   createdAt: string;
 }
+
+export interface IssueFilter {
+  keyword?: string;
+  startDate?: string;
+  endDate?: string;
+  departmentIds?: string[];
+  categoryIds?: string[];
+  hostIds?: string[];
+  participantIds?: string[];
+  statuses?: string[];
+}
