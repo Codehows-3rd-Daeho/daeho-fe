@@ -17,7 +17,6 @@ import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined
 
 import { BASE_URL, type ApiError } from "../../config/httpClient";
 import { useAuthStore } from "../../store/useAuthStore";
-import axios from "axios";
 import { getFileInfo, getStatusLabel } from "../../common/commonFunction";
 import { useNavigate, useParams } from "react-router-dom";
 import type { MeetingDto } from "../type/type";
@@ -51,10 +50,9 @@ export default function MeetingDtl() {
     getMeetingDtl(id)
       .then((data) => setMeeting(data))
       .catch((error) => {
-        if (axios.isAxiosError(error) && error.response?.status === 401) {
-          return;
-        }
-        alert("회의 정보를 불러오는 중 오류가 발생했습니다.");
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+        alert(response ?? "오류가 발생했습니다.");
       });
   };
 
@@ -92,7 +90,9 @@ export default function MeetingDtl() {
           });
         })
         .catch((error) => {
-          console.error("회의 확인 상태 업데이트 실패:", error);
+          const apiError = error as ApiError;
+          const response = apiError.response?.data?.message;
+          alert(response ?? "오류가 발생했습니다.");
         });
     }
   }, [meetingId, meeting, currentMemberId]);

@@ -54,6 +54,11 @@ export default function MyPage() {
 
     getMemberProfile(member.memberId)
       .then(setProfile)
+      .catch((error) => {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+        alert(response ?? "오류가 발생했습니다.");
+      })
       .finally(() => setLoading(false));
   }, [member?.memberId]);
 

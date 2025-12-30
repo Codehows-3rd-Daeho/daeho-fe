@@ -9,6 +9,7 @@ import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { useNavigate } from "react-router-dom";
 import { getMeetingList } from "../api/MeetingApi";
 import { getStatusLabel } from "../../common/commonFunction";
+import type { ApiError } from "../../config/httpClient";
 
 export default function MeetingList() {
   const navigate = useNavigate();
@@ -18,15 +19,20 @@ export default function MeetingList() {
   const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
-    getMeetingList(page - 1, 10).then((data) => {
-      const list = (data.content ?? data).map((item: MeetingListItem) => ({
-        ...item,
-        status: getStatusLabel(item.status),
-      }));
-
-      setData(list);
-      setTotalCount(data.totalElements); // 전체 개수
-    });
+    getMeetingList(page - 1, 10)
+      .then((data) => {
+        const list = (data.content ?? data).map((item: MeetingListItem) => ({
+          ...item,
+          status: getStatusLabel(item.status),
+        }));
+        setData(list);
+        setTotalCount(data.totalElements); // 전체 개수
+      })
+      .catch((error) => {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+        alert(response ?? "오류가 발생했습니다.");
+      });
   }, [page]);
 
   const allColumns: GridColDef[] = [

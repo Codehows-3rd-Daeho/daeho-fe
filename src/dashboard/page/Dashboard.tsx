@@ -27,48 +27,62 @@ export default function Dashboard() {
   });
   const [issueCount, setIssueCount] = useState(0);
   const [imminentCount, setImminentCount] = useState(0);
-
+  //회의
   const [meetingData, setMeetingData] = useState<MeetingListItem[]>([]);
 
   useEffect(() => {
-    getKanbanIssues().then(
-      (res: {
-        inProgress: IssueListItem[];
-        completed: IssueListItem[];
-        delayed: IssueListItem[];
-      }) => {
-        const inProgressCount = res.inProgress.length; //진행중인 이슈 개수
-        const imminentCount = res.inProgress.filter((issue) => {
-          const { isImminent } = calculateDDay(issue.endDate);
-          return isImminent;
-        }).length;
-        const delayIds = new Set(res.delayed.map((item) => item.id));
-        const filteredPending = res.inProgress.filter(
-          (item) => !delayIds.has(item.id)
-        );
+    getKanbanIssues()
+      .then(
+        (res: {
+          inProgress: IssueListItem[];
+          completed: IssueListItem[];
+          delayed: IssueListItem[];
+        }) => {
+          const inProgressCount = res.inProgress.length; //진행중인 이슈 개수
+          const imminentCount = res.inProgress.filter((issue) => {
+            const { isImminent } = calculateDDay(issue.endDate);
+            return isImminent;
+          }).length;
+          const delayIds = new Set(res.delayed.map((item) => item.id));
+          const filteredPending = res.inProgress.filter(
+            (item) => !delayIds.has(item.id)
+          );
 
-        setIssueData({
-          pending: filteredPending.slice(0, 1), //최대 1개만 표시
-          done: res.completed.slice(0, 1),
-          delay: res.delayed.slice(0, 1),
-        });
+          setIssueData({
+            pending: filteredPending.slice(0, 1), //최대 1개만 표시
+            done: res.completed.slice(0, 1),
+            delay: res.delayed.slice(0, 1),
+          });
 
-        setIssueCount(inProgressCount);
-        setImminentCount(imminentCount);
-      }
-    );
+          setIssueCount(inProgressCount);
+          setImminentCount(imminentCount);
+        }
+      )
+      .catch((error) => {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+        alert(response ?? "오류가 발생했습니다.");
+      });
   }, []);
 
   //회의 리스트
-  useEffect(() => {
-    getMeetingListMT(0, 3).then((data) => {
-      const list = (data.content ?? data).map((item: MeetingListItem) => ({
-        ...item,
-        status: getStatusLabel(item.status),
-      }));
 
-      setMeetingData(list);
-    });
+  useEffect(() => {
+    getMeetingListMT(member!.memberId, 0, 3)
+      .then((data) => {
+        const list = (data.content ?? data).map((item: MeetingListItem) => ({
+          ...item,
+          status: getStatusLabel(item.status),
+        }));
+        console.log("list: ", list);
+
+        setMeetingData(list);
+      })
+      .catch((error) => {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+        alert(response ?? "오류가 발생했습니다.");
+      });
   }, []);
 
   const allColumns: GridColDef[] = [
@@ -212,7 +226,6 @@ export default function Dashboard() {
       } catch (error) {
         const apiError = error as ApiError;
         const response = apiError.response?.data?.message;
-
         alert(response ?? "오류가 발생했습니다.");
       } finally {
         setMeetings(meetings);

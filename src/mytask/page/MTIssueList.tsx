@@ -11,6 +11,7 @@ import { useAuthStore } from "../../store/useAuthStore";
 import { getStatusLabel } from "../../common/commonFunction";
 import { getIssueListMT } from "../../issue/api/issueApi";
 import type { IssueListItem } from "../../issue/type/type";
+import type { ApiError } from "../../config/httpClient";
 
 export default function MTIssueList() {
   const navigate = useNavigate();
@@ -23,15 +24,21 @@ export default function MTIssueList() {
 
   // 데이터 가져오기
   useEffect(() => {
-    getIssueListMT(member!.memberId, page - 1, 10).then((data) => {
-      const list = (data.content ?? data).map((item: IssueListItem) => ({
-        ...item,
-        status: getStatusLabel(item.status),
-      }));
+    getIssueListMT(member!.memberId, page - 1, 10)
+      .then((data) => {
+        const list = (data.content ?? data).map((item: IssueListItem) => ({
+          ...item,
+          status: getStatusLabel(item.status),
+        }));
 
-      setData(list);
-      setTotalCount(data.totalElements); // 전체 개수
-    });
+        setData(list);
+        setTotalCount(data.totalElements); // 전체 개수
+      })
+      .catch((error) => {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+        alert(response ?? "오류가 발생했습니다.");
+      });
   }, [page]);
 
   // 리스트 컬럼

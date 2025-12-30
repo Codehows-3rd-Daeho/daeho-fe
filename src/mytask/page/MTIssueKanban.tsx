@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import type { KanbanIssue } from "../../common/Kanban/type";
 import type { IssueListItem } from "../../issue/type/type";
 import { getKanbanIssuesMT } from "../../issue/api/issueApi";
+import type { ApiError } from "../../config/httpClient";
 
 export type KanbanData = Record<string, KanbanIssue[]>;
 
@@ -22,24 +23,30 @@ export default function MTIssueKanban() {
   });
 
   useEffect(() => {
-    getKanbanIssuesMT(member!.memberId).then(
-      (res: {
-        inProgress: IssueListItem[];
-        completed: IssueListItem[];
-        delayed: IssueListItem[];
-      }) => {
-        const delayIds = new Set(res.delayed.map((item) => item.id));
-        const filteredPending = res.inProgress.filter(
-          (item) => !delayIds.has(item.id)
-        );
+    getKanbanIssuesMT(member!.memberId)
+      .then(
+        (res: {
+          inProgress: IssueListItem[];
+          completed: IssueListItem[];
+          delayed: IssueListItem[];
+        }) => {
+          const delayIds = new Set(res.delayed.map((item) => item.id));
+          const filteredPending = res.inProgress.filter(
+            (item) => !delayIds.has(item.id)
+          );
 
-        setData({
-          pending: filteredPending,
-          done: res.completed,
-          delay: res.delayed,
-        });
-      }
-    );
+          setData({
+            pending: filteredPending,
+            done: res.completed,
+            delay: res.delayed,
+          });
+        }
+      )
+      .catch((error) => {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+        alert(response ?? "오류가 발생했습니다.");
+      });
   }, []);
 
   return (

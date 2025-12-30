@@ -10,6 +10,7 @@ import { useAuthStore } from "../../store/useAuthStore";
 import { getStatusLabel } from "../../common/commonFunction";
 import type { MeetingListItem } from "../../meeting/type/type";
 import { getMeetingListMT } from "../../meeting/api/MeetingApi";
+import type { ApiError } from "../../config/httpClient";
 
 export default function MeetingList() {
   const navigate = useNavigate();
@@ -20,15 +21,21 @@ export default function MeetingList() {
   const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
-    getMeetingListMT(member!.memberId, page - 1, 10).then((data) => {
-      const list = (data.content ?? data).map((item: MeetingListItem) => ({
-        ...item,
-        status: getStatusLabel(item.status),
-      }));
+    getMeetingListMT(member!.memberId, page - 1, 10)
+      .then((data) => {
+        const list = (data.content ?? data).map((item: MeetingListItem) => ({
+          ...item,
+          status: getStatusLabel(item.status),
+        }));
 
-      setData(list);
-      setTotalCount(data.totalElements); // 전체 개수
-    });
+        setData(list);
+        setTotalCount(data.totalElements); // 전체 개수
+      })
+      .catch((error) => {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+        alert(response ?? "오류가 발생했습니다.");
+      });
   }, [page]);
 
   const allColumns: GridColDef[] = [

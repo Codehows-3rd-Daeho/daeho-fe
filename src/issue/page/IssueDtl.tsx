@@ -25,7 +25,6 @@ import { deleteIssue, getIssueDtl, updateReadStatus } from "../api/issueApi";
 import type { IssueDto } from "../type/type";
 import { BASE_URL, type ApiError } from "../../config/httpClient";
 import { useAuthStore } from "../../store/useAuthStore";
-import axios from "axios";
 import { getFileInfo, getStatusLabel } from "../../common/commonFunction";
 
 export default function IssueDtl() {
@@ -44,10 +43,9 @@ export default function IssueDtl() {
     getIssueDtl(id)
       .then((data) => setIssue(data))
       .catch((error) => {
-        if (axios.isAxiosError(error) && error.response?.status === 401) {
-          return;
-        }
-        alert("이슈 정보를 불러오는 중 오류가 발생했습니다.");
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+        alert(response ?? "오류가 발생했습니다.");
       });
   };
 
@@ -88,7 +86,9 @@ export default function IssueDtl() {
           });
         })
         .catch((error) => {
-          console.error("이슈 확인 상태 업데이트 실패:", error);
+          const apiError = error as ApiError;
+          const response = apiError.response?.data?.message;
+          alert(response ?? "오류가 발생했습니다.");
         });
     }
   }, [issueId, issue, currentMemberId]);

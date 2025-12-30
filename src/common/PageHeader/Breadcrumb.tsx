@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { getIssueDtl } from "../../issue/api/issueApi";
 import { getMeetingDtl } from "../../meeting/api/MeetingApi";
+import type { ApiError } from "../../config/httpClient";
 
 export default function Breadcrumb() {
   //url 정보 가져오는 훅
@@ -89,22 +90,34 @@ export default function Breadcrumb() {
 
     //이슈 제목 매핑
     if (info.type === "issue") {
-      getIssueDtl(info.id).then((res) => {
-        setDynamicNameMap((prev) => ({
-          ...prev,
-          [info.id]: res.title,
-        }));
-      });
+      getIssueDtl(info.id)
+        .then((res) => {
+          setDynamicNameMap((prev) => ({
+            ...prev,
+            [info.id]: res.title,
+          }));
+        })
+        .catch((error) => {
+          const apiError = error as ApiError;
+          const response = apiError.response?.data?.message;
+          alert(response ?? "오류가 발생했습니다.");
+        });
     }
 
     //회의 제목 매핑
     if (info.type === "meeting") {
-      getMeetingDtl(info.id).then((res) => {
-        setDynamicNameMap((prev) => ({
-          ...prev,
-          [info.id]: res.title, // 또는 res.subject
-        }));
-      });
+      getMeetingDtl(info.id)
+        .then((res) => {
+          setDynamicNameMap((prev) => ({
+            ...prev,
+            [info.id]: res.title, // 또는 res.subject
+          }));
+        })
+        .catch((error) => {
+          const apiError = error as ApiError;
+          const response = apiError.response?.data?.message;
+          alert(response ?? "오류가 발생했습니다.");
+        });
     }
   }, [location.pathname]);
 
