@@ -84,7 +84,7 @@ export default function TabSTT({
 
   const { 
     stt: recordingStt, 
-    recordingStatus, 
+    activeSessionId,
     recordingTime,
     startRecording,
     pauseRecording,
@@ -237,13 +237,13 @@ export default function TabSTT({
         const newSttEntry: STTWithRecording = {
           ...newStt,
           isTemp: true,
-          recordingStatus: 'recording',
+          recordingStatus: 'recording',  // 세션 상태 사용
           recordingTime: 0,
         };
         setStts(prev => [...prev.filter(s => s.id !== selectedSttId), newSttEntry]);
         setSelectedSttId(newStt.id);
       });
-    }catch(error) {
+    } catch(error) {
       handleError(error, "녹음을 시작할 수 없습니다.");
     }
   };
@@ -263,8 +263,6 @@ export default function TabSTT({
           isEditable: false,
           isLoading: true,
           isTemp: false,
-          recordingStatus: 'idle',
-          recordingTime: 0,
         });
         setSelectedSttId(newStt.id);
         startSttPolling(newStt.id, 2000);
@@ -285,25 +283,24 @@ export default function TabSTT({
   }
 
   useEffect(() => {
-    if (recordingStt) {
+    if (recordingStt && activeSessionId !== null) {
+      const sessionStatus = useRecordingStore.getState().getSessionStatus(activeSessionId);
       if (!stts.some(s => s.id === recordingStt.id)) {
         const newSttEntry: STTWithRecording = {
           ...recordingStt,
           isTemp: true, 
-          recordingStatus: recordingStatus,
-          recordingTime: recordingTime,
+          recordingStatus: sessionStatus,  // 세션 상태 사용
+          recordingTime: 0,  // 임시값 또는 제거
         };
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setStts(prev => [...prev, newSttEntry]);
         setSelectedSttId(newSttEntry.id);
       } else {
         updateSttState(recordingStt.id, {
-          recordingStatus: recordingStatus,
-          recordingTime: recordingTime,
+          recordingStatus: sessionStatus,  // 세션 상태 사용
         });
       }
     }
-  }, [recordingStt, recordingStatus, recordingTime]);
+  }, [recordingStt, activeSessionId]);  // 의존성 변경
 
   {/* File */}
   const openFileInput = () => {
@@ -488,11 +485,11 @@ export default function TabSTT({
               }}
               label={
                 <Box sx={{ 
-                    display: "flex", 
-                    alignItems: "center", 
-                    textTransform: 'none',
-                  }}>
-                  {(stt.id === recordingStt?.id && (recordingStatus === 'recording' || recordingStatus === 'paused')) && (
+                  display: "flex", 
+                  alignItems: "center", 
+                  textTransform: 'none',
+                }}>
+                  {(stt.id === recordingStt?.id && isCurrentlyRecording) && (
                     <Box sx={{ display: 'flex', alignItems: 'center', mr: 1 }}>
                       <Box 
                         component="span"
@@ -507,7 +504,7 @@ export default function TabSTT({
                             '70%': { transform: 'scale(1)', boxShadow: '0 0 0 8px rgba(255, 82, 82, 0)' },
                             '100%': { transform: 'scale(0.8)', boxShadow: '0 0 0 0 rgba(255, 82, 82, 0)' }
                           },
-                          animation: recordingStatus === 'recording' ? 'heartbeat 1.5s infinite' : 'none'
+                          animation: 'heartbeat 1.5s infinite'  // paused 상태에서도 깜빡임
                         }}
                       />
                       <Typography variant="caption" sx={{ color: 'red', fontWeight: 'bold' }}>Live</Typography>
@@ -562,7 +559,9 @@ export default function TabSTT({
             );
 
             const isThisSttRecording = currentStt.id === recordingStt?.id;
-            const currentRecordingStatus = isThisSttRecording ? recordingStatus : currentStt.recordingStatus;
+            const currentRecordingStatus = isThisSttRecording && activeSessionId !== null 
+              ? useRecordingStore.getState().getSessionStatus(activeSessionId) 
+              : currentStt.recordingStatus;
             const currentRecordingTime = isThisSttRecording ? recordingTime : (currentStt.recordingTime || 0);
 
             if (currentRecordingStatus === 'recording' || currentRecordingStatus === 'paused') {

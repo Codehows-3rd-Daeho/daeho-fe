@@ -35,6 +35,7 @@ interface RecordingState {
   cancelRecording: (sttId: number) => Promise<void>;
   isRecording: () => boolean;
   handleLastChunk: () => void;
+  getSessionStatus: (sessionId: number) => RecordingStatus;
 }
 
 // 각 녹음 세션의 리소스를 독립적으로 관리
