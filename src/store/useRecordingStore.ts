@@ -72,7 +72,6 @@ const useRecordingStore = create<RecordingState>((set, get) => {
     set({
       stt: null,
       meetingId: null,
-      recordingStatus: "idle",
       recordingTime: 0,
       mediaRecorder: null,
       mediaStream: null,
@@ -127,7 +126,6 @@ const useRecordingStore = create<RecordingState>((set, get) => {
             clearInterval(currentSession.recordTimeTimer);
             clearInterval(currentSession.chunkTimer);
           }
-          set({ recordingStatus: "encoding" });
         };
 
         recorder.start(1000);
@@ -233,6 +231,7 @@ const useRecordingStore = create<RecordingState>((set, get) => {
           formData.append("file", finalChunk, "final.wav");
           formData.append("finish", String(true));
           try {
+            set({ recordingStatus: "encoding" });
             await uploadAudioChunk(stt.id, formData);
             set({ recordingStatus: "finished" });
           } catch (e) {
