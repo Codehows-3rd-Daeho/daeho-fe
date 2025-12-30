@@ -91,6 +91,15 @@ export const usePushNotification = (
       return false;
     }
 
+    // 차단된 상태
+    if (Notification.permission === "denied") {
+      alert(
+        "브라우저 알림이 차단되어 있습니다.\n\n" +
+          "주소창 왼쪽 🔒 아이콘 → 사이트 설정 → 알림을 허용해 주세요."
+      );
+      return false;
+    }
+
     // 이미 허용된 경우 다시 요청하지 않음
     if (Notification.permission === "granted") {
       setState((prev) => ({ ...prev, permission: "granted" }));

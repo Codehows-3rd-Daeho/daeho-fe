@@ -27,3 +27,5 @@ certs/
 *.njsproj
 *.sln
 *.sw?
+
+vite.config.ts

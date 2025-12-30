@@ -72,7 +72,6 @@ export default function Login() {
       }
 
       setError(message);
-      alert(message);
     }
   };
 

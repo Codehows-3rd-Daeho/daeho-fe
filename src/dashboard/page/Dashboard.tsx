@@ -451,13 +451,14 @@ export default function Dashboard() {
                                 justifyContent: "space-between", // 좌우로 벌리기
                                 gridTemplateColumns: "auto 1fr",
                                 gap: 1,
+                                mb: 1,
                                 width: "100%",
                               }}
                             >
                               {meeting.startDate && (
                                 <Box
                                   sx={{
-                                    fontSize: 10,
+                                    fontSize: 12,
                                     color: "white",
                                   }}
                                 >
@@ -467,7 +468,7 @@ export default function Dashboard() {
 
                               <Box
                                 sx={{
-                                  fontSize: 10,
+                                  fontSize: 12,
                                   color: "white",
                                   overflow: "hidden",
                                   textOverflow: "ellipsis",
@@ -479,7 +480,7 @@ export default function Dashboard() {
                             </Box>
                             <Box
                               sx={{
-                                fontSize: 14,
+                                fontSize: 15,
                                 fontWeight: 500,
                                 color: "white",
                                 overflow: "hidden",

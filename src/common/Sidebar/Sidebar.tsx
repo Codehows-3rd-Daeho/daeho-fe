@@ -86,53 +86,36 @@ export default function Sidebar({
       {/* 로고 */}
       <Toolbar
         sx={{
-          px: 0,
-          minHeight: collapsed ? 64 : undefined,
+          px: 2,
+          minHeight: 64,
           display: "flex",
-          justifyContent: "center",
+          justifyContent: collapsed ? "center" : "space-between",
+          alignItems: "center",
+          py: 3.7,
         }}
       >
-        {!collapsed ? (
+        {/* 로고 (펼침 상태에서만) */}
+        {!collapsed && (
           <Box
             display="flex"
             alignItems="center"
-            sx={{ cursor: "pointer", py: 3.7 }}
+            sx={{ cursor: "pointer" }}
             onClick={() => navigate("/")}
           >
             <img
               src="/daehologo.gif"
               alt="로고"
-              style={{ width: 244, height: 50 }}
+              style={{ width: 200, height: 45 }}
             />
           </Box>
-        ) : (
-          <Box
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            sx={{ height: 110 }}
-          >
-            <IconButton onClick={() => navigate("/")}>
-              <HomeIcon />
-            </IconButton>
-          </Box>
         )}
-        <IconButton
-          onClick={onToggle}
-          sx={{
-            position: "absolute",
-            right: -20,
-            top: "50%",
-            transform: "translateY(-50%)",
-            backgroundColor: "#fff",
-            border: "1px solid #ccc",
-            "&:hover": { backgroundColor: "#f0f0f0" },
-            zIndex: 10,
-          }}
-        >
+
+        {/* 메뉴 토글 버튼 (항상 존재) */}
+        <IconButton onClick={onToggle}>
           {collapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
         </IconButton>
       </Toolbar>
+
       <Divider />
       {/* 일반 메뉴 */}
       <List>
