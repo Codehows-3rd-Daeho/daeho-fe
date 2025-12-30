@@ -13,6 +13,17 @@ import type {
 // 이슈 목록 조회
 export const getIssueList = async (
   page: number,
+  size: number = 10
+): Promise<IssueListResponse> => {
+  const response = await httpClient.get(`/issue/list`, {
+    params: { page, size },
+  });
+  return response.data;
+};
+
+// 이슈 목록 조회 + 검색 추가
+export const getIssueListSrc = async (
+  page: number,
   size: number = 10,
   keyword: string
 ): Promise<IssueListResponse> => {
@@ -68,7 +79,13 @@ type temp = {
 };
 
 //칸반 전체
-export const getKanbanIssues = async (keyword: string): Promise<temp> => {
+export const getKanbanIssues = async (): Promise<temp> => {
+  const response = await httpClient.get(`/issue/kanban`);
+  return response.data;
+};
+
+// 칸반 전체 + 검색 추가
+export const getKanbanIssuesSrc = async (keyword: string): Promise<temp> => {
   const response = await httpClient.get(`/issue/kanban`, {
     params: { keyword },
   });

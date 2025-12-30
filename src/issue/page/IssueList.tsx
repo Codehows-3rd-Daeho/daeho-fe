@@ -9,7 +9,7 @@ import { PageHeader } from "../../common/PageHeader/PageHeader";
 import { Toggle } from "../../common/PageHeader/Toggle/Toggle";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { Box, Typography } from "@mui/material";
-import { getIssueList } from "../api/issueApi";
+import { getIssueListSrc } from "../api/issueApi";
 import { getStatusLabel } from "../../common/commonFunction";
 import { SearchBar } from "../../common/SearchBar/SearchBar";
 
@@ -26,7 +26,7 @@ export default function IssueList() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await getIssueList(page - 1, 10, searchQuery);
+        const data = await getIssueListSrc(page - 1, 10, searchQuery);
         const list = (data.content ?? data).map((item: IssueListItem) => ({
           ...item,
           status: getStatusLabel(item.status),

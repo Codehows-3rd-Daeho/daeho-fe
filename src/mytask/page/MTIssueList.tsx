@@ -26,7 +26,9 @@ export default function MTIssueList() {
 
   // 데이터 가져오기
   useEffect(() => {
-    getIssueListMT(member!.memberId, page - 1, 10, searchQuery).then((data) => {
+    if (!member?.memberId) return;
+
+    getIssueListMT(member.memberId, page - 1, 10, searchQuery).then((data) => {
       const list = (data.content ?? data).map((item: IssueListItem) => ({
         ...item,
         status: getStatusLabel(item.status),
@@ -35,7 +37,7 @@ export default function MTIssueList() {
       setData(list);
       setTotalCount(data.totalElements); // 전체 개수
     });
-  }, [page, searchQuery]);
+  }, [page, searchQuery, member?.memberId]);
 
   // 리스트 컬럼
   const allColumns: GridColDef[] = [

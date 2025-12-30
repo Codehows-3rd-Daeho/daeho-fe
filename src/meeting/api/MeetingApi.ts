@@ -8,13 +8,24 @@ import httpClient from "../../config/httpClient";
 // 회의 목록 조회(페이징)
 export const getMeetingList = async (
   page: number,
+  size: number = 10
+): Promise<MeetingListResponse> => {
+  const response = await httpClient.get(`/meeting/list`, {
+    params: { page, size },
+  });
+  return response.data;
+};
+
+// 회의 목록 조회(페이징) + 검색 추가
+export const getMeetingListSrc = async (
+  page: number,
   size: number = 10,
   keyword: string
 ): Promise<MeetingListResponse> => {
   const response = await httpClient.get(`/meeting/list`, {
     params: { page, size, keyword },
   });
-  return response.data; // { content, totalElements }
+  return response.data;
 };
 
 //나의 업무 회의 목록
@@ -27,7 +38,7 @@ export const getMeetingListMT = async (
   const response = await httpClient.get(`/meeting/mytask/${id}`, {
     params: { page, size, keyword },
   });
-  return response.data; // { content, totalElements }
+  return response.data;
 };
 
 //회의 캘린더 조회
@@ -38,7 +49,7 @@ export const getMeetingMonth = async (
   const response = await httpClient.get(`/meeting/scheduler`, {
     params: { year, month },
   });
-  return response.data; // { content, totalElements }
+  return response.data;
 };
 
 //나의 업무 회의 캘린더
@@ -52,7 +63,7 @@ export const getMeetingMonthMT = async (
   const response = await httpClient.get(`/meeting/scheduler/mytask/${id}`, {
     params: { year, month },
   });
-  return response.data; // { content, totalElements }
+  return response.data;
 };
 
 //등록

@@ -5,7 +5,7 @@ import { Toggle } from "../../common/PageHeader/Toggle/Toggle";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
-import { getKanbanIssues } from "../api/issueApi";
+import { getKanbanIssuesSrc } from "../api/issueApi";
 import type { IssueListItem } from "../type/type";
 import type { KanbanIssue } from "../../common/Kanban/type";
 import { SearchBar } from "../../common/SearchBar/SearchBar";
@@ -31,7 +31,7 @@ export default function IssueKanban() {
           inProgress: IssueListItem[];
           completed: IssueListItem[];
           delayed: IssueListItem[];
-        } = await getKanbanIssues(searchQuery);
+        } = await getKanbanIssuesSrc(searchQuery);
 
         const delayIds = new Set(res.delayed.map((item) => item.id));
         const filteredPending = res.inProgress.filter(

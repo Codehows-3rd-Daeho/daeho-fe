@@ -25,7 +25,9 @@ export default function MTIssueKanban() {
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    getKanbanIssuesMT(member!.memberId, searchQuery).then(
+    if (!member?.memberId) return;
+
+    getKanbanIssuesMT(member.memberId, searchQuery).then(
       (res: {
         inProgress: IssueListItem[];
         completed: IssueListItem[];
@@ -43,7 +45,7 @@ export default function MTIssueKanban() {
         });
       }
     );
-  }, [searchQuery]);
+  }, [searchQuery, member?.memberId]);
 
   return (
     <>

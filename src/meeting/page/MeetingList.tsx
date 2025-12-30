@@ -7,7 +7,7 @@ import { Box, Typography } from "@mui/material";
 import { PageHeader } from "../../common/PageHeader/PageHeader";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { useNavigate } from "react-router-dom";
-import { getMeetingList } from "../api/MeetingApi";
+import { getMeetingListSrc } from "../api/MeetingApi";
 import { getStatusLabel } from "../../common/commonFunction";
 import { SearchBar } from "../../common/SearchBar/SearchBar";
 
@@ -22,7 +22,7 @@ export default function MeetingList() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await getMeetingList(page - 1, 10, searchQuery);
+        const data = await getMeetingListSrc(page - 1, 10, searchQuery);
         const list = (data.content ?? data).map((item: MeetingListItem) => ({
           ...item,
           status: getStatusLabel(item.status),
