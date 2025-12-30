@@ -183,11 +183,10 @@ const useRecordingStore = create<RecordingState>((set, get) => {
       }
     },
 
-    stopRecording: () => {
+    stopRecording: async () => {
       const { mediaRecorder, stt } = get();
       if (mediaRecorder && mediaRecorder.state !== "inactive") {
-        mediaRecorder.stop(); // This will trigger onstop
-        // send remaining chunks
+        mediaRecorder.stop();
         const remainingChunks = audioChunks;
         if (remainingChunks.length > 0 && stt) {
           const finalChunk = new Blob(remainingChunks, { type: "audio/wav" });
@@ -195,13 +194,14 @@ const useRecordingStore = create<RecordingState>((set, get) => {
           const formData = new FormData();
           formData.append("file", finalChunk, "final.wav");
           formData.append("finish", String(true));
-          uploadAudioChunk(stt.id, formData).then(() => {
+          try{
+            await uploadAudioChunk(stt.id, formData);
             set({ recordingStatus: "finished" });
-          }).catch((e) => {
+          } catch(e) {
             console.error("Final chunk upload failed:", e)
             alert("네트워크가 불안정합니다. 확인 후 재시도바랍니다.");
             cleanup();
-          });
+          };
         }
       }
     },
