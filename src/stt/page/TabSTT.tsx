@@ -190,11 +190,9 @@ export default function TabSTT({
   }, [meetingId]);
 
   const handleDelete = async (sttId: number) => {
-    if (!meetingId 
-      || deletingIds.current.has(sttId) 
-      || !window.confirm("선택한 회의 내용을 삭제하시겠습니까?")
-    ) return;
+    if (!sttId || !meetingId || deletingIds.current.has(sttId)) return;
     const isTemp = findSttById(sttId)?.isTemp;
+    if(!isTemp && !window.confirm("선택한 회의 내용을 삭제하시겠습니까?")) return;
     setStts((prev) => {
       if (!prev.some(stt => stt.id === sttId)) return prev;
       const sttToDelete = prev.find(stt => stt.id === sttId);
@@ -204,7 +202,7 @@ export default function TabSTT({
       deletingIds.current.add(sttId);
       stopSttPolling(sttId);
       const current = prev.filter(stt => stt.id !== sttId);
-      setSelectedSttId(current[current.length-1].id);
+      setSelectedSttId(current.length === 0 ? null : current[current.length-1].id);
       return current;
     });
     if(isTemp) return;
