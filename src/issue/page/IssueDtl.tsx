@@ -168,13 +168,20 @@ export default function IssueDtl() {
         gap: 3,
         p: 3,
         bgcolor: "#f5f5f5",
-        minWidth: "400px",
+        minWidth: 300,
         flexDirection: { xs: "column-reverse", md: "row" }, // 모바일: 세로(2,1), 데스크탑: 가로(1,2)
       }}
     >
       {/* 왼쪽 섹션 */}
       <Box
-        sx={{ flex: 1, bgcolor: "white", borderRadius: 2, p: 3, boxShadow: 1 }}
+        sx={{
+          flex: 1,
+          bgcolor: "white",
+          borderRadius: 2,
+          p: 3,
+          boxShadow: 1,
+          minWidth: 200,
+        }}
       >
         {/* 제목 */}
         <Typography variant="h5" sx={{ fontWeight: 700, mb: 3 }}>
@@ -344,9 +351,27 @@ export default function IssueDtl() {
 
       {/* 오른쪽 섹션 */}
       <Box
-        sx={{ width: 400, display: "flex", flexDirection: "column", gap: 2 }}
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
       >
-        <Box sx={{ bgcolor: "white", borderRadius: 2, p: 3, boxShadow: 1 }}>
+        <Box
+          sx={{
+            height: 800,
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+            p: 3,
+            bgcolor: "white",
+            borderRadius: 2,
+            boxShadow: 1,
+            minWidth: 150,
+            maxWidth: 360,
+          }}
+        >
           {/* 상태 */}
           <InfoRow
             label="상태"
@@ -512,13 +537,23 @@ export default function IssueDtl() {
         {((issue.isEditPermitted && issue.status !== "COMPLETED") ||
           role === "ADMIN") &&
           issue.isDel === false && (
-            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "flex-end",
+                width: "100%",
+                gap: 1,
+              }}
+            >
               <Button
                 variant="contained"
                 startIcon={<EditIcon />}
                 sx={{
+                  mt: 3,
+                  width: 100,
+                  fontWeight: 600,
                   borderRadius: 1.5,
-                  backgroundColor: "#5497ff",
+                  "&:hover": { boxShadow: 3 },
                 }}
                 onClick={() => {
                   navigate(`/issue/${issueId}/update`);
@@ -529,7 +564,13 @@ export default function IssueDtl() {
               <Button
                 variant="contained"
                 startIcon={<DeleteIcon />}
-                sx={{ borderRadius: 1.5, backgroundColor: "#5497ff" }}
+                sx={{
+                  mt: 3,
+                  width: 100,
+                  fontWeight: 600,
+                  borderRadius: 1.5,
+                  "&:hover": { boxShadow: 3 },
+                }}
                 onClick={handleDelete}
               >
                 삭제
@@ -554,12 +595,14 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
         display: "flex",
         alignItems: "flex-start",
         mb: 3,
+        gap: 2,
       }}
     >
       <Typography
         sx={{
           fontWeight: 500,
-          width: "90px",
+          // width: "90px",
+          // flexShrink: 0,
         }}
       >
         {label}
