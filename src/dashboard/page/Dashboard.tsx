@@ -15,6 +15,7 @@ import { ListDataGrid } from "../../common/List/ListDataGrid";
 import { useAuthStore } from "../../store/useAuthStore";
 import type { GridColDef } from "@mui/x-data-grid";
 import { calculateDDay } from "../../common/Kanban/KanbanDDay";
+import type { ApiError } from "../../config/httpClient";
 
 const days = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -145,9 +146,8 @@ export default function Dashboard() {
 
   //오늘
   const today = new Date();
-  const current = new Date();
-  const year = current.getFullYear();
-  const month = current.getMonth(); // 0~11
+  const year = today.getFullYear();
+  const month = today.getMonth(); // 0~11
 
   // 주간 범위 계산
   const [startOfWeek, endOfWeek, weekDays] = useMemo(() => {
@@ -189,28 +189,34 @@ export default function Dashboard() {
       const endYear = endOfWeek.getFullYear();
 
       let meetings: MeetingListItem[] = [];
+      try {
+        if (startMonth === endMonth && startYear === endYear) {
+          meetings = await getMeetingMonthMT(
+            member.memberId,
+            startYear,
+            startMonth
+          );
+        } else {
+          const res1 = await getMeetingMonthMT(
+            member.memberId,
+            startYear,
+            startMonth
+          );
+          const res2 = await getMeetingMonthMT(
+            member.memberId,
+            endYear,
+            endMonth
+          );
+          meetings = [...res1, ...res2];
+        }
+      } catch (error) {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
 
-      if (startMonth === endMonth && startYear === endYear) {
-        meetings = await getMeetingMonthMT(
-          member.memberId,
-          startYear,
-          startMonth
-        );
-      } else {
-        const res1 = await getMeetingMonthMT(
-          member.memberId,
-          startYear,
-          startMonth
-        );
-        const res2 = await getMeetingMonthMT(
-          member.memberId,
-          endYear,
-          endMonth
-        );
-        meetings = [...res1, ...res2];
+        alert(response ?? "오류가 발생했습니다.");
+      } finally {
+        setMeetings(meetings);
       }
-
-      setMeetings(meetings);
     };
 
     fetchMeetings();

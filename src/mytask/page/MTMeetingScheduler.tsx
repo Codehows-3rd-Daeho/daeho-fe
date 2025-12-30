@@ -8,6 +8,7 @@ import { getMeetingMonthMT } from "../../meeting/api/MeetingApi";
 import { useAuthStore } from "../../store/useAuthStore";
 import { PageHeader } from "../../common/PageHeader/PageHeader";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
+import type { ApiError } from "../../config/httpClient";
 
 const days = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -56,13 +57,19 @@ export default function MTMeetingScheduler() {
   //달이 바뀔 때마다 데이터 조회
   useEffect(() => {
     const fetchMeetings = async () => {
-      const response = await getMeetingMonthMT(
-        member!.memberId,
-        year,
-        month + 1
-      );
-      setMeetings(response);
-      console.log("response: ", response);
+      try {
+        const response = await getMeetingMonthMT(
+          member!.memberId,
+          year,
+          month + 1
+        );
+        setMeetings(response);
+        console.log("response: ", response);
+      } catch (error) {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+        alert(response ?? "오류가 발생했습니다.");
+      }
     };
 
     fetchMeetings();

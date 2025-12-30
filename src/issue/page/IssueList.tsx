@@ -12,6 +12,7 @@ import { Box, Typography } from "@mui/material";
 import { getIssueList } from "../api/issueApi";
 import { getStatusLabel } from "../../common/commonFunction";
 import { SearchBar } from "../../common/SearchBar/SearchBar";
+import type { ApiError } from "../../config/httpClient";
 
 export default function IssueList() {
   const navigate = useNavigate();
@@ -34,6 +35,10 @@ export default function IssueList() {
         setData(list);
         setTotalCount(data.totalElements);
       } catch (error) {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+
+        alert(response ?? "오류가 발생했습니다.");
         console.error("이슈 조회 실패", error);
       }
     };

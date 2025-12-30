@@ -15,7 +15,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
 
-import { BASE_URL } from "../../config/httpClient";
+import { BASE_URL, type ApiError } from "../../config/httpClient";
 import { useAuthStore } from "../../store/useAuthStore";
 import axios from "axios";
 import { getFileInfo, getStatusLabel } from "../../common/commonFunction";
@@ -158,10 +158,10 @@ export default function MeetingDtl() {
         alert("회의가 삭제되었습니다.");
         navigate("/meeting/list");
       } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.status === 401) {
-          return;
-        }
-        alert("회의 삭제 중 오류가 발생했습니다.");
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+
+        alert(response ?? "회의 삭제 중 오류가 발생했습니다.");
       }
     }
   };
@@ -176,10 +176,10 @@ export default function MeetingDtl() {
       alert("회의록이 삭제되었습니다.");
       fetchMeetingDetail(meetingId as string);
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
-        return;
-      }
-      alert("회의록 삭제 중 오류가 발생했습니다.");
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+
+      alert(response ?? "회의록 삭제 중 오류가 발생했습니다.");
     }
   };
 

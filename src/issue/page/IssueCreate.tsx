@@ -12,12 +12,12 @@ import {
   getCategory,
   getDepartment,
 } from "../../admin/setting/api/MasterDataApi";
-import axios from "axios";
 import {
   getExtensions,
   getFileSize,
 } from "../../admin/setting/api/FileSettingApi";
 import { Box, CircularProgress } from "@mui/material";
+import type { ApiError } from "../../config/httpClient";
 
 export interface DateRangeType {
   startDate: Date;
@@ -95,10 +95,10 @@ export default function IssueCreate() {
           console.log("memberId 없음:", memberId);
         }
       } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.status === 401) {
-          return;
-        }
-        console.log("데이터를 불러오는 중 오류 발생", error);
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+
+        alert(response ?? "데이터를 불러오는 중 오류가 발생했습니다.");
       } finally {
         setIsLoading(false);
       }
@@ -193,11 +193,11 @@ export default function IssueCreate() {
       alert("이슈가 등록되었습니다!");
       navigator(`/issue/list`);
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
-        return;
-      }
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+
+      alert(response ?? "이슈 등록 중 오류가 발생했습니다.");
       console.error("이슈 등록 실패:", error);
-      alert("이슈 등록 중 오류가 발생했습니다.");
     } finally {
       setIsSaving(false); // 버튼 원상복귀
     }

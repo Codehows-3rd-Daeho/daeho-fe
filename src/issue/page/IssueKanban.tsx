@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { getKanbanIssues } from "../api/issueApi";
 import type { IssueListItem } from "../type/type";
 import type { KanbanIssue } from "../../common/Kanban/type";
+import type { ApiError } from "../../config/httpClient";
 
 export type KanbanData = Record<string, KanbanIssue[]>;
 
@@ -42,7 +43,11 @@ export default function IssueKanban() {
           delay: res.delayed,
         });
       } catch (error) {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+
         console.error("칸반 이슈 조회 실패", error);
+        alert(response ?? "오류가 발생했습니다.");
       } finally {
         setIsLoading(false);
       }

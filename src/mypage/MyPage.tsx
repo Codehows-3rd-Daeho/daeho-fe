@@ -17,7 +17,7 @@ import { useAuthStore } from "../store/useAuthStore";
 import type { MemberProfile } from "../admin/member/type/MemberType";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import { BASE_URL } from "../config/httpClient";
+import { BASE_URL, type ApiError } from "../config/httpClient";
 
 interface InfoRowProps {
   label: string;
@@ -82,11 +82,17 @@ export default function MyPage() {
       return;
     }
 
-    await changePassword(newPassword);
-    alert("비밀번호가 변경되었습니다.");
+    try {
+      await changePassword(newPassword);
+      alert("비밀번호가 변경되었습니다.");
 
-    setNewPassword("");
-    setConfirmPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error) {
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+      alert(response ?? "오류가 발생했습니다.");
+    }
   };
 
   return (

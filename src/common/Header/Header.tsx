@@ -4,14 +4,22 @@ import type { HeaderProps } from "./type";
 import NotificationDropdown from "../../webpush/page/NotificationDropdown";
 import { useEffect, useState } from "react";
 import { getUnreadNotificationCount } from "../../webpush/api/notificationApi";
+import type { ApiError } from "../../config/httpClient";
 
 export default function Header({ name, jobPosition }: HeaderProps) {
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const fetchUnreadCount = async () => {
-      const count = await getUnreadNotificationCount();
-      setUnreadCount(count);
+      try {
+        const count = await getUnreadNotificationCount();
+        setUnreadCount(count);
+      } catch (error) {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+
+        alert(response ?? "오류가 발생했습니다.");
+      }
     };
 
     fetchUnreadCount();

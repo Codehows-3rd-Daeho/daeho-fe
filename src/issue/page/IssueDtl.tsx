@@ -23,7 +23,7 @@ import ParticipantListModal from "./component/ParticipantListModal";
 import { useNavigate, useParams } from "react-router-dom";
 import { deleteIssue, getIssueDtl, updateReadStatus } from "../api/issueApi";
 import type { IssueDto } from "../type/type";
-import { BASE_URL } from "../../config/httpClient";
+import { BASE_URL, type ApiError } from "../../config/httpClient";
 import { useAuthStore } from "../../store/useAuthStore";
 import axios from "axios";
 import { getFileInfo, getStatusLabel } from "../../common/commonFunction";
@@ -154,10 +154,10 @@ export default function IssueDtl() {
         alert("이슈가 삭제되었습니다.");
         navigate("/issue/list");
       } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.status === 401) {
-          return;
-        }
-        alert("이슈 삭제 중 오류가 발생했습니다.");
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+
+        alert(response ?? "이슈 삭제 중 오류가 발생했습니다.");
       }
     }
   };

@@ -14,6 +14,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import RenderMentionText from "./mention/RenderMentionText";
 import MentionTextInput from "./mention/MentionTextInput";
+import type { ApiError } from "../../config/httpClient";
 
 // =====================================================================
 // CommentItem Props
@@ -72,10 +73,17 @@ export const CommentItem = ({
   };
 
   const handleDeleteClick = async () => {
-    if (window.confirm("댓글을 삭제하시겠습니까?")) {
+    try {
+      if (!window.confirm("댓글을 삭제하시겠습니까?")) return;
       await onDeleteComment?.(comment.id);
+    } catch (error) {
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+
+      alert(response ?? "삭제 실패");
+    } finally {
+      setAnchorEl(null);
     }
-    setAnchorEl(null);
   };
 
   const handleUpdate = async () => {
@@ -90,15 +98,23 @@ export const CommentItem = ({
       return;
     }
 
-    await onUpdateComment?.(
-      comment.id,
-      editedContent,
-      newFiles,
-      removeFileIds,
-      mentionedMemberIds
-    );
+    try {
+      await onUpdateComment?.(
+        comment.id,
+        editedContent,
+        newFiles,
+        removeFileIds,
+        mentionedMemberIds
+      );
+      setIsEditing(false);
+    } catch (error) {
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
 
-    setIsEditing(false);
+      alert(response ?? "댓글 수정 중 오류가 발생했습니다.");
+    } finally {
+      setIsEditing(false);
+    }
   };
 
   const handleCancelEdit = () => {

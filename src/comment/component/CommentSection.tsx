@@ -12,6 +12,7 @@ import {
 
 import type { CommentDto, Mention } from "../type/type";
 import MentionTextInput from "./mention/MentionTextInput";
+import type { ApiError } from "../../config/httpClient";
 
 // =====================================================================
 //  Props
@@ -74,14 +75,21 @@ export default function CommentSection({
   ========================= */
   useEffect(() => {
     async function fetchFileSetting() {
-      const sizeConfig = await getFileSize();
-      const extensionConfig = await getExtensions();
+      try {
+        const sizeConfig = await getFileSize();
+        const extensionConfig = await getExtensions();
 
-      const maxFileSizeByte = Number(sizeConfig.name);
-      const maxFileSizeMB = maxFileSizeByte / 1024 / 1024;
+        const maxFileSizeByte = Number(sizeConfig.name);
+        const maxFileSizeMB = maxFileSizeByte / 1024 / 1024;
 
-      setMaxFileSize(maxFileSizeMB);
-      setAllowedExtensions(extensionConfig.map((e) => e.name.toLowerCase()));
+        setMaxFileSize(maxFileSizeMB);
+        setAllowedExtensions(extensionConfig.map((e) => e.name.toLowerCase()));
+      } catch (error) {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+
+        alert(response ?? "파일 설정을 불러오는 중 오류가 발생했습니다.");
+      }
     }
     fetchFileSetting();
   }, []);

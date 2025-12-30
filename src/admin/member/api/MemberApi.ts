@@ -12,6 +12,7 @@ export const createMember = async (formData: FormData) => {
   return response.data;
 };
 
+//아이디 중복 확인
 export const checkId = async (loginId: string) => {
   const response = await httpClient.get(`/signup/check_loginId`, {
     params: { loginId: loginId },

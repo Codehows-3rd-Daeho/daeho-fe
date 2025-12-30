@@ -21,11 +21,11 @@ import {
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import SearchIcon from "@mui/icons-material/Search";
-import axios from "axios";
 import { getDepartment, createGroup, updateGroup } from "../api/MasterDataApi";
 import { getPartMemberList } from "../../member/api/MemberApi";
 import type { PartMemberList } from "../../../issue/type/type";
 import type { Group } from "../type/SettingType";
+import type { ApiError } from "../../../config/httpClient";
 
 interface GroupDialogProps {
   open: boolean;
@@ -60,8 +60,11 @@ export default function GroupModal({
 
         const memberList = await getPartMemberList();
         setMembers(memberList);
-      } catch {
-        alert("회원/부서 목록을 불러오지 못했습니다.");
+      } catch (error) {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+
+        alert(response ?? "회원/부서 목록을 불러오지 못했습니다.");
       } finally {
         setIsLoading(false);
       }
@@ -115,8 +118,10 @@ export default function GroupModal({
       onSuccess();
       onClose();
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 401) return;
-      alert("그룹 생성에 실패했습니다.");
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+
+      alert(response ?? "그룹 생성에 실패했습니다.");
     }
   };
   const filteredMembers = members.filter((m) => {
