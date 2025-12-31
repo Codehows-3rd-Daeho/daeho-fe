@@ -734,7 +734,7 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                   녹음 완료
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1 }}>
-                  <audio className='w-full' preload="metadata" controls>
+                  <audio key={currentStt.id}  className='w-full' preload="metadata" controls>
                     <source src={`${BASE_URL}${currentStt?.file?.path}`} type="audio/mpeg" />
                   </audio>
                 </Box>
@@ -932,7 +932,7 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                         </IconButton>
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1 }}>
-                        <audio className='w-full' preload="metadata" controls>
+                        <audio key={currentStt.id} className='w-full' preload="metadata" controls>
                           <source src={`${BASE_URL}${currentStt?.file?.path}`} type="audio/mpeg" />
                         </audio>
                       </Box>
