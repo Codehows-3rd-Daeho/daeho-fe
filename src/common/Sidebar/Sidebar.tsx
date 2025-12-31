@@ -33,12 +33,17 @@ export default function Sidebar({
 }: SidebarProps & { isAdmin?: boolean }) {
   const navigate = useNavigate();
   const { member, logout } = useAuthStore();
-  const { clear } = useRecordingStore();
+  const { clear, isAnyRecordingActive, handleLastChunk } = useRecordingStore();
   const role = member?.role;
 
   //로그아웃
   const handleLogout = () => {
-    clear();
+    if(isAnyRecordingActive()){
+      if(!window.confirm("로그아웃 시 녹음이 중단됩니다. 계속하시겠습니까?"))
+        return;
+      handleLastChunk();
+      clear();
+    }
     logout();
     navigate("/login");
   };

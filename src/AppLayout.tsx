@@ -11,57 +11,58 @@ type AppLayoutProps = {
   children: ReactNode;
 };
 
-function usePreventPageLeave(shouldPrevent: boolean, message: string, handleLastChunk: () => void) {
+function usePreventPageLeave(
+  shouldPrevent: boolean, 
+  message: string, 
+  handleLastChunk: () => void, 
+  clear: () => void
+) {
   useEffect(() => {
     if (!shouldPrevent) return;
-
     const handleBeforeUnload = (e: { preventDefault: () => void; returnValue: string; }) => {
       e.preventDefault();
       e.returnValue = message;
       handleLastChunk();
+      clear();
       return message;
     };
-
     window.addEventListener('beforeunload', handleBeforeUnload);
-
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [message, shouldPrevent]);
 }
 
-function useBlockRouterNavigation(shouldBlock: boolean, message: string, handleLastChunk: () => void) {
+function useBlockRouterNavigation(
+  shouldBlock: boolean, 
+  message: string, 
+  handleLastChunk: () => void, 
+  clear: () => void
+) {
   const isBlockingRef = useRef(false);
-
   useEffect(() => {
     if (!shouldBlock) {
       isBlockingRef.current = false;
       return;
     }
-
     isBlockingRef.current = true;
-
     const handleClick = (e: MouseEvent) => {
       const link = (e.target as HTMLElement).closest('a');
-      
       if (link && isBlockingRef.current) {
         const href = link.getAttribute('href');
-        
         if (href && !href.startsWith('http') && href !== '#') {
           e.preventDefault();
           e.stopPropagation();
-          
           if (window.confirm(message)) {
             handleLastChunk();
+            clear();
             isBlockingRef.current = false;
             link.click();
           }
         }
       }
     };
-
     document.addEventListener('click', handleClick, true);
-
     return () => {
       document.removeEventListener('click', handleClick, true);
       isBlockingRef.current = false;
@@ -69,29 +70,29 @@ function useBlockRouterNavigation(shouldBlock: boolean, message: string, handleL
   }, [shouldBlock, message]);
 }
 
-function useBlockNavigation(shouldBlock: boolean, message: string, handleLastChunk: () => void) {
+function useBlockNavigation(
+  shouldBlock: boolean, 
+  message: string, 
+  handleLastChunk: () => void, 
+  clear: () => void
+) {
   useEffect(() => {
     if (!shouldBlock) return;
-
     let isNavigating = false;
-
     const handlePopState = () => {
       if (isNavigating) return;
-
       const userConfirmed = window.confirm(message);
-      
       if (!userConfirmed) {
         isNavigating = true;
         window.history.pushState(null, '', window.location.href);
         isNavigating = false;
       }else {
         handleLastChunk();
+        clear();
       }
     };
-
     window.history.pushState(null, '', window.location.href);
     window.addEventListener('popstate', handlePopState);
-
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
@@ -101,13 +102,13 @@ function useBlockNavigation(shouldBlock: boolean, message: string, handleLastChu
 export default function AppLayout({ children }: AppLayoutProps) {
   const { member } = useAuthStore();
   const [collapsed, setCollapsed] = useState(false); // 사이드바 접기 상태
-  const { isAnyRecordingActive, handleLastChunk } = useRecordingStore();
+  const { isAnyRecordingActive, handleLastChunk, clear } = useRecordingStore();
   const isCurrentlyRecording = isAnyRecordingActive();
   const confirmationMessage = "페이지를 벗어나면 녹음이 중단됩니다. 계속하시겠습니까?";
 
-  usePreventPageLeave(isCurrentlyRecording, confirmationMessage, handleLastChunk);
-  useBlockRouterNavigation(isCurrentlyRecording, confirmationMessage, handleLastChunk);
-  useBlockNavigation(isCurrentlyRecording, confirmationMessage, handleLastChunk);
+  usePreventPageLeave(isCurrentlyRecording, confirmationMessage, handleLastChunk, clear);
+  useBlockRouterNavigation(isCurrentlyRecording, confirmationMessage, handleLastChunk, clear);
+  useBlockNavigation(isCurrentlyRecording, confirmationMessage, handleLastChunk, clear);
 
   const handleToggleSidebar = () => setCollapsed((prev) => !prev);
 
