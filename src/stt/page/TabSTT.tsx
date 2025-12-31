@@ -41,7 +41,6 @@ import axios from "axios";
 
 export interface STTWithRecording extends STT {
   recordingStatus?: RecordingStatus;
-  recordingTime?: number;
 }
 
 type TabSTTProp = {
@@ -50,7 +49,6 @@ type TabSTTProp = {
 };
 
 //daglo 최대 업로드 용량, 허용 확장자
-const chunkingRate = 10;
 const maxFileSize = 2 * 1024 * 1024 * 1024; // 2GB
 const allowedExtensions = [
   // audio
@@ -96,6 +94,7 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
     cancelRecording,
     isAnyRecordingActive,
     getSessionState,
+    getRecordingTime,
   } = useRecordingStore();
 
   const [stts, setStts] = useState<STTWithRecording[]>([]);
@@ -288,7 +287,6 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
         const newSttEntry: STTWithRecording = {
           ...newStt,
           isTemp: true,
-          // recordingStatus and recordingTime will be sourced from the store
         };
         setStts((prev) => [
           ...prev.filter((s) => s.id !== selectedSttId),
@@ -300,6 +298,17 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
       handleError(error, "녹음을 시작할 수 없습니다.");
     }
   };
+
+  const finishRecording = async (sttId: number) => {
+    const newStt = await stopRecording(sttId);
+    updateSttState(sttId, {
+      ...newStt,
+      isEditable: false,
+      isLoading: false,
+      isTemp: false,
+      recordingStatus: "finished",
+    });
+  }
 
   const handleConfirmUpload = async (sttId: number | null) => {
     if (!sttId || !window.confirm("음성 파일을 등록하시겠습니까?")) return;
@@ -327,12 +336,6 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
         status: "RECORDING",
       });
     }
-  };
-
-  const assumeDuration = (cnt: number) => {
-    const min = Math.floor((cnt * chunkingRate) / 60);
-    if (min < 1) return "1분 미만 녹음 파일";
-    return `약 ${min}분 녹음 파일`;
   };
 
   const isSttRecordingNow = (sttId: number | null): boolean => {
@@ -487,7 +490,6 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
       isLoading: false,
       isTemp: true,
       recordingStatus: "idle",
-      recordingTime: 0,
     };
     setStts((prev) => [...prev, newTempStt]);
     setSelectedSttId(NEW_STT_ID);
@@ -658,12 +660,8 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
             );
 
           const sessionState = getSessionState(currentStt.id);
-          const currentRecordingStatus =
-            sessionState?.recordingStatus ??
-            currentStt.recordingStatus ??
-            "idle";
-          const currentRecordingTime =
-            sessionState?.recordingTime ?? currentStt.recordingTime ?? 0;
+          const currentRecordingStatus = sessionState?.recordingStatus ?? currentStt.recordingStatus ?? "idle";
+          const currentRecordingTime = getRecordingTime(currentStt.id);
 
           if (
             currentRecordingStatus === "recording" ||
@@ -712,7 +710,7 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                     <IconButton
                       size="large"
                       color="error"
-                      onClick={() => stopRecording(currentStt.id)}
+                      onClick={() => finishRecording(currentStt.id)}
                     >
                       <StopCircleIcon sx={{ fontSize: 40 }} />
                     </IconButton>
@@ -734,12 +732,10 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                   textAlign: "center",
                 }}
               >
-                {(currentStt.recordingTime ?? 0) === 0 && (
-                  <Typography variant="h6" sx={{ mb: 2 }}>
-                    {assumeDuration(currentStt.chunkingCnt || 0)}
-                  </Typography>
-                )}
-                <AudioPlayer stts={stts} sttId={selectedSttId} />
+                <Typography variant="h6" sx={{ mb: 2 }}>
+                  녹음 완료
+                </Typography>
+                <AudioPlayer stt={currentStt} />
                 <Box
                   sx={{
                     mt: 3,
@@ -933,7 +929,7 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                           <GridDownloadIcon fontSize="small" />
                         </IconButton>
                       </Box>
-                      <AudioPlayer stts={stts} sttId={selectedSttId} />
+                      <AudioPlayer stt={currentStt} />
                     </Box>
                     <Typography fontWeight="bold" fontSize="1.2rem">
                       요약 결과
