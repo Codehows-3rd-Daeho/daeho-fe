@@ -38,8 +38,8 @@ export default function Sidebar({
 
   //로그아웃
   const handleLogout = async () => {
-    if(isAnyRecordingActive()){
-      if(!window.confirm("로그아웃 시 녹음이 중단됩니다. 계속하시겠습니까?"))
+    if (isAnyRecordingActive()) {
+      if (!window.confirm("로그아웃 시 녹음이 중단됩니다. 계속하시겠습니까?"))
         return;
       await handleLastChunk();
       clear();
@@ -102,47 +102,34 @@ export default function Sidebar({
         {/* 로고 */}
         <Toolbar
           sx={{
-            px: 0,
-            py: 2,
+            // px: 0,
+            // py: 2,
+            px: 2,
+            py: 3.7,
             minHeight: collapsed ? 64 : undefined,
             display: "flex",
-            justifyContent: "center",
+            justifyContent: collapsed ? "center" : "space-between",
+            alignItems: "center",
           }}
         >
-          {!collapsed ? (
+          {/* 로고 (펼침 상태에서만) */}
+          {!collapsed && (
             <Box
               display="flex"
               alignItems="center"
-              sx={{ cursor: "pointer", py: 3.7 }}
+              sx={{ cursor: "pointer" }}
               onClick={() => navigate("/")}
             >
               <img
                 src="/daehologo.gif"
                 alt="로고"
-                style={{ width: 244, height: 50 }}
+                style={{ width: 200, height: 45 }}
               />
-            </Box>
-          ) : (
-            <Box
-              display="flex"
-              alignItems="center"
-              justifyContent="center"
-              sx={{ height: 110 }}
-            >
-              <IconButton onClick={() => navigate("/")}>
-                <HomeIcon />
-              </IconButton>
             </Box>
           )}
           <IconButton
             onClick={onToggle}
             sx={{
-              position: "absolute",
-              right: -20,
-              top: "50%",
-              transform: "translateY(-50%)",
-              backgroundColor: "#fff",
-              border: "1px solid #ccc",
               "&:hover": { backgroundColor: "#f0f0f0" },
               zIndex: 10,
             }}
