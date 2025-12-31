@@ -7,8 +7,9 @@ import { Box, Typography } from "@mui/material";
 import { PageHeader } from "../../common/PageHeader/PageHeader";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { useNavigate } from "react-router-dom";
-import { getMeetingList } from "../api/MeetingApi";
+import { getMeetingListSrc } from "../api/MeetingApi";
 import { getStatusLabel } from "../../common/commonFunction";
+import { SearchBar } from "../../common/SearchBar/SearchBar";
 
 export default function MeetingList() {
   const navigate = useNavigate();
@@ -16,18 +17,25 @@ export default function MeetingList() {
   const [page, setPage] = useState(1);
   const [data, setData] = useState<MeetingListItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
-    getMeetingList(page - 1, 10).then((data) => {
-      const list = (data.content ?? data).map((item: MeetingListItem) => ({
-        ...item,
-        status: getStatusLabel(item.status),
-      }));
+    const fetchData = async () => {
+      try {
+        const data = await getMeetingListSrc(page - 1, 10, searchQuery);
+        const list = (data.content ?? data).map((item: MeetingListItem) => ({
+          ...item,
+          status: getStatusLabel(item.status),
+        }));
 
-      setData(list);
-      setTotalCount(data.totalElements); // 전체 개수
-    });
-  }, [page]);
+        setData(list);
+        setTotalCount(data.totalElements);
+      } catch (error) {
+        console.error("회의 조회 실패", error);
+      }
+    };
+    fetchData();
+  }, [page, searchQuery]);
 
   const allColumns: GridColDef[] = [
     {
@@ -123,7 +131,12 @@ export default function MeetingList() {
 
   return (
     <>
-      <Box mb={2}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="flex-end"
+        mb={3}
+      >
         <Typography
           variant="h4"
           component="h1"
@@ -132,11 +145,17 @@ export default function MeetingList() {
         >
           회의
         </Typography>
+        <AddButton onClick={() => navigate("/meeting/create")} />
       </Box>
 
       <PageHeader>
+        {/* 빈 공간을 차지할 요소 추가 (왼쪽) */}
         <Box />
-        <AddButton onClick={() => navigate("/meeting/create")} />
+
+        {/* 검색창 (오른쪽으로 밀려남) */}
+        <Box sx={{ height: "40px", display: "flex", alignItems: "flex-end" }}>
+          <SearchBar onSearch={setSearchQuery} placeholder="검색" />
+        </Box>
       </PageHeader>
       {/* 리스트 */}
       <ListDataGrid<MeetingListItem>

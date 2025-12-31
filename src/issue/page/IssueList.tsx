@@ -9,12 +9,13 @@ import { PageHeader } from "../../common/PageHeader/PageHeader";
 import { Toggle } from "../../common/PageHeader/Toggle/Toggle";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { Box, Typography } from "@mui/material";
-import { getIssueList } from "../api/issueApi";
+import { getIssueListSrc } from "../api/issueApi";
 import { getStatusLabel } from "../../common/commonFunction";
 import { SearchBar } from "../../common/SearchBar/SearchBar";
 
 export default function IssueList() {
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
 
   // 페이징
   const [page, setPage] = useState(1);
@@ -25,7 +26,7 @@ export default function IssueList() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await getIssueList(page - 1, 10);
+        const data = await getIssueListSrc(page - 1, 10, searchQuery);
         const list = (data.content ?? data).map((item: IssueListItem) => ({
           ...item,
           status: getStatusLabel(item.status),
@@ -39,7 +40,7 @@ export default function IssueList() {
     };
 
     fetchData();
-  }, [page]);
+  }, [page, searchQuery]);
 
   // 리스트 컬럼
   const allColumns: GridColDef[] = [
@@ -145,31 +146,13 @@ export default function IssueList() {
     },
   ];
 
-  // 검색 필터
-  const [searchQuery, setSearchQuery] = useState("");
-  const filteredData = data.filter((item) => {
-    const query = searchQuery.toLowerCase();
-
-    return (
-      item.title.toLowerCase().includes(query) || // 제목
-      item.status.toLowerCase().includes(query) || // 상태
-      item.categoryName.toLowerCase().includes(query) || // 카테고리
-      item.hostName.toLowerCase().includes(query) || // 주관자
-      item.departmentName.some(
-        (
-          dept // 부서 (리스트 형태 처리)
-        ) => dept.toLowerCase().includes(query)
-      )
-    );
-  });
-
   return (
     <>
       {/* 타이틀 */}
       <Box
         display="flex"
         justifyContent="space-between"
-        alignItems="flex-end" // 타이틀과 버튼 하단 정렬
+        alignItems="flex-end"
         mb={3}
       >
         {/* 아래 여백 */}
@@ -181,22 +164,26 @@ export default function IssueList() {
         >
           이슈
         </Typography>
+        <AddButton onClick={() => navigate("/issue/create")} />
       </Box>
+
       <PageHeader>
+        {/* 왼쪽: 토글 */}
         <Toggle
           options={[
             { label: "리스트", value: "list", path: "/issue/list" },
             { label: "칸반", value: "kanban", path: "/issue/kanban" },
           ]}
         />
-        <AddButton onClick={() => navigate("/issue/create")} />
-        <Box display="flex" alignItems="center" gap={1.5}>
+
+        {/* 오른쪽: 검색창 */}
+        <Box sx={{ height: "40px", display: "flex", alignItems: "center" }}>
           <SearchBar onSearch={setSearchQuery} placeholder="검색" />
         </Box>
       </PageHeader>
 
       <ListDataGrid<IssueListItem>
-        rows={filteredData}
+        rows={data}
         columns={allColumns}
         rowIdField="id"
       />

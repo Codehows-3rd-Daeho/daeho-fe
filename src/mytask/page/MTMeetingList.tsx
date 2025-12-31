@@ -10,27 +10,31 @@ import { useAuthStore } from "../../store/useAuthStore";
 import { getStatusLabel } from "../../common/commonFunction";
 import type { MeetingListItem } from "../../meeting/type/type";
 import { getMeetingListMT } from "../../meeting/api/MeetingApi";
+import { SearchBar } from "../../common/SearchBar/SearchBar";
 
 export default function MeetingList() {
   const navigate = useNavigate();
   const { member } = useAuthStore();
   const role = member?.role;
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [page, setPage] = useState(1);
   const [data, setData] = useState<MeetingListItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
-    getMeetingListMT(member!.memberId, page - 1, 10).then((data) => {
-      const list = (data.content ?? data).map((item: MeetingListItem) => ({
-        ...item,
-        status: getStatusLabel(item.status),
-      }));
+    getMeetingListMT(member!.memberId, page - 1, 10, searchQuery).then(
+      (data) => {
+        const list = (data.content ?? data).map((item: MeetingListItem) => ({
+          ...item,
+          status: getStatusLabel(item.status),
+        }));
 
-      setData(list);
-      setTotalCount(data.totalElements); // 전체 개수
-    });
-  }, [page]);
+        setData(list);
+        setTotalCount(data.totalElements); // 전체 개수
+      }
+    );
+  }, [page, searchQuery]);
 
   const allColumns: GridColDef[] = [
     {
@@ -102,7 +106,12 @@ export default function MeetingList() {
 
   return (
     <>
-      <Box mb={2}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="flex-end"
+        mb={3}
+      >
         <Typography
           variant="h4"
           component="h1"
@@ -111,13 +120,14 @@ export default function MeetingList() {
         >
           회의
         </Typography>
+        {role === "USER" && (
+          <AddButton onClick={() => navigate("/meeting/create")} />
+        )}
       </Box>
 
       <PageHeader>
         <Box />
-        {role === "USER" && (
-          <AddButton onClick={() => navigate("/meeting/create")} />
-        )}
+        <SearchBar onSearch={setSearchQuery} placeholder="검색" />
       </PageHeader>
       {/* 리스트 */}
       <ListDataGrid<MeetingListItem>

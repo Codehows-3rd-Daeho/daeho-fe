@@ -6,7 +6,7 @@ export const PageHeader = ({ children }: { children: ReactNode }) => {
     <Box
       display="flex"
       justifyContent="space-between"
-      alignItems="center"
+      alignItems="flex-end"
       mb={2}
       gap={2}
     >

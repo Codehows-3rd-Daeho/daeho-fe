@@ -51,7 +51,8 @@ export default function MentionTextInput({
      멘션 하이라이트 렌더
   ========================= */
   const renderMentionText = (text: string, mentions: Mention[]) => {
-    if (!mentions.length) return text;
+    if (!mentions.length)
+      return <span style={{ color: "transparent" }}>{text}</span>; // 전체 투명
 
     const nodes: React.ReactNode[] = [];
     let cursor = 0;
@@ -61,11 +62,20 @@ export default function MentionTextInput({
       const index = text.indexOf(mentionText, cursor);
       if (index === -1) return;
 
-      nodes.push(<span key={`text-${idx}`}>{text.slice(cursor, index)}</span>);
+      nodes.push(
+        <span key={`text-${idx}`} style={{ color: "transparent" }}>
+          {text.slice(cursor, index)}
+        </span>
+      );
+
       nodes.push(
         <span
           key={`mention-${m.memberId}-${idx}`}
-          style={{ color: "#1976d2", fontWeight: 500 }}
+          style={{
+            color: "#1976d2",
+            fontWeight: 700,
+            backgroundColor: "rgba(25, 118, 210, 0.1)",
+          }}
         >
           {mentionText}
         </span>
@@ -73,7 +83,11 @@ export default function MentionTextInput({
       cursor = index + mentionText.length;
     });
 
-    nodes.push(<span key="last">{text.slice(cursor)}</span>);
+    nodes.push(
+      <span key="last" style={{ color: "transparent" }}>
+        {text.slice(cursor)}
+      </span>
+    );
     return nodes;
   };
 
@@ -86,9 +100,13 @@ export default function MentionTextInput({
     // 삭제된 멘션 정리
     setMentions((prev) => prev.filter((m) => text.includes(`@${m.name}`)));
 
-    if (!enableMention) return;
+    if (!enableMention || !inputRef.current) return;
 
-    const match = text.match(/@([가-힣a-zA-Z0-9_]*)$/);
+    const cursorPosition = inputRef.current.selectionStart;
+    const textBeforeCursor = text.slice(0, cursorPosition);
+
+    const match = textBeforeCursor.match(/@([가-힣a-zA-Z0-9_]*)$/);
+
     if (!match) {
       setShowMentionBox(false);
       return;
@@ -120,16 +138,20 @@ export default function MentionTextInput({
   };
 
   return (
-    <Box sx={{ position: "relative" }}>
+    <Box sx={{ position: "relative", width: "100%" }}>
       {/* 하이라이트 레이어 */}
       <Box
         sx={{
           position: "absolute",
-          inset: 0,
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0, // inset: 0과 동일, 높이를 TextField와 맞춤
           padding: "16.5px 14px",
           pointerEvents: "none",
-          color: "#000",
-          overflow: "hidden",
+          overflow: "hidden", // 레이어 밖으로 나가는 글자 숨김
+          backgroundColor: "transparent",
+          zIndex: 1,
           ...textStyle,
         }}
       >
@@ -140,16 +162,22 @@ export default function MentionTextInput({
       <TextField
         fullWidth
         multiline
-        rows={rows}
+        minRows={rows}
         value={value}
         placeholder={placeholder}
         inputRef={inputRef}
         onChange={(e) => handleChange(e.target.value)}
         sx={{
+          "& .MuiOutlinedInput-root": {
+            "&:hover .MuiOutlinedInput-notchedOutline": {
+              borderWidth: "1px",
+            },
+          },
           "& textarea": {
-            color: "transparent",
             caretColor: "#000",
+            color: "#333",
             ...textStyle,
+            overflow: "hidden !important",
           },
         }}
       />
@@ -184,13 +212,18 @@ export default function MentionTextInput({
                 "&:hover": { backgroundColor: "#f5f5f5" },
               }}
               onClick={() => {
-                if (!mentionKeyword) return;
+                if (mentionKeyword === null || !inputRef.current) return;
 
-                const nextText = value.replace(
+                const cursorPosition = inputRef.current.selectionStart;
+                const textBeforeCursor = value.slice(0, cursorPosition);
+                const textAfterCursor = value.slice(cursorPosition);
+
+                const newBeforeCursor = textBeforeCursor.replace(
                   new RegExp(`@${mentionKeyword}$`),
                   `@${m.name} `
                 );
 
+                const nextText = newBeforeCursor + textAfterCursor;
                 onChange(nextText);
 
                 setMentions((prev) => [
@@ -200,6 +233,8 @@ export default function MentionTextInput({
 
                 onAddMention?.(m.id);
                 setShowMentionBox(false);
+
+                setTimeout(() => inputRef.current?.focus(), 0);
               }}
             >
               <Typography fontWeight={500}>
