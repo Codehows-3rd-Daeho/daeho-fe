@@ -140,6 +140,7 @@ export const CommentItem = ({
           </Typography>
 
           {/* ⭐ 멘션 입력 */}
+
           <MentionTextInput
             value={editedContent}
             onChange={setEditedContent}
@@ -147,6 +148,7 @@ export const CommentItem = ({
             setMentions={setEditMentions}
             enableMention={true}
             placeholder="댓글을 수정하세요"
+            rows={3}
           />
 
           {currentFiles.length > 0 && (
