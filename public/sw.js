@@ -1,9 +1,8 @@
-const CACHE_NAME = "my-toy-app-cache-v2"; // 캐시 이름을 변경하여 새 버전임을 명시
+const CACHE_NAME = "daehoint-issue-v1"; // 캐시 이름을 변경하여 새 버전임을 명시
 const URLS_TO_CACHE = [
   "/",
   "/index.html",
   "/manifest.webmanifest",
-  "/vite.svg",
 ];
 
 /** install: 필요한 파일들을 캐시에 “미리 넣어두는 단계”
@@ -49,22 +48,25 @@ self.addEventListener("activate", (event) => {
 });
 
 // 3. 네트워크 요청 가로채기 (네트워크 우선, 실패 시 캐시 사용)
+// 3. 네트워크 요청 가로채기 (네트워크 우선, 실패 시 캐시 사용)
 self.addEventListener("fetch", (event) => {
   const requestUrl = new URL(event.request.url);
 
+  // 같은 오리진이 아닌 요청은 Service Worker를 거치지 않고 바로 네트워크로
+  if (requestUrl.origin !== location.origin) {
+    return;
+  }
+
   // 인증 관련 API 요청은 서비스 워커를 통과하지 않고 네트워크로 직접 보냅니다.
   if (requestUrl.pathname.startsWith("/api/login")) {
-    // 네트워크로 직접 요청하고 응답 반환
     event.respondWith(fetch(event.request));
     return;
   }
 
-  // 인증 외의 요청: "네트워크 우선, 실패 시 캐시 사용" 전략 적용 이유: 최신 데이터를 우선적으로 가져오되, 네트워크 오류 발생 시 캐시된 데이터로 폴백
+  // 인증 외의 요청: "네트워크 우선, 실패 시 캐시 사용" 전략 적용
   event.respondWith(
-    fetch(event.request) // 1) 네트워크 요청 시도
+    fetch(event.request)
       .catch(() => {
-        // 2) 네트워크 실패 시 캐시를 사용
-        // caches.match: 요청과 동일한 URL로 캐시된 응답이 있으면 반환
         return caches.match(event.request);
       })
   );
@@ -79,8 +81,8 @@ self.addEventListener("push", (event) => {
   const title = pushData.title || "새로운 알림"; // 서버가 제목을 보내지 않으면 기본값 사용
   const options = {
     body: pushData.body || "새로운 메시지가 도착했습니다.", // 알림 본문
-    icon: pushData.icon || "/vite.svg", // 알림 아이콘
-    badge: pushData.badge || "/vite.svg", // 알림 배지(작은 아이콘, 모바일 등에서 사용)
+    icon: pushData.icon, // 알림 아이콘
+    badge: pushData.badge, // 알림 배지(작은 아이콘, 모바일 등에서 사용)
     data: {
       url: pushData.url || "/", // 알림 클릭 시 이동할 URL을 data에 저장
     },
