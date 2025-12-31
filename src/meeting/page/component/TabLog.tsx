@@ -73,7 +73,7 @@ export default function TabLog({ meetingId }: TabLogProps) {
     {
       field: "createTime",
       headerName: "시간",
-      flex: 2,
+      flex: 1.5,
       minWidth: 100,
       headerAlign: "center",
       align: "center",
@@ -81,10 +81,31 @@ export default function TabLog({ meetingId }: TabLogProps) {
     {
       field: "memberName",
       headerName: "사용자",
-      flex: 1.2,
+      flex: 1,
       minWidth: 100,
       headerAlign: "center",
       align: "center",
+    },
+    {
+      field: "targetType",
+      headerName: "유형",
+      flex: 1,
+      minWidth: 100,
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params) => {
+        const type = params.row.targetType;
+        switch (type) {
+          case "COMMENT":
+            return "댓글";
+          case "MEETING":
+            return "회의";
+          case "ISSUE":
+            return "이슈";
+          default:
+            return type;
+        }
+      },
     },
     {
       field: "work",
@@ -102,7 +123,7 @@ export default function TabLog({ meetingId }: TabLogProps) {
     {
       field: "message",
       headerName: "내용",
-      flex: 1,
+      flex: 3,
       minWidth: 250,
       headerAlign: "center",
       align: "left",
@@ -142,6 +163,7 @@ export default function TabLog({ meetingId }: TabLogProps) {
         page={page}
         totalCount={totalCount}
         onPageChange={setPage}
+        pageSize={pageSize}
       />
     </>
   );

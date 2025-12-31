@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
 import type { ApiError } from "../../config/httpClient";
-import httpClient from "../../config/httpClient";
+import { getTitleIS } from "../../issue/api/issueApi";
+import { getTitleMT } from "../../meeting/api/MeetingApi";
 
 export default function Breadcrumb() {
   //url 정보 가져오는 훅
@@ -89,10 +90,9 @@ export default function Breadcrumb() {
 
     // 이슈 제목만 가져오기
     if (info.type === "issue") {
-      httpClient
-        .get(`/issue/${info.id}/title`)
+      getTitleIS(info.id)
         .then((res) => {
-          setDynamicNameMap((prev) => ({ ...prev, [info.id]: res.data }));
+          setDynamicNameMap((prev) => ({ ...prev, [info.id]: res }));
         })
         .catch((error) => {
           setDynamicNameMap((prev) => ({ ...prev, [info.id]: `#${info.id}` }));
@@ -104,10 +104,9 @@ export default function Breadcrumb() {
 
     //회의 제목 매핑
     if (info.type === "meeting") {
-      httpClient
-        .get(`/meeting/${info.id}/title`)
+      getTitleMT(info.id)
         .then((res) => {
-          setDynamicNameMap((prev) => ({ ...prev, [info.id]: res.data }));
+          setDynamicNameMap((prev) => ({ ...prev, [info.id]: res }));
         })
         .catch((error) => {
           setDynamicNameMap((prev) => ({ ...prev, [info.id]: `#${info.id}` }));
