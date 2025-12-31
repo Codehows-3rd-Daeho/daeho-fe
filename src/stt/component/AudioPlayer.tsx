@@ -59,6 +59,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ stt }) => {
         if (typeof time !== "number" || !isFinite(time)) {
             if(!stt.id) return;
             const recordingTime = getRecordingTime(stt.id)
+            alert(recordingTime)
             return recordingTime > 0 ? toMinSec(recordingTime) : "--";
         }
 

@@ -276,9 +276,7 @@ const useRecordingStore = create<RecordingState>((set, get) => {
           formData.append("finish", String(true));
           try {
             updateSessionState(sttId, { recordingStatus: "encoding" });
-            const stt = await uploadAudioChunk(sttId, formData);
-            updateSessionState(sttId, { recordingStatus: "finished" });
-            return stt;
+            return await uploadAudioChunk(sttId, formData);
           } catch (e) {
             console.error("Final chunk upload failed:", e);
             alert("네트워크가 불안정합니다. 확인 후 재시도바랍니다.");
