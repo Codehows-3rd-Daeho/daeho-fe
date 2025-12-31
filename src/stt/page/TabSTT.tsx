@@ -30,7 +30,6 @@ import { useParams } from "react-router-dom";
 import type { STT } from "../type/type";
 import { BASE_URL } from "../../config/httpClient";
 import { GridDownloadIcon } from "@mui/x-data-grid";
-import AudioPlayer from "../component/AudioPlayer";
 import { useAuthStore } from "../../store/useAuthStore";
 import type { MeetingDto } from "../../meeting/type/type";
 import useRecordingStore, {
@@ -734,7 +733,11 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                 <Typography variant="h6" sx={{ mb: 2 }}>
                   녹음 완료
                 </Typography>
-                <AudioPlayer stt={currentStt} />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1 }}>
+                  <audio className='w-full' preload="metadata" controls>
+                    <source src={`${BASE_URL}${currentStt?.file?.path}`} type="audio/mpeg" />
+                  </audio>
+                </Box>
                 <Box
                   sx={{
                     mt: 3,
@@ -928,7 +931,11 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                           <GridDownloadIcon fontSize="small" />
                         </IconButton>
                       </Box>
-                      <AudioPlayer stt={currentStt} />
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1 }}>
+                        <audio className='w-full' preload="metadata" controls>
+                          <source src={`${BASE_URL}${currentStt?.file?.path}`} type="audio/mpeg" />
+                        </audio>
+                      </Box>
                     </Box>
                     <Typography fontWeight="bold" fontSize="1.2rem">
                       요약 결과
