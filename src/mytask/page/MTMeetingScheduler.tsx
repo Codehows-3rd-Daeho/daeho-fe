@@ -168,7 +168,7 @@ export default function MTMeetingScheduler() {
       <Box
         sx={{
           display: "grid",
-          gridTemplateRows: `repeat(${matrix.length}, 1fr)`,
+          gridTemplateRows: "auto",
           gap: 1,
         }}
       >
@@ -191,6 +191,7 @@ export default function MTMeetingScheduler() {
                       ? "3px solid #2563EB"
                       : "2px solid #eef2f7",
                   p: 1,
+                  minHeight: 150,
                   position: "relative",
                   backgroundColor: "#fff",
                 }}
@@ -224,7 +225,7 @@ export default function MTMeetingScheduler() {
                           sx={{
                             boxSizing: "border-box",
                             px: 1,
-                            py: 0.75,
+                            py: 1,
                             cursor: "pointer",
                             backgroundColor: "#4b6485",
                             width: 180,
@@ -241,18 +242,19 @@ export default function MTMeetingScheduler() {
                               justifyContent: "space-between", // 좌우로 벌리기
                               gridTemplateColumns: "auto 1fr",
                               gap: 1,
+                              mb: 1,
                               width: "100%",
                             }}
                           >
                             {meeting.startDate && (
-                              <Box sx={{ fontSize: 10, color: "white" }}>
+                              <Box sx={{ fontSize: 12, color: "white" }}>
                                 {meeting.startDate?.split(" ")[1]}
                               </Box>
                             )}
 
                             <Box
                               sx={{
-                                fontSize: 10,
+                                fontSize: 12,
                                 color: "white",
                                 overflow: "hidden",
                                 textOverflow: "ellipsis",
@@ -264,7 +266,7 @@ export default function MTMeetingScheduler() {
                           </Box>
                           <Box
                             sx={{
-                              fontSize: 14,
+                              fontSize: 15,
                               fontWeight: 500,
                               color: "white",
                               overflow: "hidden",

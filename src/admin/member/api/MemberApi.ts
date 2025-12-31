@@ -23,12 +23,13 @@ export const checkId = async (loginId: string) => {
 // 회원 목록 조회
 export const getMemberList = async (
   page: number,
-  size: number
+  size: number,
+  keyword: string
 ): Promise<PageResponse<MemberList>> => {
   const response = await httpClient.get<PageResponse<MemberList>>(
     `/admin/member`,
     {
-      params: { page, size },
+      params: { page, size, keyword },
     }
   );
   return response.data;

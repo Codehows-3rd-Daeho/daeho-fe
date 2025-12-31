@@ -3,6 +3,7 @@ import { useLocation, Link } from "react-router-dom";
 import { getIssueDtl } from "../../issue/api/issueApi";
 import { getMeetingDtl } from "../../meeting/api/MeetingApi";
 import type { ApiError } from "../../config/httpClient";
+import httpClient from "../../config/httpClient";
 
 export default function Breadcrumb() {
   //url 정보 가져오는 훅
@@ -88,16 +89,16 @@ export default function Breadcrumb() {
     // 이미 있으면 다시 호출하지 않음
     if (dynamicNameMap[info.id]) return;
 
-    //이슈 제목 매핑
+    // 이슈 제목만 가져오기
     if (info.type === "issue") {
-      getIssueDtl(info.id)
+
+      httpClient
+        .get(`/issue/${info.id}/title`)
         .then((res) => {
-          setDynamicNameMap((prev) => ({
-            ...prev,
-            [info.id]: res.title,
-          }));
+          setDynamicNameMap((prev) => ({ ...prev, [info.id]: res.data }));
         })
         .catch((error) => {
+          setDynamicNameMap((prev) => ({ ...prev, [info.id]: `#${info.id}` }));
           const apiError = error as ApiError;
           const response = apiError.response?.data?.message;
           alert(response ?? "오류가 발생했습니다.");
@@ -106,14 +107,13 @@ export default function Breadcrumb() {
 
     //회의 제목 매핑
     if (info.type === "meeting") {
-      getMeetingDtl(info.id)
+      httpClient
+        .get(`/meeting/${info.id}/title`)
         .then((res) => {
-          setDynamicNameMap((prev) => ({
-            ...prev,
-            [info.id]: res.title, // 또는 res.subject
-          }));
+          setDynamicNameMap((prev) => ({ ...prev, [info.id]: res.data }));
         })
-        .catch((error) => {
+        .catch(() => {
+          setDynamicNameMap((prev) => ({ ...prev, [info.id]: `#${info.id}` }));
           const apiError = error as ApiError;
           const response = apiError.response?.data?.message;
           alert(response ?? "오류가 발생했습니다.");

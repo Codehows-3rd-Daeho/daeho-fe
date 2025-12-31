@@ -12,11 +12,25 @@ import { getStatusLabel } from "../../common/commonFunction";
 import { getIssueListMT } from "../../issue/api/issueApi";
 import type { IssueListItem } from "../../issue/type/type";
 import type { ApiError } from "../../config/httpClient";
+import { SearchBar } from "../../common/SearchBar/SearchBar";
+import DateFilter from "../../common/PageHeader/DateFilter";
+import Filter from "../../common/PageHeader/Filter";
+import type { FilterDto } from "../../common/PageHeader/type";
 
 export default function MTIssueList() {
   const navigate = useNavigate();
   const { member } = useAuthStore();
-
+  const role = member?.role;
+  const [filter, setFilter] = useState<FilterDto>({
+    keyword: "",
+    departmentIds: [],
+    categoryIds: [],
+    hostIds: [],
+    participantIds: [],
+    statuses: [],
+    startDate: "",
+    endDate: "",
+  });
   // 페이징
   const [page, setPage] = useState(1);
   const [data, setData] = useState<IssueListItem[]>([]);
@@ -24,22 +38,22 @@ export default function MTIssueList() {
 
   // 데이터 가져오기
   useEffect(() => {
-    getIssueListMT(member!.memberId, page - 1, 10)
-      .then((data) => {
-        const list = (data.content ?? data).map((item: IssueListItem) => ({
-          ...item,
-          status: getStatusLabel(item.status),
-        }));
+    if (!member?.memberId) return;
 
-        setData(list);
-        setTotalCount(data.totalElements); // 전체 개수
-      })
-      .catch((error) => {
-        const apiError = error as ApiError;
-        const response = apiError.response?.data?.message;
-        alert(response ?? "오류가 발생했습니다.");
-      });
-  }, [page]);
+    getIssueListMT(member.memberId, page - 1, 10, filter).then((data) => {
+      const list = (data.content ?? data).map((item: IssueListItem) => ({
+        ...item,
+        status: getStatusLabel(item.status),
+      }));
+
+      setData(list);
+      setTotalCount(data.totalElements); // 전체 개수
+    }).catch((error) => {
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+      alert(response ?? "오류가 발생했습니다.");
+    });
+  }, [page, filter, member?.memberId]);
 
   // 리스트 컬럼
   const allColumns: GridColDef[] = [
@@ -71,9 +85,30 @@ export default function MTIssueList() {
       field: "status",
       headerName: "상태",
       flex: 2,
-      minWidth: 80,
+      minWidth: 100,
       headerAlign: "center",
       align: "center",
+      renderCell: (params) => {
+        const status = params.value;
+        let bgColor = "";
+        let textColor = "";
+
+        if (status === "진행중") {
+          bgColor = "bg-blue-100";
+          textColor = "text-blue-700";
+        } else {
+          bgColor = "bg-red-100";
+          textColor = "text-red-700";
+        }
+
+        return (
+          <span
+            className={`px-3 py-1 text-sm font-semibold rounded-sm ${bgColor} ${textColor}`}
+          >
+            {status}
+          </span>
+        );
+      },
     },
     {
       field: "period",
@@ -127,27 +162,63 @@ export default function MTIssueList() {
   return (
     <>
       {/* 타이틀 */}
-      <Box mb={2}>
-        {/* 아래 여백 */}
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="flex-end"
+        mb={3}
+      >
         <Typography
-          variant="h4" // 글자 크기
+          variant="h4"
           component="h1"
-          textAlign="left" // 왼쪽 정렬
-          fontWeight="bold" // 볼드
+          textAlign="left"
+          fontWeight="bold"
           minWidth={100}
         >
           이슈
-        </Typography>
-      </Box>
-      <PageHeader>
-        <Toggle
-          options={[
-            { label: "리스트", value: "list", path: "/mytask/issue/list" },
-            { label: "칸반", value: "kanban", path: "/mytask/issue/kanban" },
-          ]}
-        />
-
+        </Typography
         <AddButton onClick={() => navigate("/issue/create")} />
+      </Box>
+
+      <PageHeader>
+        <Box sx={{ alignSelf: "center" }}>
+          <Toggle
+            options={[
+              { label: "리스트", value: "list", path: "/mytask/issue/list" },
+              { label: "칸반", value: "kanban", path: "/mytask/issue/kanban" },
+            ]}
+          />
+        </Box>
+
+        {/* 3. 오른쪽: 필터 UI 추가 (IssueList와 동일한 구조) */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <DateFilter
+            startDate={filter.startDate ?? ""}
+            endDate={filter.endDate ?? ""}
+            onStartDateChange={(v) =>
+              setFilter((prev) => ({ ...prev, startDate: v }))
+            }
+            onEndDateChange={(v) =>
+              setFilter((prev) => ({ ...prev, endDate: v }))
+            }
+          />
+
+          <Filter
+            type="meeting"
+            value={filter}
+            onChange={(f) => {
+              setPage(1);
+              setFilter(f);
+            }}
+          />
+
+          <SearchBar
+            placeholder="검색"
+            onSearch={(value) =>
+              setFilter((prev) => ({ ...prev, keyword: value }))
+            }
+          />
+        </Box>
       </PageHeader>
 
       <ListDataGrid<IssueListItem>

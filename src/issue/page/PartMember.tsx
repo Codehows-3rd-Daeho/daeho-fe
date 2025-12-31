@@ -73,16 +73,14 @@ export default function PartMember({
 
   // 저장 로직 (배열 기준으로 중복 없이 처리)
   function handleSave(updatedList: Participant[]) {
-    const selectedParticipants = updatedList.filter(
-      (p) => p.selected || p.id === Number(memberId)
-    );
+    const selectedParticipants = updatedList.filter((p) => p.selected);
 
     const result: IssueMemberDto[] = selectedParticipants.map((p) => ({
       id: p.id,
       name: p.name,
       jobPositionName: p.jobPositionName || "",
       departmentName: p.department || "",
-      isHost: p.id === Number(memberId),
+      isHost: p.isHost,
       isPermitted: p.isPermitted,
       isRead: false,
     }));
@@ -107,14 +105,18 @@ export default function PartMember({
         const initialMap = new Map(initialMembers?.map((m) => [m.id, m]));
         const mapped: Participant[] = memberList.map((m) => {
           const memberIdNum = Number(m.id);
-          const isHost = memberIdNum === Number(memberId);
           const existingMember = initialMap.get(memberIdNum);
+
+          const isHost =
+            mode === "update"
+              ? existingMember?.isHost === true // 서버 값 사용
+              : memberIdNum === Number(memberId); // create일 때만 로그인 유저
 
           return {
             ...m,
+            isHost,
             selected: mode === "create" ? isHost : isHost || !!existingMember,
-            isPermitted: isHost ? true : existingMember?.isPermitted || false,
-            isHost: isHost,
+            isPermitted: isHost ? true : existingMember?.isPermitted ?? false,
           };
         });
         setAllParticipants(mapped);
@@ -157,15 +159,25 @@ export default function PartMember({
     const currentIds = new Set(currentParticipants.map((p) => p.id));
 
     setAllParticipants((prev) => {
-      const updated = prev.map((p) => ({
-        ...p,
-        selected: currentIds.has(p.id)
-          ? p.isHost // host는 항상 선택
-            ? true
-            : checked
-          : p.selected,
-        // isPermitted는 그대로 유지
-      }));
+      const updated = prev.map((p) => {
+        if (!currentIds.has(p.id)) return p;
+
+        // host는 항상 유지
+        if (p.isHost) {
+          return {
+            ...p,
+            selected: true,
+            isPermitted: true,
+          };
+        }
+
+        return {
+          ...p,
+          selected: checked,
+          isPermitted: checked ? p.isPermitted : false,
+        };
+      });
+
       handleSave(updated);
       return updated;
     });

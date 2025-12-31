@@ -7,9 +7,13 @@ import { Box, Typography } from "@mui/material";
 import { PageHeader } from "../../common/PageHeader/PageHeader";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { useNavigate } from "react-router-dom";
-import { getMeetingList } from "../api/MeetingApi";
+import { getMeetingListSrc } from "../api/MeetingApi";
 import { getStatusLabel } from "../../common/commonFunction";
 import type { ApiError } from "../../config/httpClient";
+import { SearchBar } from "../../common/SearchBar/SearchBar";
+import Filter from "../../common/PageHeader/Filter";
+import DateFilter from "../../common/PageHeader/DateFilter";
+import type { FilterDto } from "../../common/PageHeader/type";
 
 export default function MeetingList() {
   const navigate = useNavigate();
@@ -18,22 +22,35 @@ export default function MeetingList() {
   const [data, setData] = useState<MeetingListItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
 
+  const [filter, setFilter] = useState<FilterDto>({
+    keyword: "",
+    departmentIds: [],
+    categoryIds: [],
+    hostIds: [],
+    participantIds: [],
+    statuses: [],
+    startDate: "",
+    endDate: "",
+  });
+
   useEffect(() => {
-    getMeetingList(page - 1, 10)
-      .then((data) => {
+    const fetchData = async () => {
+      try {
+        const data = await getMeetingListSrc(page - 1, 10, filter);
         const list = (data.content ?? data).map((item: MeetingListItem) => ({
           ...item,
           status: getStatusLabel(item.status),
         }));
         setData(list);
-        setTotalCount(data.totalElements); // 전체 개수
-      })
-      .catch((error) => {
+        setTotalCount(data.totalElements);
+      } catch (error) {
         const apiError = error as ApiError;
         const response = apiError.response?.data?.message;
         alert(response ?? "오류가 발생했습니다.");
-      });
-  }, [page]);
+      }
+    };
+    fetchData();
+  }, [page, filter]);
 
   const allColumns: GridColDef[] = [
     {
@@ -129,7 +146,12 @@ export default function MeetingList() {
 
   return (
     <>
-      <Box mb={2}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="flex-end"
+        mb={3}
+      >
         <Typography
           variant="h4"
           component="h1"
@@ -139,11 +161,41 @@ export default function MeetingList() {
         >
           회의
         </Typography>
+        <AddButton onClick={() => navigate("/meeting/create")} />
       </Box>
 
       <PageHeader>
+        {/* 탭 공간 (왼쪽) */}
         <Box />
-        <AddButton onClick={() => navigate("/meeting/create")} />
+
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <DateFilter
+            startDate={filter.startDate ?? ""}
+            endDate={filter.endDate ?? ""}
+            onStartDateChange={(v) =>
+              setFilter((prev) => ({ ...prev, startDate: v }))
+            }
+            onEndDateChange={(v) =>
+              setFilter((prev) => ({ ...prev, endDate: v }))
+            }
+          />
+
+          <Filter
+            type="meeting"
+            value={filter}
+            onChange={(f) => {
+              setPage(1); // 필터 변경 시 1페이지로 이동
+              setFilter(f);
+            }}
+          />
+
+          <SearchBar
+            onSearch={(value) =>
+              setFilter((prev) => ({ ...prev, keyword: value }))
+            }
+            placeholder="검색"
+          />
+        </Box>
       </PageHeader>
       {/* 리스트 */}
       <ListDataGrid<MeetingListItem>

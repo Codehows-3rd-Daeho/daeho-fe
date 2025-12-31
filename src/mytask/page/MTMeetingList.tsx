@@ -11,6 +11,10 @@ import { getStatusLabel } from "../../common/commonFunction";
 import type { MeetingListItem } from "../../meeting/type/type";
 import { getMeetingListMT } from "../../meeting/api/MeetingApi";
 import type { ApiError } from "../../config/httpClient";
+import { SearchBar } from "../../common/SearchBar/SearchBar";
+import DateFilter from "../../common/PageHeader/DateFilter";
+import Filter from "../../common/PageHeader/Filter";
+import type { FilterDto } from "../../common/PageHeader/type";
 
 export default function MeetingList() {
   const navigate = useNavigate();
@@ -19,24 +23,32 @@ export default function MeetingList() {
   const [page, setPage] = useState(1);
   const [data, setData] = useState<MeetingListItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
+  const [filter, setFilter] = useState<FilterDto>({
+    keyword: "",
+    departmentIds: [],
+    categoryIds: [],
+    hostIds: [],
+    participantIds: [],
+    statuses: [],
+    startDate: "",
+    endDate: "",
+  });
 
   useEffect(() => {
-    getMeetingListMT(member!.memberId, page - 1, 10)
-      .then((data) => {
-        const list = (data.content ?? data).map((item: MeetingListItem) => ({
-          ...item,
-          status: getStatusLabel(item.status),
-        }));
+    getMeetingListMT(member!.memberId, page - 1, 10, filter).then((data) => {
+      const list = (data.content ?? data).map((item: MeetingListItem) => ({
+        ...item,
+        status: getStatusLabel(item.status),
+      }));
 
-        setData(list);
-        setTotalCount(data.totalElements); // 전체 개수
-      })
-      .catch((error) => {
-        const apiError = error as ApiError;
-        const response = apiError.response?.data?.message;
-        alert(response ?? "오류가 발생했습니다.");
-      });
-  }, [page]);
+      setData(list);
+      setTotalCount(data.totalElements || 0); // 전체 개수
+    }).catch((error) => {
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+      alert(response ?? "오류가 발생했습니다.");
+    });
+  }, [page, filter]);
 
   const allColumns: GridColDef[] = [
     {
@@ -67,9 +79,33 @@ export default function MeetingList() {
       field: "status",
       headerName: "상태",
       flex: 0.5,
-      minWidth: 80,
+      minWidth: 100,
       headerAlign: "center",
       align: "center",
+      renderCell: (params) => {
+        const status = params.value;
+        let bgColor = "";
+        let textColor = "";
+
+        if (status === "진행전") {
+          bgColor = "bg-green-100";
+          textColor = "text-green-700";
+        } else if (status === "진행중") {
+          bgColor = "bg-blue-100";
+          textColor = "text-blue-700";
+        } else {
+          bgColor = "bg-red-100";
+          textColor = "text-red-700";
+        }
+
+        return (
+          <span
+            className={`px-3 py-1 text-sm font-semibold rounded-sm ${bgColor} ${textColor}`}
+          >
+            {status}
+          </span>
+        );
+      },
     },
     {
       field: "startDate",
@@ -108,7 +144,12 @@ export default function MeetingList() {
 
   return (
     <>
-      <Box mb={2}>
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="flex-end"
+        mb={3}
+      >
         <Typography
           variant="h4"
           component="h1"
@@ -118,11 +159,40 @@ export default function MeetingList() {
         >
           회의
         </Typography>
+        <AddButton onClick={() => navigate("/meeting/create")} />
       </Box>
 
       <PageHeader>
-        <Box />
-        <AddButton onClick={() => navigate("/meeting/create")} />
+        <Box /> {/* 왼쪽 공간 확보 */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          {/* 날짜 필터 */}
+          <DateFilter
+            startDate={filter.startDate ?? ""}
+            endDate={filter.endDate ?? ""}
+            onStartDateChange={(v) =>
+              setFilter((prev) => ({ ...prev, startDate: v }))
+            }
+            onEndDateChange={(v) =>
+              setFilter((prev) => ({ ...prev, endDate: v }))
+            }
+          />
+
+          {/* 공통 필터 (부서, 카테고리, 상태 등) */}
+          <Filter
+            type="meeting"
+            value={filter}
+            onChange={(f) => {
+              setPage(1);
+              setFilter(f);
+            }}
+          />
+
+          {/* 검색창 */}
+          <SearchBar
+            onSearch={(val) => setFilter((prev) => ({ ...prev, keyword: val }))}
+            placeholder="회의 제목 검색"
+          />
+        </Box>
       </PageHeader>
       {/* 리스트 */}
       <ListDataGrid<MeetingListItem>

@@ -9,6 +9,7 @@ import { PageHeader } from "../../../common/PageHeader/PageHeader";
 import { Box, ToggleButton, ToggleButtonGroup } from "@mui/material"; // Toggle 직접 사용
 import { SearchBar } from "../../../common/SearchBar/SearchBar";
 import type { ApiError } from "../../../config/httpClient";
+import { convertStatusMessage } from "../../../common/commonFunction";
 
 export default function LogList() {
   const [page, setPage] = useState(1);
@@ -138,18 +139,22 @@ export default function LogList() {
       minWidth: 200,
       headerAlign: "center",
       align: "left",
-      renderCell: (params) => (
-        <div
-          title={params.value}
-          style={{
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {params.value}
-        </div>
-      ),
+      renderCell: (params) => {
+        const converted = convertStatusMessage(params.value);
+
+        return (
+          <div
+            title={converted}
+            style={{
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {converted}
+          </div>
+        );
+      },
     },
     {
       field: "memberName",

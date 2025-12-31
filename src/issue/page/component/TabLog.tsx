@@ -5,6 +5,7 @@ import { getIssueLog } from "../../api/issueLogApi";
 import { useParams } from "react-router-dom";
 import { ListDataGrid } from "../../../common/List/ListDataGrid";
 import type { ApiError } from "../../../config/httpClient";
+import { convertStatusMessage } from "../../../common/commonFunction";
 
 export type IssueLoglist = {
   id: number;
@@ -65,7 +66,7 @@ export default function TabLog() {
       field: "createTime",
       headerName: "시간",
       flex: 2,
-      minWidth: 150,
+      minWidth: 100,
       headerAlign: "center",
       align: "center",
     },
@@ -90,19 +91,19 @@ export default function TabLog() {
         return row.updateField ? `${row.updateField} ${type}` : type;
       }) as GridValueGetter,
     },
-
     {
       field: "message",
       headerName: "내용",
       flex: 1,
-      minWidth: 120,
+      minWidth: 250,
       headerAlign: "center",
       align: "left",
       renderCell: (params) => {
-        const text = params.value as string;
-        const maxLength = 20;
+        const rawText = params.value as string;
+        if (!rawText) return "";
 
-        if (!text) return "";
+        const text = convertStatusMessage(rawText);
+        const maxLength = 30;
 
         return (
           <div
