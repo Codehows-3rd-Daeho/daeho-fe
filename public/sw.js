@@ -1,9 +1,22 @@
-const CACHE_NAME = "daehoint-issue-v3";
+const CACHE_NAME = "daehoint-issue-v4"; // 버전 업데이트
 const URLS_TO_CACHE = [
   "/",
   "/index.html",
   "/manifest.webmanifest",
 ];
+
+// 오디오/비디오 확장자 목록
+const MEDIA_EXTENSIONS = [
+  "3gp", "3gpp", "ac3", "aac", "aiff", "amr", "au", "flac", 
+  "m4a", "mp3", "mxf", "opus", "ra", "wav", "weba",
+  "asx", "avi", "ogm", "ogv", "m4v", "mov", "mp4", "mpeg", "mpg", "wmv"
+];
+
+// 확장자 체크 함수
+const isMediaFile = (pathname) => {
+  const ext = pathname.split('.').pop()?.toLowerCase();
+  return ext ? MEDIA_EXTENSIONS.includes(ext) : false;
+};
 
 // 1. 서비스 워커 설치
 self.addEventListener("install", (event) => {
@@ -48,11 +61,16 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // 오디오/비디오 파일은 Service Worker를 거치지 않음 (스트리밍 최적화)
+  if (isMediaFile(requestUrl.pathname)) {
+    return;
+  }
+
   // API 요청은 항상 네트워크만 사용 (캐시 사용 안 함)
   if (requestUrl.pathname.startsWith("/api/")) {
     event.respondWith(
       fetch(event.request, {
-        cache: "no-cache", // 브라우저 캐시도 사용하지 않음
+        cache: "no-cache",
       })
     );
     return;

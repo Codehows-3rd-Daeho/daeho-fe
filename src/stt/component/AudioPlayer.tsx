@@ -69,7 +69,9 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ stt }) => {
   if(!stt) return;
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1 }}>
-      <audio ref={audioRef} src={`${BASE_URL}${stt?.file?.path}`} preload="metadata" />
+      <audio ref={audioRef} preload="metadata">
+        <source src={`${BASE_URL}${stt?.file?.path}`} type="audio/mpeg" />
+      </audio>
       
       <IconButton onClick={togglePlay} size="small">
         {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
