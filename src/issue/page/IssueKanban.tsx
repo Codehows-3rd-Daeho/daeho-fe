@@ -3,7 +3,7 @@ import KanbanBoard from "../../common/Kanban/KanbanBoard";
 import { PageHeader } from "../../common/PageHeader/PageHeader";
 import { Toggle } from "../../common/PageHeader/Toggle/Toggle";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
-import { Box, CircularProgress, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { getKanbanIssuesSrc } from "../api/issueApi";
 import type { IssueListItem } from "../type/type";
@@ -18,7 +18,6 @@ export type KanbanData = Record<string, KanbanIssue[]>;
 
 export default function IssueKanban() {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false);
 
   const [data, setData] = useState<KanbanData>({
     pending: [],
@@ -40,7 +39,6 @@ export default function IssueKanban() {
   useEffect(() => {
     const fetchIssues = async () => {
       try {
-        setIsLoading(true);
         const res: {
           inProgress: IssueListItem[];
           completed: IssueListItem[];
@@ -63,8 +61,6 @@ export default function IssueKanban() {
 
         console.error("칸반 이슈 조회 실패", error);
         alert(response ?? "오류가 발생했습니다.");
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -80,23 +76,6 @@ export default function IssueKanban() {
   const handleFilterChange = (newFilter: FilterDto) => {
     setFilter(newFilter);
   };
-
-  if (isLoading) {
-    return (
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          height: "80vh",
-          width: "100%",
-          minWidth: "1000px",
-        }}
-      >
-        <CircularProgress color="primary" />
-      </Box>
-    );
-  }
 
   return (
     <>

@@ -34,6 +34,15 @@ export default function MentionTextInput({
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
   const mentionBoxRef = useRef<HTMLDivElement | null>(null);
 
+  const backdropRef = useRef<HTMLDivElement | null>(null); // 스크롤 동기화용 리프 추가
+
+  // 스크롤 동기화 함수: 입력창을 내리면 하이라이트 레이어도 같이 내려가야 함
+  const handleScroll = (e: React.UIEvent<HTMLElement>) => {
+    if (backdropRef.current) {
+      backdropRef.current.scrollTop = (e.target as HTMLElement).scrollTop;
+    }
+  };
+
   /* =========================
      멘션 외부 클릭 닫기
   ========================= */
@@ -66,46 +75,29 @@ export default function MentionTextInput({
      멘션 하이라이트 렌더
   ========================= */
   const renderMentionText = (text: string, mentions: Mention[]) => {
-    if (!mentions.length)
-      return <span style={{ color: "transparent" }}>{text}</span>; // 전체 투명
+    if (!mentions.length) return text;
+    const mentionNames = mentions.map((m) => `@${m.name}`);
+    const regex = new RegExp(`(${mentionNames.join("|")})`, "g");
+    const parts = text.split(regex);
 
-    const nodes: React.ReactNode[] = [];
-    let cursor = 0;
-
-    mentions.forEach((m, idx) => {
-      const mentionText = `@${m.name}`;
-      const index = text.indexOf(mentionText, cursor);
-      if (index === -1) return;
-
-      nodes.push(
-        <span key={`text-${idx}`} style={{ color: "transparent" }}>
-          {text.slice(cursor, index)}
-        </span>
-      );
-
-      nodes.push(
+    return parts.map((part, idx) => {
+      const isMention = mentionNames.includes(part);
+      return (
         <span
-          key={`mention-${m.memberId}-${idx}`}
+          key={idx}
           style={{
-            color: "#1976d2",
-            fontWeight: 700,
-            backgroundColor: "rgba(25, 118, 210, 0.1)",
+            color: isMention ? "#1976d2" : "#333",
+            fontWeight: isMention ? 700 : 400,
+            backgroundColor: isMention
+              ? "rgba(25, 118, 210, 0.1)"
+              : "transparent",
           }}
         >
-          {mentionText}
+          {part}
         </span>
       );
-      cursor = index + mentionText.length;
     });
-
-    nodes.push(
-      <span key="last" style={{ color: "transparent" }}>
-        {text.slice(cursor)}
-      </span>
-    );
-    return nodes;
   };
-
   /* =========================
      입력 변경 + 멘션 검색
   ========================= */
@@ -180,23 +172,25 @@ export default function MentionTextInput({
     lineHeight: "1.4375em",
     letterSpacing: "0.01071em",
     whiteSpace: "pre-wrap",
-    wordBreak: "break-word",
+    wordBreak: "break-word" as const,
+    boxSizing: "border-box" as const,
   };
 
   return (
     <Box sx={{ position: "relative", width: "100%" }}>
       {/* 하이라이트 레이어 */}
       <Box
+        ref={backdropRef}
         sx={{
           position: "absolute",
           top: 0,
           left: 0,
           right: 0,
-          bottom: 0, // inset: 0과 동일, 높이를 TextField와 맞춤
+          bottom: 0,
           padding: "16.5px 14px",
           pointerEvents: "none",
-          overflow: "hidden", // 레이어 밖으로 나가는 글자 숨김
-          backgroundColor: "transparent",
+          overflow: "hidden",
+          backgroundColor: "#fff",
           zIndex: 1,
           ...textStyle,
         }}
@@ -213,6 +207,7 @@ export default function MentionTextInput({
         placeholder={placeholder}
         inputRef={inputRef}
         onChange={(e) => handleChange(e.target.value)}
+        onScroll={handleScroll}
         onKeyDown={(e) => {
           if (!showMentionBox || mentionList.length === 0) return;
 
@@ -242,15 +237,21 @@ export default function MentionTextInput({
         }}
         sx={{
           "& .MuiOutlinedInput-root": {
-            "&:hover .MuiOutlinedInput-notchedOutline": {
-              borderWidth: "1px",
+            zIndex: 2,
+            backgroundColor: "transparent", // 배경을 투명하게 고정
+            "& fieldset": { borderColor: "#ddd" },
+            "&.Mui-focused": {
+              backgroundColor: "transparent", // 포커스 시에도 배경 투명 유지
             },
           },
           "& textarea": {
-            caretColor: "#000",
-            color: "#333",
             ...textStyle,
-            overflow: "hidden !important",
+            color: "transparent",
+            caretColor: "#000",
+            zIndex: 3,
+            "&::selection": {
+              backgroundColor: "rgba(25, 118, 210, 0.2)", // 텍스트 드래그 시 선택 영역은 보이게
+            },
           },
         }}
       />
