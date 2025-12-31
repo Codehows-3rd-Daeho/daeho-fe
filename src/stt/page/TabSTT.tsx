@@ -300,37 +300,41 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
   };
 
   const finishRecording = async (sttId: number) => {
-    const newStt = await stopRecording(sttId);
-    updateSttState(sttId, {
-      ...newStt,
-      isEditable: false,
-      isLoading: false,
-      isTemp: false,
-      recordingStatus: "finished",
-    });
+    await stopRecording(sttId);
+    if(!meetingId) return;
+    const response = await getSTTs(meetingId);
+    setStts(
+      response.map((stt) => {
+        if (stt.status === "PROCESSING" || stt.status === "SUMMARIZING") {
+          startSttPolling(stt.id, 2000);
+          return {
+            ...stt,
+            isLoading: true,
+          };
+        }
+        return { ...stt };
+      })
+    );
   }
 
   const handleConfirmUpload = async (sttId: number | null) => {
-    if (!meetingId || !sttId || !window.confirm("음성 파일을 등록하시겠습니까?")) return;
+    if (!sttId || !window.confirm("음성 파일을 등록하시겠습니까?")) return;
     updateSttState(sttId, {
       isLoading: true,
       isTemp: false,
     });
     try {
-      await confirmUpload(sttId);
-      const response = await getSTTs(meetingId);
-      setStts(
-        response.map((stt) => {
-          if (stt.status === "PROCESSING" || stt.status === "SUMMARIZING") {
-            startSttPolling(stt.id, 2000);
-            return {
-              ...stt,
-              isLoading: true,
-            };
-          }
-          return { ...stt };
-        })
-      );
+      const newStt = await confirmUpload(sttId);
+      if (newStt) {
+        updateSttState(sttId, {
+          ...newStt,
+          isEditable: false,
+          isLoading: true,
+          isTemp: false,
+        });
+        setSelectedSttId(newStt.id);
+        startSttPolling(newStt.id, 2000);
+      }
     } catch (error) {
       handleError(error, "음성 변환에 실패했습니다.");
       updateSttState(sttId, {
