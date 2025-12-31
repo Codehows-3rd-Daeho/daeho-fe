@@ -11,7 +11,7 @@ export function ListDataGrid<T extends object>({
   return (
     <>
       <Box sx={{ pt: 2, display: "flex", justifyContent: "center" }}>
-        <Box sx={{ width: "100%", maxWidth }}>
+        <Box sx={{ width: "100%", maxWidth, minWidth: "100px" }}>
           <DataGrid<T>
             columnHeaderHeight={48}
             rows={rows}

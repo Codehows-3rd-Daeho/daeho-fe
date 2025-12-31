@@ -13,7 +13,7 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import MemberForm from "./MemberForm";
 import { checkId, createMember } from "../api/MemberApi";
-import axios from "axios";
+import type { ApiError } from "../../../config/httpClient";
 
 type CreateMemberModalProps = {
   open: boolean; // 모달이 열려있는지, 닫혀있는지
@@ -55,7 +55,9 @@ export default function CreateMemberModal({
           setDepartment(await getDepartment()); // 부서
           setJobPosition(await getJobPosition()); // 직급
         } catch (error) {
-          console.log("데이터를 불러오는 중 오류 발생", error);
+          const apiError = error as ApiError;
+          const response = apiError.response?.data?.message;
+          alert(response ?? "부서, 직습 데이터 호출 중 오류가 발생했습니다.");
         }
       }
       fetchData();
@@ -124,8 +126,11 @@ export default function CreateMemberModal({
       const result = await checkId(loginId);
       setIsDuplicate(result.exists);
       setIsChecked(true);
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+
+      alert(response ?? "아이디 확인 중 오류가 발생했습니다.");
       setIsDuplicate(false);
       setIsChecked(true);
     }
@@ -195,11 +200,10 @@ export default function CreateMemberModal({
       alert("회원 등록 성공");
       handleClose();
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
-        return;
-      }
-      console.error("회원 등록 중 오류 발생:", error);
-      alert("회원 등록 중 오류가 발생했습니다.");
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+
+      alert(response ?? "회원 등록 중 오류가 발생했습니다.");
     }
   };
 

@@ -16,8 +16,8 @@ import {
   getExtensions,
   getFileSize,
 } from "../../../admin/setting/api/FileSettingApi";
-import axios from "axios";
 import { saveMeetingMinutes } from "../../api/MeetingApi";
+import type { ApiError } from "../../../config/httpClient";
 
 interface UploadedFile {
   file: File;
@@ -54,10 +54,9 @@ export default function FileUploadModal({
         setAllowedExtensions(extRes.map((e) => e.name.toLowerCase()));
         setMaxFileSizeBytes(Number(sizeRes.name));
       } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.status === 401) {
-          return;
-        }
-        alert("파일 설정 불러오기 실패");
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+        alert(response ?? "파일 설정 로딩을 실패하였슺니다.");
       }
     })();
   }, [open]);
@@ -118,10 +117,9 @@ export default function FileUploadModal({
       fetchMeetingDetail(meetingId);
       onClose();
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
-        return;
-      }
-      alert("회의록 등록 중 오류가 발생했습니다.");
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+      alert(response ?? "회의록 등록 중 오류가 발생했습니다.");
     }
   };
 

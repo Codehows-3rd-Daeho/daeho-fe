@@ -7,7 +7,7 @@ import {
   createJobPosition,
 } from "../api/MasterDataApi";
 import type { MasterDataType } from "../type/SettingType";
-import axios from "axios";
+import type { ApiError } from "../../../config/httpClient";
 
 interface MasterDataProps {
   departments: TagItem[];
@@ -53,7 +53,6 @@ export default function MasterData({
     (async () => {
       try {
         const response = await apiFunction(payload);
-        console.log(response);
 
         // 부모 컴포넌트의 상태 (departments) 갱신
         const newTag: TagItem = {
@@ -66,18 +65,11 @@ export default function MasterData({
         // 입력 필드 초기화
         setInput("");
       } catch (error) {
-        if (axios.isAxiosError(error) && error.response) {
-          const { status, data } = error.response;
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
 
-          if (status === 400) {
-            alert(data);
-            return;
-          }
-
-          if (status === 401) return;
-        }
+        alert(response ?? "등록 중 오류가 발생했습니다.");
         console.error("등록 실패:", error);
-        alert("등록 중 오류가 발생했습니다.");
       }
     })();
   };

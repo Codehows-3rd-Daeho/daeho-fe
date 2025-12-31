@@ -2,17 +2,19 @@ import { Box, Button } from "@mui/material";
 import { type GridColDef } from "@mui/x-data-grid";
 import { useCallback, useEffect, useState } from "react";
 import { getMemberList } from "../api/MemberApi";
-import axios from "axios";
 import type { MemberList } from "../type/MemberType";
 import { ListDataGrid } from "../../../common/List/ListDataGrid";
 import { CommonPagination } from "../../../common/Pagination/Pagination";
 import CreateMemberModal from "../component/CreateMemberModal";
 import UpdateMemberModal from "../component/UpdateMemberModal";
+import type { ApiError } from "../../../config/httpClient";
+import { SearchBar } from "../../../common/SearchBar/SearchBar";
 
 export default function MemberList() {
   const [open, setOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // 페이지네이션
   const [page, setPage] = useState(1);
@@ -34,14 +36,16 @@ export default function MemberList() {
 
   const loadData = useCallback(async () => {
     try {
-      const data = await getMemberList(page - 1, pageSize);
+      const data = await getMemberList(page - 1, pageSize, searchQuery);
       setRows(data.content);
       setTotalCount(data.totalElements);
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 401) return;
-      alert("회원 정보 조회 중 오류가 발생했습니다.");
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+
+      alert(response ?? "회원 정보 조회 중 오류가 발생했습니다.");
     }
-  }, [page, pageSize]);
+  }, [page, pageSize, searchQuery]);
 
   useEffect(() => {
     (async () => {
@@ -124,7 +128,18 @@ export default function MemberList() {
 
   return (
     <>
-      <Box sx={{ display: "flex", justifyContent: "flex-end", mb: 2 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 2,
+          width: "100%",
+        }}
+      >
+        <SearchBar onSearch={setSearchQuery} placeholder="회원 검색" />
+
+        {/* 오른쪽 끝 */}
         <Button variant="outlined" color="primary" onClick={handleModalOpen}>
           회원등록
         </Button>

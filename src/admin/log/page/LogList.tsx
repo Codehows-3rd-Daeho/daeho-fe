@@ -8,6 +8,8 @@ import { useNavigate } from "react-router-dom";
 import { PageHeader } from "../../../common/PageHeader/PageHeader";
 import { Box, ToggleButton, ToggleButtonGroup } from "@mui/material"; // Toggle 직접 사용
 import { SearchBar } from "../../../common/SearchBar/SearchBar";
+import type { ApiError } from "../../../config/httpClient";
+import { convertStatusMessage } from "../../../common/commonFunction";
 
 export default function LogList() {
   const [page, setPage] = useState(1);
@@ -22,16 +24,22 @@ export default function LogList() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    getLogList(page - 1, pageSize).then((data) => {
-      const list = (data.content ?? data).map(
-        (item: LogList, index: number) => ({
-          ...item,
-          no: data.totalElements - ((page - 1) * pageSize + index),
-        })
-      );
-      setRows(list);
-      setTotalCount(data.totalElements);
-    });
+    getLogList(page - 1, pageSize)
+      .then((data) => {
+        const list = (data.content ?? data).map(
+          (item: LogList, index: number) => ({
+            ...item,
+            no: data.totalElements - ((page - 1) * pageSize + index),
+          })
+        );
+        setRows(list);
+        setTotalCount(data.totalElements);
+      })
+      .catch((error) => {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+        alert(response ?? "오류가 발생했습니다.");
+      });
   }, [page, pageSize]);
 
   const changeTypeMap: Record<string, string> = {
@@ -131,18 +139,22 @@ export default function LogList() {
       minWidth: 200,
       headerAlign: "center",
       align: "left",
-      renderCell: (params) => (
-        <div
-          title={params.value}
-          style={{
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {params.value}
-        </div>
-      ),
+      renderCell: (params) => {
+        const converted = convertStatusMessage(params.value);
+
+        return (
+          <div
+            title={converted}
+            style={{
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {converted}
+          </div>
+        );
+      },
     },
     {
       field: "memberName",

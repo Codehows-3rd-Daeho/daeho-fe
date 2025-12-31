@@ -46,3 +46,13 @@ export function formatFileSize(size: number) {
 
   return `${formatted} MB`;
 }
+
+export function convertStatusMessage(message?: string): string {
+  if (!message) return "";
+
+  const match = message.match(/상태\s*>\s*(PLANNED|IN_PROGRESS|COMPLETED)/);
+  if (!match) return message;
+
+  const statusCode = match[1];
+  return message.replace(statusCode, getStatusLabel(statusCode));
+}

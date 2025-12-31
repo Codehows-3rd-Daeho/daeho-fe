@@ -8,7 +8,6 @@ import {
   getCategory,
   getDepartment,
 } from "../../admin/setting/api/MasterDataApi";
-import axios from "axios";
 import { Box, CircularProgress } from "@mui/material";
 import type { DateRangeType } from "./IssueCreate";
 import dayjs from "dayjs";
@@ -16,6 +15,7 @@ import {
   getExtensions,
   getFileSize,
 } from "../../admin/setting/api/FileSettingApi";
+import type { ApiError } from "../../config/httpClient";
 
 export default function IssueUpdate() {
   const { issueId } = useParams<{ issueId: string }>();
@@ -103,11 +103,11 @@ export default function IssueUpdate() {
         // 참여자 초기화
         setIssueMembers(issue.participantList);
       } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.status === 401) {
-          return;
-        }
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+
+        alert(response ?? "오류가 발생했습니다.");
         console.error("이슈 데이터 로딩 중 오류 발생:", error);
-        alert("이슈 데이터 로딩 중 오류가 발생했습니다.");
         navigate(`/issue/${issueId}`);
       } finally {
         setIsLoading(false);
@@ -123,8 +123,12 @@ export default function IssueUpdate() {
 
         setMaxFileSize(Number(sizeConfig.name) / 1024 / 1024); // MB 단위 변환
         setAllowedExtensions(extensionConfig.map((e) => e.name.toLowerCase()));
-      } catch (e) {
-        console.error("파일 설정 로딩 오류:", e);
+      } catch (error) {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+
+        alert(response ?? "파일 설정 로딩 오류가 발생했습니다.");
+        console.error("파일 설정 로딩 오류:", error);
       }
     }
 
@@ -214,15 +218,13 @@ export default function IssueUpdate() {
     try {
       setIsSaving(true);
       await updateIssue(issueId as string, formDataObj);
-      console.log(formData);
       alert("이슈가 수정되었습니다!");
       navigate(`/issue/${issueId}`);
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
-        return;
-      }
-      console.error("이슈 수정 실패:", error);
-      alert("이슈 수정 중 오류가 발생했습니다.");
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+
+      alert(response ?? "이슈 수정 중 오류가 발생했습니다.");
     } finally {
       setIsSaving(false);
     }
@@ -251,8 +253,6 @@ export default function IssueUpdate() {
 
       // 2) 용량 체크
       const sizeMB = file.size / 1024 / 1024; //바이트 단위 → MB로 변환
-      console.log("sizeMB: ", sizeMB);
-      console.log("maxFileSize: ", maxFileSize);
 
       if (sizeMB > maxFileSize) {
         alert(

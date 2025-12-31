@@ -6,6 +6,7 @@ import type { GridColDef } from "@mui/x-data-grid";
 import { ListDataGrid } from "../../../common/List/ListDataGrid";
 import { CommonPagination } from "../../../common/Pagination/Pagination";
 import { getMeetingRelatedIssue } from "../../api/issueApi";
+import type { ApiError } from "../../../config/httpClient";
 
 export default function TabMeeting() {
   const navigate = useNavigate();
@@ -16,14 +17,20 @@ export default function TabMeeting() {
   const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
-    getMeetingRelatedIssue(issueId as string, page - 1, 5).then((data) => {
-      const list = (data.content ?? data).map((item: MeetingListItem) => ({
-        ...item,
-        status: getStatusLabel(item.status),
-      }));
-      setData(list);
-      setTotalCount(data.totalElements);
-    });
+    getMeetingRelatedIssue(issueId as string, page - 1, 5)
+      .then((data) => {
+        const list = (data.content ?? data).map((item: MeetingListItem) => ({
+          ...item,
+          status: getStatusLabel(item.status),
+        }));
+        setData(list);
+        setTotalCount(data.totalElements);
+      })
+      .catch((error) => {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+        alert(response ?? "오류가 발생했습니다.");
+      });
   }, [issueId, page]);
 
   const allColumns: GridColDef[] = [

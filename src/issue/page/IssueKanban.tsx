@@ -5,9 +5,14 @@ import { Toggle } from "../../common/PageHeader/Toggle/Toggle";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
-import { getKanbanIssues } from "../api/issueApi";
+import { getKanbanIssuesSrc } from "../api/issueApi";
 import type { IssueListItem } from "../type/type";
 import type { KanbanIssue } from "../../common/Kanban/type";
+import type { ApiError } from "../../config/httpClient";
+import { SearchBar } from "../../common/SearchBar/SearchBar";
+import Filter from "../../common/PageHeader/Filter";
+import DateFilter from "../../common/PageHeader/DateFilter";
+import type { FilterDto } from "../../common/PageHeader/type";
 
 export type KanbanData = Record<string, KanbanIssue[]>;
 
@@ -21,6 +26,17 @@ export default function IssueKanban() {
     delay: [],
   });
 
+  const [filter, setFilter] = useState<FilterDto>({
+    keyword: "",
+    departmentIds: [],
+    categoryIds: [],
+    hostIds: [],
+    participantIds: [],
+    statuses: [],
+    startDate: "",
+    endDate: "",
+  });
+
   useEffect(() => {
     const fetchIssues = async () => {
       try {
@@ -29,7 +45,7 @@ export default function IssueKanban() {
           inProgress: IssueListItem[];
           completed: IssueListItem[];
           delayed: IssueListItem[];
-        } = await getKanbanIssues();
+        } = await getKanbanIssuesSrc(filter);
 
         const delayIds = new Set(res.delayed.map((item) => item.id));
         const filteredPending = res.inProgress.filter(
@@ -42,14 +58,28 @@ export default function IssueKanban() {
           delay: res.delayed,
         });
       } catch (error) {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+
         console.error("칸반 이슈 조회 실패", error);
+        alert(response ?? "오류가 발생했습니다.");
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchIssues();
-  }, []);
+  }, [filter]);
+
+  // 검색바 전용 핸들러
+  const handleSearch = (query: string) => {
+    setFilter((prev) => ({ ...prev, keyword: query }));
+  };
+
+  // 필터 컴포넌트 전용 핸들러
+  const handleFilterChange = (newFilter: FilterDto) => {
+    setFilter(newFilter);
+  };
 
   if (isLoading) {
     return (
@@ -71,27 +101,51 @@ export default function IssueKanban() {
   return (
     <>
       {/* 타이틀 */}
-      <Box mb={2}>
-        {/* 아래 여백 */}
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="flex-end"
+        mb={3}
+      >
         <Typography
-          variant="h4" // 글자 크기
+          variant="h4"
           component="h1"
           textAlign="left" // 왼쪽 정렬
           fontWeight="bold" // 볼드
+          minWidth={100}
         >
           이슈
         </Typography>
+        <AddButton onClick={() => navigate("/issue/create")} />
       </Box>
       {/* 헤더 */}
       <PageHeader>
-        <Toggle
-          options={[
-            { label: "리스트", value: "list", path: "/issue/list" },
-            { label: "칸반", value: "kanban", path: "/issue/kanban" },
-          ]}
-        />
-
-        <AddButton onClick={() => navigate("/issue/create")} />
+        <Box sx={{ alignSelf: "center" }}>
+          <Toggle
+            options={[
+              { label: "리스트", value: "list", path: "/issue/list" },
+              { label: "칸반", value: "kanban", path: "/issue/kanban" },
+            ]}
+          />
+        </Box>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <DateFilter
+            startDate={filter.startDate ?? ""}
+            endDate={filter.endDate ?? ""}
+            onStartDateChange={(v) =>
+              setFilter((prev) => ({ ...prev, startDate: v }))
+            }
+            onEndDateChange={(v) =>
+              setFilter((prev) => ({ ...prev, endDate: v }))
+            }
+          />
+          <Filter
+            value={filter}
+            onChange={handleFilterChange}
+            excludeSections={["상태"]}
+          />
+          <SearchBar onSearch={handleSearch} placeholder="검색" />
+        </Box>
       </PageHeader>
 
       {/* 칸반 */}

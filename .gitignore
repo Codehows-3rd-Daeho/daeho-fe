@@ -11,6 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
+vite.config.ts
 
 certs/
 *.pem
@@ -27,3 +28,5 @@ certs/
 *.njsproj
 *.sln
 *.sw?
+
+vite.config.ts
