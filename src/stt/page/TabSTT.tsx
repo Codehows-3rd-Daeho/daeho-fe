@@ -301,6 +301,17 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
     }
   };
 
+  const finishRecording = async (sttId: number) => {
+    const stt = stopRecording(sttId);
+    if(stt) 
+    updateSttState(sttId, {
+      ...stt,
+      isEditable: false,
+      isLoading: false,
+      isTemp: false,
+    });
+  }
+
   const handleConfirmUpload = async (sttId: number | null) => {
     if (!sttId || !window.confirm("음성 파일을 등록하시겠습니까?")) return;
 
@@ -712,7 +723,7 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                     <IconButton
                       size="large"
                       color="error"
-                      onClick={() => stopRecording(currentStt.id)}
+                      onClick={() => finishRecording(currentStt.id)}
                     >
                       <StopCircleIcon sx={{ fontSize: 40 }} />
                     </IconButton>
