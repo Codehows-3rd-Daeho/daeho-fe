@@ -55,7 +55,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ stt }) => {
         };
 
         // time이 유효하지 않으면 recordingTime 사용
-        if (typeof time !== "number" || !isFinite(time)) {=
+        if (typeof time !== "number" || !isFinite(time)) {
             return "--";
         }
 
