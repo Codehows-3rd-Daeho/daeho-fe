@@ -84,7 +84,7 @@ export interface FileDto {
   createdAt: string;
 }
 
-export interface IssueFilter {
+export interface FilterDto {
   keyword?: string;
   startDate?: string;
   endDate?: string;

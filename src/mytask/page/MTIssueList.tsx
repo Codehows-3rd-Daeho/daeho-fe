@@ -10,16 +10,17 @@ import { Box, Typography } from "@mui/material";
 import { useAuthStore } from "../../store/useAuthStore";
 import { getStatusLabel } from "../../common/commonFunction";
 import { getIssueListMT } from "../../issue/api/issueApi";
-import type { IssueFilter, IssueListItem } from "../../issue/type/type";
+import type { IssueListItem } from "../../issue/type/type";
 import { SearchBar } from "../../common/SearchBar/SearchBar";
 import DateFilter from "../../common/PageHeader/DateFilter";
 import Filter from "../../common/PageHeader/Filter";
+import type { FilterDto } from "../../common/PageHeader/type";
 
 export default function MTIssueList() {
   const navigate = useNavigate();
   const { member } = useAuthStore();
   const role = member?.role;
-  const [filter, setFilter] = useState<IssueFilter>({
+  const [filter, setFilter] = useState<FilterDto>({
     keyword: "",
     departmentIds: [],
     categoryIds: [],
@@ -199,6 +200,7 @@ export default function MTIssueList() {
           />
 
           <Filter
+            type="meeting"
             value={filter}
             onChange={(f) => {
               setPage(1);

@@ -1,6 +1,6 @@
 import { type GridColDef, type GridRenderCellParams } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
-import type { IssueFilter, IssueListItem } from "../type/type";
+import type { IssueListItem } from "../type/type";
 import { ListDataGrid } from "../../common/List/ListDataGrid";
 import { CommonPagination } from "../../common/Pagination/Pagination";
 import { useNavigate } from "react-router-dom";
@@ -14,6 +14,7 @@ import { getStatusLabel } from "../../common/commonFunction";
 import { SearchBar } from "../../common/SearchBar/SearchBar";
 import Filter from "../../common/PageHeader/Filter";
 import DateFilter from "../../common/PageHeader/DateFilter";
+import type { FilterDto } from "../../common/PageHeader/type";
 
 export default function IssueList() {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ export default function IssueList() {
   const [data, setData] = useState<IssueListItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
 
-  const [filter, setFilter] = useState<IssueFilter>({
+  const [filter, setFilter] = useState<FilterDto>({
     keyword: "",
     departmentIds: [],
     categoryIds: [],

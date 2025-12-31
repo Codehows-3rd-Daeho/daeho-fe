@@ -6,11 +6,12 @@ import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { Box, CircularProgress, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
 import { getKanbanIssuesSrc } from "../api/issueApi";
-import type { IssueFilter, IssueListItem } from "../type/type";
+import type { IssueListItem } from "../type/type";
 import type { KanbanIssue } from "../../common/Kanban/type";
 import { SearchBar } from "../../common/SearchBar/SearchBar";
 import Filter from "../../common/PageHeader/Filter";
 import DateFilter from "../../common/PageHeader/DateFilter";
+import type { FilterDto } from "../../common/PageHeader/type";
 
 export type KanbanData = Record<string, KanbanIssue[]>;
 
@@ -24,7 +25,7 @@ export default function IssueKanban() {
     delay: [],
   });
 
-  const [filter, setFilter] = useState<IssueFilter>({
+  const [filter, setFilter] = useState<FilterDto>({
     keyword: "",
     departmentIds: [],
     categoryIds: [],
@@ -71,7 +72,7 @@ export default function IssueKanban() {
   };
 
   // 필터 컴포넌트 전용 핸들러
-  const handleFilterChange = (newFilter: IssueFilter) => {
+  const handleFilterChange = (newFilter: FilterDto) => {
     setFilter(newFilter);
   };
 

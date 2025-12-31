@@ -80,9 +80,9 @@ httpClient.interceptors.response.use(
     if (status === 401) {
       if (!alreadyAlerted) {
         alreadyAlerted = true;
-        localStorage.removeItem("jwt");
+        // localStorage.removeItem("jwt");
         alert(message);
-        window.location.href = "/login";
+        // window.location.href = "/login";
       }
     }
 

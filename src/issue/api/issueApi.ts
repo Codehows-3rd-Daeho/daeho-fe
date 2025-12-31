@@ -1,6 +1,6 @@
 import type {
   IssueDto,
-  IssueFilter,
+  FilterDto,
   IssueIdTitle,
   IssueListItem,
   IssueListResponse,
@@ -28,7 +28,7 @@ const toParam = <T>(arr?: T[]) => (arr && arr.length > 0 ? arr : null);
 export const getIssueListSrc = async (
   page: number,
   size: number,
-  filter: IssueFilter
+  filter: FilterDto
 ) => {
   const params = {
     page,
@@ -53,7 +53,7 @@ export const getIssueListMT = async (
   id: number,
   page: number,
   size: number = 10,
-  filter: IssueFilter
+  filter: FilterDto
 ): Promise<IssueListResponse> => {
   const params = {
     page,
@@ -109,9 +109,7 @@ export const getKanbanIssues = async (): Promise<temp> => {
 };
 
 // 칸반 전체 + 검색 추가
-export const getKanbanIssuesSrc = async (
-  filter: IssueFilter
-): Promise<temp> => {
+export const getKanbanIssuesSrc = async (filter: FilterDto): Promise<temp> => {
   const response = await httpClient.get(`/issue/kanban`, {
     params: { ...filter },
   });
@@ -122,7 +120,7 @@ export const getKanbanIssuesSrc = async (
 //나의 업무 칸반
 export const getKanbanIssuesMT = async (
   id: number,
-  filter: IssueFilter
+  filter: FilterDto
 ): Promise<temp> => {
   const response = await httpClient.get(`/issue/kanban/mytask/${id}`, {
     params: { ...filter },

@@ -9,7 +9,6 @@ import {
   InputAdornment,
 } from "@mui/material";
 import { useCallback, useState } from "react";
-import type { IssueFilter } from "../../issue/type/type";
 import CloseIcon from "@mui/icons-material/Close";
 import SearchIcon from "@mui/icons-material/Search";
 import CheckIcon from "@mui/icons-material/Check";
@@ -20,11 +19,13 @@ import {
   getDepartment,
 } from "../../admin/setting/api/MasterDataApi";
 import type { ApiError } from "../../config/httpClient";
+import type { FilterDto } from "./type";
 
 interface FilterProps {
-  value: IssueFilter;
-  onChange: (filter: IssueFilter) => void;
+  value: FilterDto;
+  onChange: (filter: FilterDto) => void;
   excludeSections?: (keyof typeof sectionKeyMap)[]; // 제외할 섹션
+  type?: "issue" | "meeting";
 }
 
 type IssueArrayFilterKey =
@@ -52,13 +53,14 @@ export default function Filter({
   value,
   onChange,
   excludeSections,
+  type,
 }: FilterProps) {
   const [open, setOpen] = useState(false);
   const [activeSection, setActiveSection] =
     useState<keyof typeof sectionKeyMap>("카테고리");
   const [searchQuery, setSearchQuery] = useState("");
   const [options, setOptions] = useState<FilterOption[]>([]);
-  const [tempFilter, setTempFilter] = useState<IssueFilter>(value);
+  const [tempFilter, setTempFilter] = useState<FilterDto>(value);
 
   const loadOptions = useCallback(
     async (section: keyof typeof sectionKeyMap) => {
@@ -93,10 +95,17 @@ export default function Filter({
             break;
           }
           case "상태": {
-            mappedData = [
+            // 모든 페이지 공통 상태 (진행중, 진행완료)
+            const commonStatus = [
               { id: "IN_PROGRESS", name: "진행중" },
               { id: "COMPLETED", name: "진행완료" },
             ];
+
+            //  type이 'meeting'일 때만 '진행전'을 배열 맨 앞에 추가
+            mappedData =
+              type === "meeting"
+                ? [{ id: "PLANNED", name: "진행전" }, ...commonStatus]
+                : commonStatus;
             break;
           }
         }
@@ -109,7 +118,7 @@ export default function Filter({
         );
       }
     },
-    [activeSection]
+    [type]
   );
 
   const filteredOptions = options.filter((o) => o.name.includes(searchQuery));
