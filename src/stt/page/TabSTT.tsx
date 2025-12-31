@@ -732,6 +732,12 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                   textAlign: "center",
                 }}
               >
+                <Typography
+                  variant="h4"
+                  sx={{ mb: 2, fontFamily: "monospace" }}
+                >
+                  녹음 완료
+                </Typography>
                 <AudioPlayer stt={currentStt} />
                 <Box
                   sx={{

@@ -302,7 +302,6 @@ const useRecordingStore = create<RecordingState>((set, get) => {
     cancelRecording: async (sttId: number) => {
       cleanupSession(sttId);
       try {
-        // This is an API call to delete from the backend
         await deleteSTT(sttId);
       } catch (error) {
         console.error("Failed to delete STT on cancel:", error);
