@@ -23,6 +23,7 @@ import ExpandMore from "@mui/icons-material/ExpandMore";
 import type { SidebarProps } from "./type";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/useAuthStore";
+import useRecordingStore from "../../store/useRecordingStore";
 export default function Sidebar({
   items,
   collapsed = false,
@@ -32,10 +33,12 @@ export default function Sidebar({
 }: SidebarProps & { isAdmin?: boolean }) {
   const navigate = useNavigate();
   const { member, logout } = useAuthStore();
+  const { clear } = useRecordingStore();
   const role = member?.role;
 
   //로그아웃
   const handleLogout = () => {
+    clear();
     logout();
     navigate("/login");
   };

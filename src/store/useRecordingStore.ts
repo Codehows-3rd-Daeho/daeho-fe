@@ -37,6 +37,7 @@ const sessions = new Map<number, RecordingSession>();
 // Zustand store state
 interface RecordingState {
   sessionStates: Map<number, SessionState>;
+  clear: () => void;
   isAnyRecordingActive: () => boolean;
   startRecording: (meetingId: string) => Promise<STT | null>;
   pauseRecording: (sttId: number) => void;
@@ -87,6 +88,30 @@ const useRecordingStore = create<RecordingState>((set, get) => {
 
   return {
     sessionStates: new Map(),
+
+    clear: () => {
+      sessions.forEach((session, sttId) => {
+        if (session) {
+          clearInterval(session.recordTimeTimer);
+          clearInterval(session.chunkTimer);
+          if (session.mediaRecorder && session.mediaRecorder.state !== "inactive") {
+            session.mediaRecorder.stop();
+          }
+          session.mediaStream.getTracks().forEach((track) => track.stop());
+          sessions.delete(sttId);
+        }
+
+        set((state) => {
+          const newSessionStates = new Map(state.sessionStates);
+          if (newSessionStates.has(sttId)) {
+            newSessionStates.delete(sttId);
+            return { sessionStates: newSessionStates };
+          }
+          return state; // Return original state if no change
+        });
+        console.log(`Recording resources cleaned up for STT ID: ${sttId}`);
+      })
+    },
 
     isAnyRecordingActive: () => {
       for (const sessionState of get().sessionStates.values()) {
