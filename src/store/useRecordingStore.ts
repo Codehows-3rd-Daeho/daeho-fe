@@ -263,6 +263,9 @@ const useRecordingStore = create<RecordingState>((set, get) => {
       if (session && session.mediaRecorder.state !== "inactive") {
         session.mediaRecorder.stop();
 
+        // 마이크 리소스 즉시 해제
+        session.mediaStream.getTracks().forEach((track) => track.stop());
+
         if (session.audioChunks.length > 0) {
           const finalChunk = new Blob(session.audioChunks, {
             type: "audio/wav",
