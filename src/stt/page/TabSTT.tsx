@@ -300,14 +300,21 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
   };
 
   const finishRecording = async (sttId: number) => {
-    const newStt = await stopRecording(sttId);
-    updateSttState(sttId, {
-      ...newStt,
-      isEditable: false,
-      isLoading: false,
-      isTemp: false,
-      recordingStatus: "finished",
-    });
+    await stopRecording(sttId);
+    if(!meetingId) return;
+    const response = await getSTTs(meetingId);
+    setStts(
+      response.map((stt) => {
+        if (stt.status === "PROCESSING" || stt.status === "SUMMARIZING") {
+          startSttPolling(stt.id, 2000);
+          return {
+            ...stt,
+            isLoading: true,
+          };
+        }
+        return { ...stt };
+      })
+    );
   }
 
   const handleConfirmUpload = async (sttId: number | null) => {
