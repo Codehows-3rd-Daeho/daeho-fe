@@ -16,7 +16,6 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ stt }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const { getRecordingTime } = useRecordingStore();
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -56,10 +55,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ stt }) => {
         };
 
         // time이 유효하지 않으면 recordingTime 사용
-        if (typeof time !== "number" || !isFinite(time)) {
-            if(!stt.id) return;
-            const recordingTime = getRecordingTime(stt.id)
-            return recordingTime > 0 ? toMinSec(recordingTime) : "--";
+        if (typeof time !== "number" || !isFinite(time)) {=
+            return "--";
         }
 
         return toMinSec(time);
