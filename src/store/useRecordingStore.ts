@@ -46,6 +46,7 @@ interface RecordingState {
   confirmUpload: (sttId: number) => Promise<STT | null>;
   cancelRecording: (sttId: number) => Promise<void>;
   getSessionState: (sttId: number) => SessionState | undefined;
+  getRecordingTime: (sttId: number) => number;
   handleLastChunk: () => Promise<void>;
   getActiveRecordingDetails: () => (SessionState & { meetingId: string }) | null;
 }
@@ -127,6 +128,10 @@ const useRecordingStore = create<RecordingState>((set, get) => {
 
     getSessionState: (sttId: number) => {
       return get().sessionStates.get(sttId);
+    },
+
+    getRecordingTime: (sttId: number): number => {
+      return get().sessionStates.get(sttId)?.recordingTime ?? 0;
     },
 
     startRecording: async (meetingId: string): Promise<STT | null> => {
@@ -224,6 +229,7 @@ const useRecordingStore = create<RecordingState>((set, get) => {
 
         return newStt;
       } catch (error) {
+        console.error(error);
         alert(
           "마이크 권한이 없습니다. 권한 허용 후 다시 시도해주세요. \n(모바일의 경우 앱 설정에서 브라우저 마이크 권한 설정)"
         );

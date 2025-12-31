@@ -302,13 +302,13 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
   };
 
   const finishRecording = async (sttId: number) => {
-    const stt = stopRecording(sttId);
-    if(stt) 
+    const newStt = await stopRecording(sttId);
     updateSttState(sttId, {
-      ...stt,
+      ...newStt,
       isEditable: false,
       isLoading: false,
       isTemp: false,
+      recordingStatus: "finished",
     });
   }
 

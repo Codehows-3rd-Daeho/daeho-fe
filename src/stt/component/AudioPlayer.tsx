@@ -5,6 +5,7 @@ import PauseIcon from '@mui/icons-material/Pause';
 import { Box } from '@mui/material';
 import { BASE_URL } from '../../config/httpClient';
 import type { STTWithRecording } from '../page/TabSTT';
+import useRecordingStore from '../../store/useRecordingStore';
 
 interface AudioPlayerProps {
     stts: STTWithRecording[]
@@ -15,7 +16,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ stts, sttId }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(stts.find(s => s.id === sttId)?.recordingTime || 0);
+  const [duration, setDuration] = useState(0);
+  const { getRecordingTime } = useRecordingStore();
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -27,7 +29,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ stts, sttId }) => {
 
     audio.addEventListener('timeupdate', updateTime);
     audio.addEventListener('loadedmetadata', () => {
-      setDuration(audio.duration || stts.find(s => s.id === sttId)?.recordingTime || 0);
+      setDuration(audio.duration);
     });
 
     return () => {
@@ -56,7 +58,8 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ stts, sttId }) => {
 
         // time이 유효하지 않으면 recordingTime 사용
         if (typeof time !== "number" || !isFinite(time)) {
-            const recordingTime = stts.find(s => s.id === sttId)?.recordingTime ?? 0;
+            if(!sttId) return;
+            const recordingTime = getRecordingTime(sttId)
             return recordingTime > 0 ? toMinSec(recordingTime) : "--";
         }
 
