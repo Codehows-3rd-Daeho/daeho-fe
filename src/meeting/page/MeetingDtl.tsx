@@ -18,7 +18,7 @@ import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined
 import { BASE_URL, type ApiError } from "../../config/httpClient";
 import { useAuthStore } from "../../store/useAuthStore";
 import { getFileInfo, getStatusLabel } from "../../common/commonFunction";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import type { MeetingDto } from "../type/type";
 import {
   deleteMeeting,
@@ -32,6 +32,7 @@ import FileUploadModal from "./component/FileUploadModal";
 import TabSTT from "../../stt/page/TabSTT";
 import TabComment from "./component/TabComment";
 import TabLog from "./component/TabLog";
+import TotalSummaryModal from "./component/TotalSummaryModal";
 
 export default function MeetingDtl() {
   const { meetingId } = useParams();
@@ -39,11 +40,20 @@ export default function MeetingDtl() {
   const [tabValue, setTabValue] = useState(0);
   const [showParticipantModal, setShowParticipantModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { member } = useAuthStore();
   const role = member?.role;
   const currentMemberId = member?.memberId;
+
+  useEffect(() => {
+    if (location.state?.openSttTab) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTabValue(1);
+    }
+  }, [location.state]);
 
   // 데이터 불러오기
   const fetchMeetingDetail = (id: string) => {
@@ -340,7 +350,11 @@ export default function MeetingDtl() {
 
           <Box p={2}>
             {tabValue === 0 && <TabComment meetingId={Number(meetingId)} />}
-            {tabValue === 1 && <TabSTT />}
+            {tabValue === 1 && 
+            <TabSTT 
+            meeting={meeting} 
+            fetchMeetingDetail={fetchMeetingDetail}
+            />}
             {tabValue === 2 && <TabLog meetingId={meetingId!} />}
           </Box>
         </Box>
@@ -615,7 +629,23 @@ export default function MeetingDtl() {
               )
             }
           />
+          {/* 회의 요약 */}
+          <InfoRow
+            label="회의 요약"
+            value={
+                <Button
+                  variant="outlined"
+                  size="small"
+                  sx={{ borderRadius: 1.5 }}
+                  onClick={() => setShowSummaryModal(true)}
+                >
+                  요약 보기
+                </Button>
+            }
+          />
         </Box>
+
+        
 
         {/* 버튼 */}
         {((meeting.isEditPermitted && meeting.status !== "COMPLETED") ||
@@ -673,6 +703,11 @@ export default function MeetingDtl() {
         onClose={() => setShowUploadModal(false)}
         meetingId={meetingId!}
         fetchMeetingDetail={fetchMeetingDetail}
+      />
+      <TotalSummaryModal
+        open={showSummaryModal}
+        onClose={() => setShowSummaryModal(false)}
+        content={meeting.totalSummary}
       />
     </Box>
   );

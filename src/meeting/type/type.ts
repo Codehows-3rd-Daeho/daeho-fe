@@ -70,6 +70,7 @@ export interface MeetingDto {
   categoryName: string;
   departmentName: string[];
   meetingMinutes: FileDto; // 회의록
+  totalSummary: string;
   createdAt: string;
   updatedAt: string;
   isDel: boolean;
