@@ -37,11 +37,11 @@ export default function Sidebar({
   const role = member?.role;
 
   //로그아웃
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if(isAnyRecordingActive()){
       if(!window.confirm("로그아웃 시 녹음이 중단됩니다. 계속하시겠습니까?"))
         return;
-      handleLastChunk();
+      await handleLastChunk();
       clear();
     }
     logout();
