@@ -166,3 +166,9 @@ export const deleteIssue = async (issueId: string): Promise<void> => {
   const response = await httpClient.delete(`/issue/${issueId}`);
   return response.data;
 };
+
+// 제목만 조회
+export const getTitleIS = async (id: string): Promise<string> => {
+  const response = await httpClient.get(`/issue/${id}/title`);
+  return response.data;
+};

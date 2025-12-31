@@ -5,8 +5,9 @@ export const CommonPagination = ({
   page,
   totalCount,
   onPageChange,
-}: Omit<PaginationProps, "size" | "onSizeChange">) => {
-  const totalPages = Math.max(1, Math.ceil(totalCount / 10));
+  pageSize = 10,
+}: Omit<PaginationProps, "size" | "onSizeChange"> & { pageSize?: number }) => {
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   const handlePageChange = (_: unknown, newPage: number) => {
     if (newPage > totalPages) return;
