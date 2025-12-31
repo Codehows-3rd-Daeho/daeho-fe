@@ -42,10 +42,11 @@ interface RecordingState {
   startRecording: (meetingId: string) => Promise<STT | null>;
   pauseRecording: (sttId: number) => void;
   resumeRecording: (sttId: number) => void;
-  stopRecording: (sttId: number) => Promise<void>;
+  stopRecording: (sttId: number) => Promise<STT | null>;
   confirmUpload: (sttId: number) => Promise<STT | null>;
   cancelRecording: (sttId: number) => Promise<void>;
   getSessionState: (sttId: number) => SessionState | undefined;
+  getRecordingTime: (sttId: number) => number;
   handleLastChunk: () => Promise<void>;
   getActiveRecordingDetails: () => (SessionState & { meetingId: string }) | null;
 }
@@ -127,6 +128,10 @@ const useRecordingStore = create<RecordingState>((set, get) => {
 
     getSessionState: (sttId: number) => {
       return get().sessionStates.get(sttId);
+    },
+
+    getRecordingTime: (sttId: number): number => {
+      return get().sessionStates.get(sttId)?.recordingTime ?? 0;
     },
 
     startRecording: async (meetingId: string): Promise<STT | null> => {
@@ -224,6 +229,7 @@ const useRecordingStore = create<RecordingState>((set, get) => {
 
         return newStt;
       } catch (error) {
+        console.error(error);
         alert(
           "마이크 권한이 없습니다. 권한 허용 후 다시 시도해주세요. \n(모바일의 경우 앱 설정에서 브라우저 마이크 권한 설정)"
         );
@@ -252,7 +258,7 @@ const useRecordingStore = create<RecordingState>((set, get) => {
       }
     },
 
-    stopRecording: async (sttId: number) => {
+    stopRecording: async (sttId: number): Promise<STT | null> => {
       const session = sessions.get(sttId);
       if (session && session.mediaRecorder.state !== "inactive") {
         session.mediaRecorder.stop();
@@ -267,8 +273,9 @@ const useRecordingStore = create<RecordingState>((set, get) => {
           formData.append("finish", String(true));
           try {
             updateSessionState(sttId, { recordingStatus: "encoding" });
-            await uploadAudioChunk(sttId, formData);
+            const stt = await uploadAudioChunk(sttId, formData);
             updateSessionState(sttId, { recordingStatus: "finished" });
+            return stt;
           } catch (e) {
             console.error("Final chunk upload failed:", e);
             alert("네트워크가 불안정합니다. 확인 후 재시도바랍니다.");
@@ -278,6 +285,7 @@ const useRecordingStore = create<RecordingState>((set, get) => {
           updateSessionState(sttId, { recordingStatus: "finished" });
         }
       }
+      return null;
     },
 
     confirmUpload: async (sttId: number): Promise<STT | null> => {
@@ -294,7 +302,6 @@ const useRecordingStore = create<RecordingState>((set, get) => {
     cancelRecording: async (sttId: number) => {
       cleanupSession(sttId);
       try {
-        // This is an API call to delete from the backend
         await deleteSTT(sttId);
       } catch (error) {
         console.error("Failed to delete STT on cancel:", error);
