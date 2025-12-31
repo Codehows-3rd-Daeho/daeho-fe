@@ -13,7 +13,6 @@ if ("serviceWorker" in navigator) {
     navigator.serviceWorker
       .register("/sw.js")
       .then((registration) => {
-        console.log("Service Worker registered: ", registration);
         // 서비스 워커의 업데이트를 강제로 확인하여 항상 최신 버전을 사용하도록 보장합니다.
         registration.update();
       })

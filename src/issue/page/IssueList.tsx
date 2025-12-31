@@ -9,9 +9,13 @@ import { PageHeader } from "../../common/PageHeader/PageHeader";
 import { Toggle } from "../../common/PageHeader/Toggle/Toggle";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { Box, Typography } from "@mui/material";
-import { getIssueList } from "../api/issueApi";
+import { getIssueListSrc } from "../api/issueApi";
 import { getStatusLabel } from "../../common/commonFunction";
 import { SearchBar } from "../../common/SearchBar/SearchBar";
+import type { ApiError } from "../../config/httpClient";
+import Filter from "../../common/PageHeader/Filter";
+import DateFilter from "../../common/PageHeader/DateFilter";
+import type { FilterDto } from "../../common/PageHeader/type";
 
 export default function IssueList() {
   const navigate = useNavigate();
@@ -21,11 +25,20 @@ export default function IssueList() {
   const [data, setData] = useState<IssueListItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
 
+  const [filter, setFilter] = useState<FilterDto>({
+    keyword: "",
+    departmentIds: [],
+    categoryIds: [],
+    hostIds: [],
+    participantIds: [],
+    statuses: [],
+  });
+
   // 데이터 가져오기
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await getIssueList(page - 1, 10);
+        const data = await getIssueListSrc(page - 1, 10, filter);
         const list = (data.content ?? data).map((item: IssueListItem) => ({
           ...item,
           status: getStatusLabel(item.status),
@@ -34,12 +47,16 @@ export default function IssueList() {
         setData(list);
         setTotalCount(data.totalElements);
       } catch (error) {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+
+        alert(response ?? "오류가 발생했습니다.");
         console.error("이슈 조회 실패", error);
       }
     };
 
     fetchData();
-  }, [page]);
+  }, [page, filter]);
 
   // 리스트 컬럼
   const allColumns: GridColDef[] = [
@@ -145,31 +162,13 @@ export default function IssueList() {
     },
   ];
 
-  // 검색 필터
-  const [searchQuery, setSearchQuery] = useState("");
-  const filteredData = data.filter((item) => {
-    const query = searchQuery.toLowerCase();
-
-    return (
-      item.title.toLowerCase().includes(query) || // 제목
-      item.status.toLowerCase().includes(query) || // 상태
-      item.categoryName.toLowerCase().includes(query) || // 카테고리
-      item.hostName.toLowerCase().includes(query) || // 주관자
-      item.departmentName.some(
-        (
-          dept // 부서 (리스트 형태 처리)
-        ) => dept.toLowerCase().includes(query)
-      )
-    );
-  });
-
   return (
     <>
       {/* 타이틀 */}
       <Box
         display="flex"
         justifyContent="space-between"
-        alignItems="flex-end" // 타이틀과 버튼 하단 정렬
+        alignItems="flex-end"
         mb={3}
       >
         {/* 아래 여백 */}
@@ -178,29 +177,62 @@ export default function IssueList() {
           component="h1"
           textAlign="left" // 왼쪽 정렬
           fontWeight="bold" // 볼드
+          minWidth={100}
         >
           이슈
         </Typography>
-      </Box>
-      <PageHeader>
-        <Toggle
-          options={[
-            { label: "리스트", value: "list", path: "/issue/list" },
-            { label: "칸반", value: "kanban", path: "/issue/kanban" },
-          ]}
-        />
         <AddButton onClick={() => navigate("/issue/create")} />
-        <Box display="flex" alignItems="center" gap={1.5}>
-          <SearchBar onSearch={setSearchQuery} placeholder="검색" />
+      </Box>
+
+      <PageHeader>
+        {/* 왼쪽: 토글 */}
+        <Box sx={{ alignSelf: "center" }}>
+          <Toggle
+            options={[
+              { label: "리스트", value: "list", path: "/issue/list" },
+              { label: "칸반", value: "kanban", path: "/issue/kanban" },
+            ]}
+          />
+        </Box>
+
+        {/* 오른쪽: 필터 + 검색창 */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          {/* 날짜 필터 */}
+          <DateFilter
+            startDate={filter.startDate ?? ""}
+            endDate={filter.endDate ?? ""}
+            onStartDateChange={(v) =>
+              setFilter((prev) => ({ ...prev, startDate: v }))
+            }
+            onEndDateChange={(v) =>
+              setFilter((prev) => ({ ...prev, endDate: v }))
+            }
+          />
+
+          {/* 필터 */}
+          <Filter
+            value={filter}
+            onChange={(f) => {
+              setPage(1);
+              setFilter(f);
+            }}
+          />
+
+          {/* 검색창 */}
+          <SearchBar
+            placeholder="검색"
+            onSearch={(value) =>
+              setFilter((prev) => ({ ...prev, keyword: value }))
+            }
+          />
         </Box>
       </PageHeader>
 
       <ListDataGrid<IssueListItem>
-        rows={filteredData}
+        rows={data}
         columns={allColumns}
         rowIdField="id"
       />
-
       <CommonPagination
         page={page}
         totalCount={totalCount}

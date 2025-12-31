@@ -18,10 +18,9 @@ import PauseCircleIcon from "@mui/icons-material/PauseCircle";
 import PlayCircleIcon from "@mui/icons-material/PlayCircle";
 
 import CloseIcon from "@mui/icons-material/Close";
-import EditIcon from '@mui/icons-material/Edit';
-import SaveIcon from '@mui/icons-material/Save';
+import EditIcon from "@mui/icons-material/Edit";
+import SaveIcon from "@mui/icons-material/Save";
 import { useParams } from "react-router-dom";
-import axios from "axios";
 import type { STT } from "../type/type";
 import { BASE_URL } from "../../config/httpClient";
 import { GridDownloadIcon } from "@mui/x-data-grid";
@@ -414,7 +413,7 @@ export default function TabSTT({
     }catch(error) {
       handleError(error, "회의 요약 수정중 오류가 발생했습니다.");
     }
-  }
+  };
 
   {/* Tabs */}
   const addTempSttTab = () => {
@@ -435,13 +434,13 @@ export default function TabSTT({
     };
     setStts(prev => [...prev, newTempStt]);
     setSelectedSttId(NEW_STT_ID);
-  }
+  };
 
   const handleTabChange = async (_event: unknown, newValue: SetStateAction<number | null>) => {
     handleSummarySave();
     setSelectedSttId(newValue);
   };
-  
+
   return (
     <>
       {/* STT 제목 */}
@@ -464,7 +463,6 @@ export default function TabSTT({
           </Button>
         )}
       </Typography>
-      
 
       {/* stt 헤더 바 */}
       <Box display="flex" alignItems="center" mb={1} gap={1}>
@@ -493,7 +491,7 @@ export default function TabSTT({
               key={stt.id}
               value={stt.id}
               sx={{
-                paddingRight: '8px',
+                paddingRight: "8px",
               }}
               label={
                 <Box sx={{ 
@@ -508,18 +506,32 @@ export default function TabSTT({
                         sx={{
                           width: 8,
                           height: 8,
-                          borderRadius: '50%',
-                          bgcolor: 'red',
+                          borderRadius: "50%",
+                          bgcolor: "red",
                           mr: 0.8,
-                          '@keyframes heartbeat': {
-                            '0%': { transform: 'scale(0.8)', boxShadow: '0 0 0 0 rgba(255, 82, 82, 0.7)' },
-                            '70%': { transform: 'scale(1)', boxShadow: '0 0 0 8px rgba(255, 82, 82, 0)' },
-                            '100%': { transform: 'scale(0.8)', boxShadow: '0 0 0 0 rgba(255, 82, 82, 0)' }
+                          "@keyframes heartbeat": {
+                            "0%": {
+                              transform: "scale(0.8)",
+                              boxShadow: "0 0 0 0 rgba(255, 82, 82, 0.7)",
+                            },
+                            "70%": {
+                              transform: "scale(1)",
+                              boxShadow: "0 0 0 8px rgba(255, 82, 82, 0)",
+                            },
+                            "100%": {
+                              transform: "scale(0.8)",
+                              boxShadow: "0 0 0 0 rgba(255, 82, 82, 0)",
+                            },
                           },
-                          animation: 'heartbeat 1.5s infinite'
+                          animation: "heartbeat 1.5s infinite",
                         }}
                       />
-                      <Typography variant="caption" sx={{ color: 'red', fontWeight: 'bold' }}>Live</Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{ color: "red", fontWeight: "bold" }}
+                      >
+                        Live
+                      </Typography>
                     </Box>
                   )}
                   {stt.isTemp ? "New Tab" : "Tab " + (index+1)}

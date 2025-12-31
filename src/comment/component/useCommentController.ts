@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { CommentDto, CommentsResponse } from "../type/type";
+import type { ApiError } from "../../config/httpClient";
 
 interface Props {
   targetId: number;
@@ -32,15 +33,22 @@ export function useCommentController({
   ========================= */
   useEffect(() => {
     const init = async () => {
-      const first = await fetchApi(targetId, 0, size);
-      const total = first.totalElements;
-      const lastPage = Math.max(1, Math.ceil(total / size));
+      try {
+        const first = await fetchApi(targetId, 0, size);
+        const total = first.totalElements;
+        const lastPage = Math.max(1, Math.ceil(total / size));
 
-      const last = await fetchApi(targetId, lastPage - 1, size);
+        const last = await fetchApi(targetId, lastPage - 1, size);
 
-      setComments(last.content);
-      setTotalCount(total);
-      setPage(lastPage);
+        setComments(last.content);
+        setTotalCount(total);
+        setPage(lastPage);
+      } catch (error) {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+
+        alert(response ?? "오류가 발생했습니다.");
+      }
     };
     init();
   }, [targetId]);
@@ -69,28 +77,42 @@ export function useCommentController({
     );
     files.forEach((f) => formData.append("file", f));
 
-    await createApi(targetId, formData);
+    try {
+      await createApi(targetId, formData);
 
-    setCommentText("");
-    setMentionedMemberIds([]);
+      setCommentText("");
+      setMentionedMemberIds([]);
 
-    const newTotal = totalCount + 1;
-    const lastPage = Math.ceil(newTotal / size);
+      const newTotal = totalCount + 1;
+      const lastPage = Math.ceil(newTotal / size);
 
-    const data = await fetchApi(targetId, lastPage - 1, size);
-    setComments(data.content);
-    setTotalCount(data.totalElements);
-    setPage(lastPage);
+      const data = await fetchApi(targetId, lastPage - 1, size);
+      setComments(data.content);
+      setTotalCount(data.totalElements);
+      setPage(lastPage);
+    } catch (error) {
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+
+      alert(response ?? "댓글 등록 중 오류가 발생했습니다.");
+    }
   };
 
   /* =========================
      페이지 변경
   ========================= */
   const changePage = async (nextPage: number) => {
-    const data = await fetchApi(targetId, nextPage - 1, size);
-    setComments(data.content);
-    setTotalCount(data.totalElements);
-    setPage(nextPage);
+    try {
+      const data = await fetchApi(targetId, nextPage - 1, size);
+      setComments(data.content);
+      setTotalCount(data.totalElements);
+      setPage(nextPage);
+    } catch (error) {
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+
+      alert(response ?? "오류가 발생했습니다.");
+    }
   };
 
   /* =========================
@@ -122,13 +144,19 @@ export function useCommentController({
       )
     );
     newFiles.forEach((f) => formData.append("file", f));
+    try {
+      await updateApi(commentId, formData);
 
-    await updateApi(commentId, formData);
+      // 수정 후 새로 불러오기
+      const data = await fetchApi(targetId, page - 1, size);
+      setComments(data.content);
+      setTotalCount(data.totalElements);
+    } catch (error) {
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
 
-    // 수정 후 새로 불러오기
-    const data = await fetchApi(targetId, page - 1, size);
-    setComments(data.content);
-    setTotalCount(data.totalElements);
+      alert(response ?? "오류가 발생했습니다.");
+    }
   };
 
   /* =========================
@@ -137,15 +165,22 @@ export function useCommentController({
   const deleteComment = async (commentId: number) => {
     if (!deleteApi) return;
 
-    await deleteApi(commentId);
+    try {
+      await deleteApi(commentId);
 
-    const newTotal = totalCount - 1;
-    const lastPage = Math.max(1, Math.ceil(newTotal / size));
-    const data = await fetchApi(targetId, lastPage - 1, size);
+      const newTotal = totalCount - 1;
+      const lastPage = Math.max(1, Math.ceil(newTotal / size));
+      const data = await fetchApi(targetId, lastPage - 1, size);
 
-    setComments(data.content);
-    setTotalCount(data.totalElements);
-    setPage(lastPage);
+      setComments(data.content);
+      setTotalCount(data.totalElements);
+      setPage(lastPage);
+    } catch (error) {
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+
+      alert(response ?? "오류가 발생했습니다.");
+    }
   };
 
   return {

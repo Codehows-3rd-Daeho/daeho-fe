@@ -6,6 +6,8 @@ import { useAuthStore } from "./store/useAuthStore";
 import { usePushNotification } from "./webpush/usePushNotification";
 import Breadcrumb from "./common/PageHeader/Breadcrumb";
 import useRecordingStore from "./store/useRecordingStore";
+import { IconButtonIcon } from "@mui/icons-material/IconButton";
+import MenuIcon from "@mui/icons-material/Menu";
 
 type AppLayoutProps = {
   children: ReactNode;
@@ -109,26 +111,51 @@ export default function AppLayout({ children }: AppLayoutProps) {
   usePreventPageLeave(isCurrentlyRecording, confirmationMessage, handleLastChunk, clear);
   useBlockRouterNavigation(isCurrentlyRecording, confirmationMessage, handleLastChunk, clear);
   useBlockNavigation(isCurrentlyRecording, confirmationMessage, handleLastChunk, clear);
+  //사이드바 간소화
+  const [collapsed, setCollapsed] = useState(false);
+  //모바일 사이드바 숨김
+  const [mobileHidden, setMobileHidden] = useState(true);
 
   const handleToggleSidebar = () => setCollapsed((prev) => !prev);
 
   usePushNotification(member?.memberId ? String(member.memberId) : "");
 
   return (
-    <div className="flex h-screen">
-      <Sidebar
-        items={sidebarItems}
-        selectedId="dashboard"
-        collapsed={collapsed}
-        onToggle={handleToggleSidebar}
-        width={300} // 접힐 때 72px 사용
-      />
+    <div className="flex h-screen ">
+      {/* 데스크탑 */}
+      <div className="hidden md:block">
+        <Sidebar
+          items={sidebarItems}
+          selectedId="dashboard"
+          collapsed={collapsed}
+          onToggle={handleToggleSidebar}
+          width={300} // 접힐 때 72px 사용
+        />
+      </div>
+
+      {/* 모바일 */}
+      <div className="md:hidden">
+        {mobileHidden || (
+          <Sidebar
+            items={sidebarItems}
+            collapsed={false} // 모바일에서는 항상 펼친 상태
+            onToggle={() => setMobileHidden(true)}
+          />
+        )}
+        <IconButtonIcon
+          onClick={() => setMobileHidden((prev) => !prev)}
+          style={{ position: "fixed", top: "10px", left: "10px", zIndex: 9999 }}
+        >
+          <MenuIcon />
+        </IconButtonIcon>
+      </div>
 
       <div className="flex flex-col flex-1 overflow-hidden">
-        <header className="h-[62px] border-b shrink-0 ">
+        <header className="h-[60px] shrink-0 ">
           <Header
             name={member?.name ?? ""}
             jobPosition={member?.jobPosition ?? ""}
+            profileUrl={member?.profileUrl ?? ""}
             notifications={[]}
           />
         </header>

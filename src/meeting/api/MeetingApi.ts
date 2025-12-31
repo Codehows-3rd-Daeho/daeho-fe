@@ -4,6 +4,7 @@ import type {
   MeetingListResponse,
 } from "../type/type";
 import httpClient from "../../config/httpClient";
+import type { FilterDto } from "../../common/PageHeader/type";
 
 // 회의 목록 조회(페이징)
 export const getMeetingList = async (
@@ -13,19 +14,55 @@ export const getMeetingList = async (
   const response = await httpClient.get(`/meeting/list`, {
     params: { page, size },
   });
-  return response.data; // { content, totalElements }
+  return response.data;
+};
+
+const toParam = <T>(arr?: T[]) => (arr && arr.length > 0 ? arr : null);
+// 회의 목록 조회(페이징) + 검색 추가
+export const getMeetingListSrc = async (
+  page: number,
+  size: number = 10,
+  filter: FilterDto
+): Promise<MeetingListResponse> => {
+  const params = {
+    page,
+    size,
+    keyword: filter.keyword || null,
+    startDate: filter.startDate || null,
+    endDate: filter.endDate || null,
+    departmentIds: toParam(filter.departmentIds),
+    categoryIds: toParam(filter.categoryIds),
+    hostIds: toParam(filter.hostIds),
+    participantIds: toParam(filter.participantIds),
+    statuses: toParam(filter.statuses),
+  };
+  const { data } = await httpClient.get("/meeting/list", { params });
+  return data;
 };
 
 //나의 업무 회의 목록
 export const getMeetingListMT = async (
   id: number,
   page: number,
-  size: number = 10
+  size: number = 10,
+  filter: FilterDto
 ): Promise<MeetingListResponse> => {
-  const response = await httpClient.get(`/meeting/mytask/${id}`, {
-    params: { page, size },
+  const params = {
+    page,
+    size,
+    keyword: filter.keyword || null,
+    startDate: filter.startDate || null,
+    endDate: filter.endDate || null,
+    departmentIds: toParam(filter.departmentIds),
+    categoryIds: toParam(filter.categoryIds),
+    hostIds: toParam(filter.hostIds),
+    participantIds: toParam(filter.participantIds),
+    statuses: toParam(filter.statuses),
+  };
+  const { data } = await httpClient.get(`/meeting/mytask/${id}`, {
+    params,
   });
-  return response.data; // { content, totalElements }
+  return data;
 };
 
 //회의 캘린더 조회
@@ -36,7 +73,7 @@ export const getMeetingMonth = async (
   const response = await httpClient.get(`/meeting/scheduler`, {
     params: { year, month },
   });
-  return response.data; // { content, totalElements }
+  return response.data;
 };
 
 //나의 업무 회의 캘린더
@@ -46,11 +83,10 @@ export const getMeetingMonthMT = async (
   year: number,
   month: number
 ): Promise<MeetingListItem[]> => {
-  console.log("getMeetingMonthMT id: ", id);
   const response = await httpClient.get(`/meeting/scheduler/mytask/${id}`, {
     params: { year, month },
   });
-  return response.data; // { content, totalElements }
+  return response.data;
 };
 
 //등록
@@ -66,7 +102,6 @@ export const meetingCreate = async (formData: FormData) => {
 // 상세 조회
 export const getMeetingDtl = async (meetingId: string): Promise<MeetingDto> => {
   const response = await httpClient.get(`/meeting/${meetingId}`);
-  console.log(response);
   return response.data;
 };
 
@@ -75,7 +110,6 @@ export const updateMeetingReadStatus = async (
   meetingId: string
 ): Promise<void> => {
   await httpClient.put(`/meeting/${meetingId}/readStatus`);
-  console.log(`API: 회의 ${meetingId}의 읽음 상태를 '확인'으로 업데이트`);
 };
 
 // 수정

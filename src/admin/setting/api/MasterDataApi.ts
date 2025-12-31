@@ -11,35 +11,30 @@ import httpClient from "../../../config/httpClient";
 //직급 리스트
 export const getJobPosition = async (): Promise<MasterDataType[]> => {
   const response = await httpClient.get(`/masterData/jobPosition`);
-  console.log("직급 : ", response.data);
   return response.data;
 };
 
 //부서 리스트
 export const getDepartment = async (): Promise<MasterDataType[]> => {
   const response = await httpClient.get(`/masterData/department`);
-  console.log("부서 :", response.data);
   return response.data;
 };
 
 //카테고리 리스트
 export const getCategory = async (): Promise<MasterDataType[]> => {
   const response = await httpClient.get(`/masterData/category`);
-  console.log("카테고리 :", response.data);
   return response.data;
 };
 
 //그룹 리스트
 export const getGroupList = async (): Promise<Group[]> => {
   const response = await httpClient.get(`/masterData/group`);
-  console.log("그룹 :", response.data);
   return response.data;
 };
 
 // 알림 설정
 export const getNotiSetting = async (): Promise<NotificationSettingType> => {
   const response = await httpClient.get(`/admin/notificationSetting`);
-  console.log("알림 : ", response.data);
   return response.data;
 };
 

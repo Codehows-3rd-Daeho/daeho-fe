@@ -15,12 +15,12 @@ import {
   getNotiSetting,
   saveNotiSetting,
 } from "../api/MasterDataApi";
-import axios from "axios";
 import MasterData from "../component/MasterData";
 import FileSetting from "../component/FileSetting";
 import NotificationSetting from "../component/NotificationSetting";
 import { deleteExtension, getExtensions } from "../api/FileSettingApi";
 import GroupManagement from "../component/Group";
+import type { ApiError } from "../../../config/httpClient";
 
 export interface TagItem {
   id: number;
@@ -92,11 +92,11 @@ export default function AdminSetting() {
         }));
         setIsLoading(false);
       } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.status === 401) {
-          return;
-        }
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+
+        alert(response ?? "기준 정보 로드에 실패했습니다.");
         console.error("기준 정보 로드 실패:", error);
-        alert("기준 정보 로드에 실패했습니다.");
       }
     };
 
@@ -149,24 +149,24 @@ export default function AdminSetting() {
       await deleteApiFunction(chipToDelete.id);
       setList((chips) => chips.filter((chip) => chip.id !== chipToDelete.id));
       alert("삭제되었습니다.");
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error) && error.response) {
-        const status = error.response.status;
-        const errorMessage = error.response.data;
+    } catch (error) {
+      const apiError = error as ApiError;
+      const status = apiError.response?.status ?? 0;
+      const response = apiError.response?.data?.message;
 
-        if (status === 401) {
-          // 401 에러는 전역 인터셉터에서 이미 처리하므로 여기선 그냥 return
+      switch (status) {
+        case 401:
+          // 이미 인터셉터에서 처리됨
           return;
-        } else if (status === 409 || status === 404) {
-          alert(`${errorMessage}`);
-        } else if (status === 500) {
-          alert(`다른곳에 사용중이므로 삭제가 불가능합니다.`);
-        } else {
-          alert(`오류 발생 (상태 코드: ${status})`);
-        }
-      } else {
-        console.error("삭제 실패:", error);
-        alert("삭제 중 오류가 발생했습니다.");
+        case 404:
+        case 409:
+          alert(response ?? "존재하지 않거나 충돌이 발생했습니다.");
+          break;
+        case 500:
+          alert("다른곳에 사용중이므로 삭제가 불가능합니다.");
+          break;
+        default:
+          alert(response ?? `(상태 코드: ${status}) 오류가 발생했습니다.`);
       }
     }
   };
@@ -221,8 +221,10 @@ export default function AdminSetting() {
 
       alert("알림 설정 저장 완료");
     } catch (error) {
-      console.error("알림 설정 저장 실패:", error);
-      alert("저장 실패");
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+
+      alert(response ?? "저장 실패");
     }
   };
 

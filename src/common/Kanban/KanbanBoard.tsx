@@ -24,32 +24,31 @@ export function KanbanBoard({
 
   return (
     <div className="h-full flex flex-col pb-6 pt-6">
-      <div className="mx-auto w-full flex flex-col">
-        <div className="flex flex-1 gap-8">
-          {columns.map((col) => {
-            const fullList = issues[col.key] || [];
-            const sliced = fullList.slice(0, visibleCount[col.key]);
-            const hasMore = fullList.length > visibleCount[col.key];
+      {/* Kanban 보드 */}
+      <div className="flex flex-row flex-wrap gap-8">
+        {columns.map((col) => {
+          const fullList = issues[col.key] || [];
+          const sliced = fullList.slice(0, visibleCount[col.key]);
+          const hasMore = fullList.length > visibleCount[col.key];
 
-            return (
-              <div key={col.key} className="flex-1 min-w-[300px]">
-                <KanbanColumn
-                  title={col.title}
-                  issues={sliced}
-                  hasMore={hasMore}
-                  onLoadMore={() => handleLoadMore(col.key)}
-                  onClickIssue={onClickIssue}
-                  isDoneColumn={col.key === "done"}
-                />
-              </div>
-            );
-          })}
-        </div>
+          return (
+            <div key={col.key} className="flex-1 min-w-[450px] max-w-[500px]">
+              <KanbanColumn
+                title={col.title}
+                issues={sliced}
+                hasMore={hasMore}
+                onLoadMore={() => handleLoadMore(col.key)}
+                onClickIssue={onClickIssue}
+                isDoneColumn={col.key === "done"}
+              />
+            </div>
+          );
+        })}
+      </div>
 
-        {/* 하단 설명 툴팁 박스 */}
-        <div className="mt-4 p-2 text-center text-xs text-gray-600 bg-gray-200 rounded-lg max-w-lg mx-auto">
-          최근등록 기준으로 표기됩니다
-        </div>
+      {/* 하단 설명 툴팁 박스 */}
+      <div className="mt-4 p-2 text-center text-xs text-gray-600 bg-gray-200 rounded-lg min-w-30 max-w-lg mx-auto ">
+        최근등록 기준으로 표기됩니다
       </div>
     </div>
   );

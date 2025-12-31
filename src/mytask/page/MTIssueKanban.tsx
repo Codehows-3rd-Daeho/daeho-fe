@@ -9,26 +9,45 @@ import { useEffect, useState } from "react";
 import type { KanbanIssue } from "../../common/Kanban/type";
 import type { IssueListItem } from "../../issue/type/type";
 import { getKanbanIssuesMT } from "../../issue/api/issueApi";
+import type { ApiError } from "../../config/httpClient";
+import { SearchBar } from "../../common/SearchBar/SearchBar";
+import DateFilter from "../../common/PageHeader/DateFilter";
+import Filter from "../../common/PageHeader/Filter";
+import type { FilterDto } from "../../common/PageHeader/type";
 
 export type KanbanData = Record<string, KanbanIssue[]>;
 
 export default function MTIssueKanban() {
   const navigate = useNavigate();
   const { member } = useAuthStore();
-  const role = member?.role;
   const [data, setData] = useState<KanbanData>({
     pending: [],
     done: [],
     delay: [],
   });
 
+  const [filter, setFilter] = useState<FilterDto>({
+    keyword: "",
+    departmentIds: [],
+    categoryIds: [],
+    hostIds: [],
+    participantIds: [],
+    statuses: [],
+    startDate: "",
+    endDate: "",
+  });
+
   useEffect(() => {
-    getKanbanIssuesMT(member!.memberId).then(
-      (res: {
-        inProgress: IssueListItem[];
-        completed: IssueListItem[];
-        delayed: IssueListItem[];
-      }) => {
+    if (!member?.memberId) return;
+
+    const fetchIssues = async () => {
+      try {
+        const res: {
+          inProgress: IssueListItem[];
+          completed: IssueListItem[];
+          delayed: IssueListItem[];
+        } = await getKanbanIssuesMT(member.memberId, filter);
+
         const delayIds = new Set(res.delayed.map((item) => item.id));
         const filteredPending = res.inProgress.filter(
           (item) => !delayIds.has(item.id)
@@ -39,36 +58,77 @@ export default function MTIssueKanban() {
           done: res.completed,
           delay: res.delayed,
         });
+      } catch (error) {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+        alert(response ?? "오류가 발생했습니다.");
       }
-    );
-  }, []);
+    };
+
+    fetchIssues();
+  }, [filter, member?.memberId]);
+
+  // 검색바 전용 핸들러
+  const handleSearch = (query: string) => {
+    setFilter((prev) => ({ ...prev, keyword: query }));
+  };
+
+  // 필터 전용 핸들러
+  const handleFilterChange = (newFilter: FilterDto) => {
+    setFilter(newFilter);
+  };
 
   return (
     <>
       {/* 타이틀 */}
-      <Box mb={2}>
-        {/* 아래 여백 */}
-        <Typography
-          variant="h4" // 글자 크기
-          component="h1"
-          textAlign="left" // 왼쪽 정렬
-          fontWeight="bold" // 볼드
-        >
+      <Box
+        display="flex"
+        justifyContent="space-between"
+        alignItems="flex-end"
+        mb={3}
+      >
+        <Typography 
+          variant="h4" 
+          component="h1" 
+          fontWeight="bold"
+          minWidth={100}
+          >
           이슈
         </Typography>
-      </Box>
-      {/* 헤더 */}
-      <PageHeader>
-        <Toggle
-          options={[
-            { label: "리스트", value: "list", path: "/mytask/issue/list" },
-            { label: "칸반", value: "kanban", path: "/mytask/issue/kanban" },
-          ]}
-        />
-
         {role === "USER" && (
           <AddButton onClick={() => navigate("/issue/create")} />
         )}
+      </Box>
+
+      {/* 헤더 */}
+      <PageHeader>
+        <Box sx={{ alignSelf: "center" }}>
+          <Toggle
+            options={[
+              { label: "리스트", value: "list", path: "/mytask/issue/list" },
+              { label: "칸반", value: "kanban", path: "/mytask/issue/kanban" },
+            ]}
+          />
+        </Box>
+
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <DateFilter
+            startDate={filter.startDate ?? ""}
+            endDate={filter.endDate ?? ""}
+            onStartDateChange={(v) =>
+              setFilter((prev) => ({ ...prev, startDate: v }))
+            }
+            onEndDateChange={(v) =>
+              setFilter((prev) => ({ ...prev, endDate: v }))
+            }
+          />
+          <Filter
+            value={filter}
+            onChange={handleFilterChange}
+            excludeSections={["상태"]}
+          />
+          <SearchBar onSearch={handleSearch} placeholder="검색" />
+        </Box>
       </PageHeader>
 
       {/* 칸반 */}

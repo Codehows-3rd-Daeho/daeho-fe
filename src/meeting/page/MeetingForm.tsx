@@ -157,7 +157,8 @@ export default function MeetingForm({
           gap: 3,
           p: 3,
           bgcolor: "#f5f5f5",
-          minWidth: "1000px",
+          minWidth: 300,
+          flexDirection: { xs: "column-reverse", md: "row" }, // 모바일: 세로(2,1), 데스크탑: 가로(1,2)
         }}
       >
         {/* 왼쪽 섹션 */}
@@ -168,6 +169,7 @@ export default function MeetingForm({
             borderRadius: 2,
             p: 3,
             boxShadow: 1,
+            minWidth: 150,
           }}
         >
           {/* 제목 */}
@@ -176,12 +178,14 @@ export default function MeetingForm({
               제목
             </Typography>
             <TextField
-              fullWidth
               placeholder="제목을 입력해주세요"
               value={formData.title}
               onChange={(e) => onChangeFormData("title", e.target.value)}
               size="small"
-              sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
+              sx={{
+                width: "100%",
+                "& .MuiOutlinedInput-root": { borderRadius: 1.5 },
+              }}
             />
           </Box>
 
@@ -191,13 +195,15 @@ export default function MeetingForm({
               본문
             </Typography>
             <TextField
-              fullWidth
               multiline
               rows={10}
               placeholder="내용을 입력해주세요"
               value={formData.content}
               onChange={(e) => onChangeFormData("content", e.target.value)}
-              sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
+              sx={{
+                width: "100%",
+                "& .MuiOutlinedInput-root": { borderRadius: 1.5 },
+              }}
             />
           </Box>
 
@@ -450,13 +456,12 @@ export default function MeetingForm({
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            height: "100%",
           }}
         >
           <Box
             sx={{
               height: 950,
-              width: 380,
+
               display: "flex",
               flexDirection: "column",
               gap: 2,
@@ -481,11 +486,13 @@ export default function MeetingForm({
                 상태
               </Typography>
               <Select
-                fullWidth
                 size="small"
                 value={formData.status}
                 onChange={(e) => onChangeFormData("status", e.target.value)}
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
+                sx={{
+                  width: "100%",
+                  "& .MuiOutlinedInput-root": { borderRadius: 1.5 },
+                }}
               >
                 <MenuItem value="PLANNED">진행전</MenuItem>
                 <MenuItem value="IN_PROGRESS">진행중</MenuItem>
@@ -511,11 +518,13 @@ export default function MeetingForm({
               </Typography>
               <TextField
                 disabled
-                fullWidth
                 size="small"
                 value={formData.host}
                 onChange={(e) => onChangeFormData("host", e.target.value)}
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: 1.5 } }}
+                sx={{
+                  width: "100%",
+                  "& .MuiOutlinedInput-root": { borderRadius: 1.5 },
+                }}
               />
             </Box>
 
@@ -535,12 +544,17 @@ export default function MeetingForm({
               >
                 관련 이슈
               </Typography>
-              <FormControl fullWidth size="small">
+              <FormControl size="small" sx={{ width: "100%" }}>
+                {" "}
                 <Select
                   value={formData.issue ?? ""}
                   displayEmpty
                   onChange={(e) => {
                     onIssueSelect(e.target.value);
+                  }}
+                  sx={{
+                    width: "100%",
+                    "& .MuiOutlinedInput-root": { borderRadius: 1.5 },
                   }}
                 >
                   {issues.map((i) => (
@@ -564,7 +578,6 @@ export default function MeetingForm({
                     시작일
                   </Typography>
                   <TextField
-                    fullWidth
                     size="small"
                     placeholder="0000-00-00"
                     value={selectedDay}
@@ -572,6 +585,10 @@ export default function MeetingForm({
                       const day = e.target.value;
                       setSelectedDay(day);
                       updateStartDate(day, selectedTime); //시간이랑 합쳐서 formData에 반영
+                    }}
+                    sx={{
+                      width: "100%",
+                      "& .MuiOutlinedInput-root": { borderRadius: 1.5 },
                     }}
                   />
                 </Box>
@@ -582,7 +599,6 @@ export default function MeetingForm({
                     시작시간
                   </Typography>
                   <TextField
-                    fullWidth
                     size="small"
                     placeholder="00:00"
                     value={selectedTime}
@@ -592,10 +608,14 @@ export default function MeetingForm({
 
                       updateStartDate(selectedDay, time);
                     }}
+                    sx={{
+                      width: "100%",
+                      "& .MuiOutlinedInput-root": { borderRadius: 1.5 },
+                    }}
                   />
                 </Box>
               </Box>
-              <Box sx={{ mt: 2 }}>
+              <Box sx={{ mt: 2, width: 260 }}>
                 {/* 달력 (항상 표시) */}
                 <StaticDateTimePicker
                   ampm={false}
@@ -623,14 +643,18 @@ export default function MeetingForm({
               >
                 카테고리
               </Typography>
-              <FormControl fullWidth size="small">
+              <FormControl size="small" sx={{ width: "100%" }}>
+                {" "}
                 <Select
                   value={formData.categoryId}
                   onChange={(e) =>
                     onChangeFormData("categoryId", e.target.value)
                   }
                   displayEmpty
-                  sx={{ borderRadius: 1.5 }}
+                  sx={{
+                    width: "100%",
+                    "& .MuiOutlinedInput-root": { borderRadius: 1.5 },
+                  }}
                 >
                   {categories.map((cat) => (
                     <MenuItem key={cat.id} value={cat.id}>
@@ -657,14 +681,18 @@ export default function MeetingForm({
               >
                 관련 부서
               </Typography>
-              <FormControl fullWidth size="small">
+              <FormControl size="small" sx={{ width: "100%" }}>
+                {" "}
                 <Select
                   multiple
                   value={formData.departmentIds}
                   onChange={(e) =>
                     onDepartmentChange(e.target.value as string[])
                   }
-                  sx={{ borderRadius: 1.5 }}
+                  sx={{
+                    width: "100%",
+                    "& .MuiOutlinedInput-root": { borderRadius: 1.5 },
+                  }}
                 >
                   {departments.map((dep) => (
                     <MenuItem key={dep.id} value={String(dep.id)}>
@@ -704,7 +732,7 @@ export default function MeetingForm({
             sx={{
               display: "flex",
               justifyContent: "flex-end",
-              width: 380,
+              width: "100%",
               gap: 1,
             }}
           >

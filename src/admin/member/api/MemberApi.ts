@@ -12,6 +12,7 @@ export const createMember = async (formData: FormData) => {
   return response.data;
 };
 
+//아이디 중복 확인
 export const checkId = async (loginId: string) => {
   const response = await httpClient.get(`/signup/check_loginId`, {
     params: { loginId: loginId },
@@ -22,12 +23,13 @@ export const checkId = async (loginId: string) => {
 // 회원 목록 조회
 export const getMemberList = async (
   page: number,
-  size: number
+  size: number,
+  keyword: string
 ): Promise<PageResponse<MemberList>> => {
   const response = await httpClient.get<PageResponse<MemberList>>(
     `/admin/member`,
     {
-      params: { page, size },
+      params: { page, size, keyword },
     }
   );
   return response.data;
@@ -58,7 +60,6 @@ export const updateMember = async (id: number, formData: FormData) => {
 //멤버 리스트(참여자, 참석자)
 export const getPartMemberList = async (): Promise<PartMemberList[]> => {
   const response = await httpClient.get(`/partMember/list`);
-  console.log("getPartMemberList response:", response.data);
   return response.data;
 };
 

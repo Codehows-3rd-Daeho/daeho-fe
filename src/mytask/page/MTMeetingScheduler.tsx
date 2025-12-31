@@ -8,6 +8,7 @@ import { getMeetingMonthMT } from "../../meeting/api/MeetingApi";
 import { useAuthStore } from "../../store/useAuthStore";
 import { PageHeader } from "../../common/PageHeader/PageHeader";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
+import type { ApiError } from "../../config/httpClient";
 
 const days = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -56,13 +57,18 @@ export default function MTMeetingScheduler() {
   //달이 바뀔 때마다 데이터 조회
   useEffect(() => {
     const fetchMeetings = async () => {
-      const response = await getMeetingMonthMT(
-        member!.memberId,
-        year,
-        month + 1
-      );
-      setMeetings(response);
-      console.log("response: ", response);
+      try {
+        const response = await getMeetingMonthMT(
+          member!.memberId,
+          year,
+          month + 1
+        );
+        setMeetings(response);
+      } catch (error) {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+        alert(response ?? "오류가 발생했습니다.");
+      }
     };
 
     fetchMeetings();
@@ -162,7 +168,7 @@ export default function MTMeetingScheduler() {
       <Box
         sx={{
           display: "grid",
-          gridTemplateRows: `repeat(${matrix.length}, 1fr)`,
+          gridTemplateRows: "auto",
           gap: 1,
         }}
       >
@@ -185,6 +191,7 @@ export default function MTMeetingScheduler() {
                       ? "3px solid #2563EB"
                       : "2px solid #eef2f7",
                   p: 1,
+                  minHeight: 150,
                   position: "relative",
                   backgroundColor: "#fff",
                 }}
@@ -218,14 +225,12 @@ export default function MTMeetingScheduler() {
                           sx={{
                             boxSizing: "border-box",
                             px: 1,
-                            py: 0.75,
+                            py: 1,
                             cursor: "pointer",
-                            // border: "2px solid #bb91ff",
                             backgroundColor: "#4b6485",
                             width: 180,
                             "&:hover": {
                               backgroundColor: "#1a3260",
-                              // borderColor: "#2563eb",
                             },
                           }}
                           onClick={() => navigate(`/meeting/${meeting.id}`)}
@@ -237,18 +242,19 @@ export default function MTMeetingScheduler() {
                               justifyContent: "space-between", // 좌우로 벌리기
                               gridTemplateColumns: "auto 1fr",
                               gap: 1,
+                              mb: 1,
                               width: "100%",
                             }}
                           >
                             {meeting.startDate && (
-                              <Box sx={{ fontSize: 10, color: "white" }}>
+                              <Box sx={{ fontSize: 12, color: "white" }}>
                                 {meeting.startDate?.split(" ")[1]}
                               </Box>
                             )}
 
                             <Box
                               sx={{
-                                fontSize: 10,
+                                fontSize: 12,
                                 color: "white",
                                 overflow: "hidden",
                                 textOverflow: "ellipsis",
@@ -260,7 +266,7 @@ export default function MTMeetingScheduler() {
                           </Box>
                           <Box
                             sx={{
-                              fontSize: 14,
+                              fontSize: 15,
                               fontWeight: 500,
                               color: "white",
                               overflow: "hidden",

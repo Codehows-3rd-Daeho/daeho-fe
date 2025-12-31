@@ -43,11 +43,9 @@ export const updateComment = async (
   commentId: number,
   formData: FormData
 ): Promise<CommentDto> => {
-  const response = await httpClient.put(
-    `/comment/${commentId}`,
-    formData,
-    { headers: { "Content-Type": "multipart/form-data" } }
-  );
+  const response = await httpClient.put(`/comment/${commentId}`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
   return response.data;
 };
 

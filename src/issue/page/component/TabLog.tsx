@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { getIssueLog } from "../../api/issueLogApi";
 import { useParams } from "react-router-dom";
 import { ListDataGrid } from "../../../common/List/ListDataGrid";
+import type { ApiError } from "../../../config/httpClient";
+import { convertStatusMessage } from "../../../common/commonFunction";
 
 export type IssueLoglist = {
   id: number;
@@ -31,17 +33,23 @@ export default function TabLog() {
   const pageSize = 5;
 
   useEffect(() => {
-    getIssueLog(issueId as string, page - 1, pageSize).then((data) => {
-      const list = (data.content ?? data).map(
-        (item: IssueLoglist, index: number) => ({
-          ...item,
-          no: data.totalElements - ((page - 1) * pageSize + index),
-        })
-      );
+    getIssueLog(issueId as string, page - 1, pageSize)
+      .then((data) => {
+        const list = (data.content ?? data).map(
+          (item: IssueLoglist, index: number) => ({
+            ...item,
+            no: data.totalElements - ((page - 1) * pageSize + index),
+          })
+        );
 
-      setData(list);
-      setTotalCount(data.totalElements);
-    });
+        setData(list);
+        setTotalCount(data.totalElements);
+      })
+      .catch((error) => {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+        alert(response ?? "오류가 발생했습니다.");
+      });
   }, [issueId, page]);
 
   const allColumns: GridColDef[] = [
@@ -58,7 +66,7 @@ export default function TabLog() {
       field: "createTime",
       headerName: "시간",
       flex: 2,
-      minWidth: 150,
+      minWidth: 100,
       headerAlign: "center",
       align: "center",
     },
@@ -83,19 +91,19 @@ export default function TabLog() {
         return row.updateField ? `${row.updateField} ${type}` : type;
       }) as GridValueGetter,
     },
-
     {
       field: "message",
       headerName: "내용",
       flex: 1,
-      minWidth: 120,
+      minWidth: 250,
       headerAlign: "center",
       align: "left",
       renderCell: (params) => {
-        const text = params.value as string;
-        const maxLength = 20;
+        const rawText = params.value as string;
+        if (!rawText) return "";
 
-        if (!text) return "";
+        const text = convertStatusMessage(rawText);
+        const maxLength = 30;
 
         return (
           <div

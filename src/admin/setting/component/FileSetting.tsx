@@ -7,7 +7,7 @@ import {
   saveExtension,
   saveFileSize,
 } from "../api/FileSettingApi";
-import axios from "axios";
+import type { ApiError } from "../../../config/httpClient";
 
 interface FileSettingProps {
   fileExtensions: TagItem[];
@@ -32,7 +32,10 @@ export default function FileSetting({
         const mbValue = parseInt(byteValue) / (1024 * 1024);
         setFileSizeInput(mbValue.toString());
       } catch (error) {
-        console.log("파일 설정 불러오기 실패 ", error);
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+
+        alert(response ?? "파일 설정 불러오기에 실패 하였습니다.");
       }
     };
     fetchData();
@@ -65,11 +68,10 @@ export default function FileSetting({
       await saveFileSize(data);
       alert("저장되었습니다.");
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
-        return;
-      }
-      // 다른 alert
-      alert("오류가 발생했습니다.");
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+
+      alert(response ?? "파일 최대 용량 설정에 실패하였습니다.");
     } finally {
       setIsSaving(false);
     }
@@ -96,18 +98,13 @@ export default function FileSetting({
       };
       setFileExtensions((prev) => [...prev, newTag]);
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response) {
-        const { status, data } = error.response;
-        if (status === 400) {
-          // 중복
-          alert(data);
-          return;
-        }
-        if (status === 401) return;
-      }
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+
+      alert(response ?? "등록 중 오류가 발생했습니다.");
       console.error("등록 실패:", error);
-      alert("등록 중 오류가 발생했습니다.");
     }
+
     setExtensionInput("");
   };
 
