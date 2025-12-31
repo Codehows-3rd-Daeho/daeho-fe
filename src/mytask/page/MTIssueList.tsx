@@ -12,13 +12,24 @@ import { getStatusLabel } from "../../common/commonFunction";
 import { getIssueListMT } from "../../issue/api/issueApi";
 import type { IssueListItem } from "../../issue/type/type";
 import { SearchBar } from "../../common/SearchBar/SearchBar";
+import DateFilter from "../../common/PageHeader/DateFilter";
+import Filter from "../../common/PageHeader/Filter";
+import type { FilterDto } from "../../common/PageHeader/type";
 
 export default function MTIssueList() {
   const navigate = useNavigate();
   const { member } = useAuthStore();
   const role = member?.role;
-  const [searchQuery, setSearchQuery] = useState("");
-
+  const [filter, setFilter] = useState<FilterDto>({
+    keyword: "",
+    departmentIds: [],
+    categoryIds: [],
+    hostIds: [],
+    participantIds: [],
+    statuses: [],
+    startDate: "",
+    endDate: "",
+  });
   // 페이징
   const [page, setPage] = useState(1);
   const [data, setData] = useState<IssueListItem[]>([]);
@@ -28,7 +39,7 @@ export default function MTIssueList() {
   useEffect(() => {
     if (!member?.memberId) return;
 
-    getIssueListMT(member.memberId, page - 1, 10, searchQuery).then((data) => {
+    getIssueListMT(member.memberId, page - 1, 10, filter).then((data) => {
       const list = (data.content ?? data).map((item: IssueListItem) => ({
         ...item,
         status: getStatusLabel(item.status),
@@ -37,7 +48,7 @@ export default function MTIssueList() {
       setData(list);
       setTotalCount(data.totalElements); // 전체 개수
     });
-  }, [page, searchQuery, member?.memberId]);
+  }, [page, filter, member?.memberId]);
 
   // 리스트 컬럼
   const allColumns: GridColDef[] = [
@@ -69,9 +80,30 @@ export default function MTIssueList() {
       field: "status",
       headerName: "상태",
       flex: 2,
-      minWidth: 80,
+      minWidth: 100,
       headerAlign: "center",
       align: "center",
+      renderCell: (params) => {
+        const status = params.value;
+        let bgColor = "";
+        let textColor = "";
+
+        if (status === "진행중") {
+          bgColor = "bg-blue-100";
+          textColor = "text-blue-700";
+        } else {
+          bgColor = "bg-red-100";
+          textColor = "text-red-700";
+        }
+
+        return (
+          <span
+            className={`px-3 py-1 text-sm font-semibold rounded-sm ${bgColor} ${textColor}`}
+          >
+            {status}
+          </span>
+        );
+      },
     },
     {
       field: "period",
@@ -131,12 +163,11 @@ export default function MTIssueList() {
         alignItems="flex-end"
         mb={3}
       >
-        {/* 아래 여백 */}
         <Typography
-          variant="h4" // 글자 크기
+          variant="h4"
           component="h1"
-          textAlign="left" // 왼쪽 정렬
-          fontWeight="bold" // 볼드
+          textAlign="left"
+          fontWeight="bold"
         >
           이슈
         </Typography>
@@ -144,15 +175,46 @@ export default function MTIssueList() {
           <AddButton onClick={() => navigate("/issue/create")} />
         )}
       </Box>
-      <PageHeader>
-        <Toggle
-          options={[
-            { label: "리스트", value: "list", path: "/mytask/issue/list" },
-            { label: "칸반", value: "kanban", path: "/mytask/issue/kanban" },
-          ]}
-        />
 
-        <SearchBar onSearch={setSearchQuery} placeholder="검색" />
+      <PageHeader>
+        <Box sx={{ alignSelf: "center" }}>
+          <Toggle
+            options={[
+              { label: "리스트", value: "list", path: "/mytask/issue/list" },
+              { label: "칸반", value: "kanban", path: "/mytask/issue/kanban" },
+            ]}
+          />
+        </Box>
+
+        {/* 3. 오른쪽: 필터 UI 추가 (IssueList와 동일한 구조) */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <DateFilter
+            startDate={filter.startDate ?? ""}
+            endDate={filter.endDate ?? ""}
+            onStartDateChange={(v) =>
+              setFilter((prev) => ({ ...prev, startDate: v }))
+            }
+            onEndDateChange={(v) =>
+              setFilter((prev) => ({ ...prev, endDate: v }))
+            }
+          />
+
+          <Filter
+            type="meeting"
+            value={filter}
+            onChange={(f) => {
+              setPage(1);
+              setFilter(f);
+            }}
+          />
+
+          <SearchBar
+            placeholder="검색"
+            onSearch={(value) =>
+              setFilter((prev) => ({ ...prev, keyword: value }))
+            }
+          />
+        </Box>
       </PageHeader>
 
       <ListDataGrid<IssueListItem>

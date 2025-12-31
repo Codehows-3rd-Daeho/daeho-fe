@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { ListDataGrid } from "../../../common/List/ListDataGrid";
 import { getMeetingLog } from "../../api/MeetingLogApi";
+import { convertStatusMessage } from "../../../common/commonFunction";
 
 export type MeetingLoglist = {
   id: number;
@@ -70,7 +71,7 @@ export default function TabLog({ meetingId }: TabLogProps) {
       field: "createTime",
       headerName: "시간",
       flex: 2,
-      minWidth: 150,
+      minWidth: 100,
       headerAlign: "center",
       align: "center",
     },
@@ -95,19 +96,19 @@ export default function TabLog({ meetingId }: TabLogProps) {
         return row.updateField ? `${row.updateField} ${type}` : type;
       }) as GridValueGetter,
     },
-
     {
       field: "message",
       headerName: "내용",
       flex: 1,
-      minWidth: 120,
+      minWidth: 250,
       headerAlign: "center",
       align: "left",
       renderCell: (params) => {
-        const text = params.value as string;
-        const maxLength = 20;
+        const rawText = params.value as string;
+        if (!rawText) return "";
 
-        if (!text) return "";
+        const text = convertStatusMessage(rawText);
+        const maxLength = 30;
 
         return (
           <div

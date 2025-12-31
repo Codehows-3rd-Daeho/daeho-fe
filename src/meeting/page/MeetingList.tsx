@@ -10,6 +10,9 @@ import { useNavigate } from "react-router-dom";
 import { getMeetingListSrc } from "../api/MeetingApi";
 import { getStatusLabel } from "../../common/commonFunction";
 import { SearchBar } from "../../common/SearchBar/SearchBar";
+import Filter from "../../common/PageHeader/Filter";
+import DateFilter from "../../common/PageHeader/DateFilter";
+import type { FilterDto } from "../../common/PageHeader/type";
 
 export default function MeetingList() {
   const navigate = useNavigate();
@@ -17,12 +20,22 @@ export default function MeetingList() {
   const [page, setPage] = useState(1);
   const [data, setData] = useState<MeetingListItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
-  const [searchQuery, setSearchQuery] = useState("");
+
+  const [filter, setFilter] = useState<FilterDto>({
+    keyword: "",
+    departmentIds: [],
+    categoryIds: [],
+    hostIds: [],
+    participantIds: [],
+    statuses: [],
+    startDate: "",
+    endDate: "",
+  });
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await getMeetingListSrc(page - 1, 10, searchQuery);
+        const data = await getMeetingListSrc(page - 1, 10, filter);
         const list = (data.content ?? data).map((item: MeetingListItem) => ({
           ...item,
           status: getStatusLabel(item.status),
@@ -35,7 +48,7 @@ export default function MeetingList() {
       }
     };
     fetchData();
-  }, [page, searchQuery]);
+  }, [page, filter]);
 
   const allColumns: GridColDef[] = [
     {
@@ -149,12 +162,36 @@ export default function MeetingList() {
       </Box>
 
       <PageHeader>
-        {/* 빈 공간을 차지할 요소 추가 (왼쪽) */}
+        {/* 탭 공간 (왼쪽) */}
         <Box />
 
-        {/* 검색창 (오른쪽으로 밀려남) */}
-        <Box sx={{ height: "40px", display: "flex", alignItems: "flex-end" }}>
-          <SearchBar onSearch={setSearchQuery} placeholder="검색" />
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <DateFilter
+            startDate={filter.startDate ?? ""}
+            endDate={filter.endDate ?? ""}
+            onStartDateChange={(v) =>
+              setFilter((prev) => ({ ...prev, startDate: v }))
+            }
+            onEndDateChange={(v) =>
+              setFilter((prev) => ({ ...prev, endDate: v }))
+            }
+          />
+
+          <Filter
+            type="meeting"
+            value={filter}
+            onChange={(f) => {
+              setPage(1); // 필터 변경 시 1페이지로 이동
+              setFilter(f);
+            }}
+          />
+
+          <SearchBar
+            onSearch={(value) =>
+              setFilter((prev) => ({ ...prev, keyword: value }))
+            }
+            placeholder="검색"
+          />
         </Box>
       </PageHeader>
       {/* 리스트 */}

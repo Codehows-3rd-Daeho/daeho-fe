@@ -196,12 +196,18 @@ export const CommentItem = ({
             ))}
           </Box>
 
-          <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1 }}>
-            <Button size="small" onClick={handleCancelEdit}>
+          <Box
+            sx={{ display: "flex", justifyContent: "flex-end", mt: 1, gap: 1 }}
+          >
+            <Button
+              size="small"
+              onClick={handleCancelEdit}
+              sx={{ border: "1px solid #1976d2" }}
+            >
               취소
             </Button>
             <Button size="small" variant="contained" onClick={handleUpdate}>
-              수정 완료
+              수정
             </Button>
           </Box>
         </Box>

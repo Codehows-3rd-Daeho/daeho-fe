@@ -54,36 +54,38 @@ export default function MeetingScheduler() {
   //달이 바뀔 때마다 데이터 조회
   useEffect(() => {
     const fetchMeetings = async () => {
-      const response = await getMeetingMonth(year, month + 1);
-      setMeetings(response);
-      console.log("response: ", response);
+      try {
+        const response = await getMeetingMonth(year, month + 1);
+        setMeetings(response);
+      } catch (error) {
+        console.error("회의 데이터 로딩 실패:", error);
+      }
     };
 
     fetchMeetings();
-  }, [year, month]);
+  }, [year, month]); // year나 month가 바뀌면 실행
 
   //날짜별로 회의 묶음
   const meetingsByDay = useMemo(() => {
-    //useMemo: 메모리에 저장되어있는 계산된 값을 가져와 재사용
-    const map = new Map<number, MeetingListItem[]>(); // 1 -> [회의1, 회의2, 회의4], 6 -> [...]
+    const map = new Map<number, MeetingListItem[]>();
 
-    //서버에서 받아온 응답(meetings)을 순회
     meetings.forEach((meeting) => {
-      // JavaScript가 지원하는 날짜 문자열 형식으로 변경
-      const date = new Date(meeting.startDate.replace(" ", "T")); //시작일 추출 2025-12-25T12:00
-      if (isNaN(date.getTime())) return;
-      const day = date.getDate(); //일자만 추출 25
+      // "2024-12-25" 형태의 문자열에서 연, 월, 일을 직접 추출 (안전함)
+      const [datePart] = meeting.startDate.split(" "); // "2024-12-25"
+      const [mYear, mMonth, mDay] = datePart.split("-").map(Number);
 
-      //시작일 없으면 빈배열 추가
-      if (!map.has(day)) {
-        map.set(day, []);
+      // 서버에서 가져온 데이터 중, 현재 달력의 연/월과 일치하는 것만 매핑
+      // mMonth - 1 은 JS Date 객체의 month(0~11) 기준과 맞추기 위함
+      if (mYear === year && mMonth - 1 === month) {
+        if (!map.has(mDay)) {
+          map.set(mDay, []);
+        }
+        map.get(mDay)!.push(meeting);
       }
-      //해당 날짜에 배열 넣고 회의 추가
-      map.get(day)!.push(meeting);
     });
 
     return map;
-  }, [meetings]);
+  }, [meetings, year, month]); // year와 month가 바뀔 때마다 다시 계산됨
 
   //더보기시 확장
   const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set());
@@ -156,7 +158,7 @@ export default function MeetingScheduler() {
       <Box
         sx={{
           display: "grid",
-          gridTemplateRows: `repeat(${matrix.length}, 1fr)`,
+          gridTemplateRows: "auto",
           gap: 1,
         }}
       >
@@ -179,6 +181,7 @@ export default function MeetingScheduler() {
                       ? "3px solid #2563EB"
                       : "2px solid #eef2f7",
                   p: 1,
+                  minHeight: 150,
                   position: "relative",
                   backgroundColor: "#fff",
                 }}
@@ -212,11 +215,12 @@ export default function MeetingScheduler() {
                           sx={{
                             boxSizing: "border-box",
                             px: 1,
-                            py: 0.75,
+                            py: 1,
                             cursor: "pointer",
                             // border: "2px solid #bb91ff",
                             backgroundColor: "#4b6485",
                             width: 180,
+
                             "&:hover": {
                               backgroundColor: "#1a3260",
                               // borderColor: "#2563eb",
@@ -231,18 +235,19 @@ export default function MeetingScheduler() {
                               justifyContent: "space-between", // 좌우로 벌리기
                               gridTemplateColumns: "auto 1fr",
                               gap: 1,
+                              mb: 1,
                               width: "100%",
                             }}
                           >
                             {meeting.startDate && (
-                              <Box sx={{ fontSize: 10, color: "white" }}>
+                              <Box sx={{ fontSize: 12, color: "white" }}>
                                 {meeting.startDate?.split(" ")[1]}
                               </Box>
                             )}
 
                             <Box
                               sx={{
-                                fontSize: 10,
+                                fontSize: 12,
                                 color: "white",
                                 overflow: "hidden",
                                 textOverflow: "ellipsis",
@@ -254,7 +259,7 @@ export default function MeetingScheduler() {
                           </Box>
                           <Box
                             sx={{
-                              fontSize: 14,
+                              fontSize: 15,
                               fontWeight: 500,
                               color: "white",
                               overflow: "hidden",
