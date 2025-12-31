@@ -18,9 +18,9 @@ import {
   getDepartment,
 } from "../../admin/setting/api/MasterDataApi";
 import { getIssueInMeeting, getSelectedINM } from "../../issue/api/issueApi";
-import axios from "axios";
 import { getMeetingDtl, updateMeeting } from "../api/MeetingApi";
 import { Box, CircularProgress } from "@mui/material";
+import type { ApiError } from "../../config/httpClient";
 
 export default function MeetingUpdate() {
   const { meetingId } = useParams<{ meetingId: string }>();
@@ -108,10 +108,11 @@ export default function MeetingUpdate() {
 
         setMeetingMembers(meeting.participantList);
       } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.status === 401) {
-          return;
-        }
-        alert("회의 데이터 로딩 중 오류가 발생했습니다.");
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+
+        alert(response ?? "회의 데이터 로딩 중 오류가 발생했습니다.");
+
         navigate(`/meeting/${meetingId}`);
       } finally {
         setIsLoading(false);
@@ -128,8 +129,11 @@ export default function MeetingUpdate() {
 
         setMaxFileSize(Number(sizeConfig.name) / 1024 / 1024); // MB 단위 변환
         setAllowedExtensions(extensionConfig.map((e) => e.name.toLowerCase()));
-      } catch (e) {
-        console.error("파일 설정 로딩 오류:", e);
+      } catch (error) {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+        alert(response ?? "파일 설정 로딩 오류가 발생했습니다.");
+        console.error("파일 설정 로딩 오류:", error);
       }
     }
 
@@ -163,8 +167,6 @@ export default function MeetingUpdate() {
 
       // 2) 용량 체크
       const sizeMB = file.size / 1024 / 1024; //바이트 단위 → MB로 변환
-      console.log("sizeMB: ", sizeMB);
-      console.log("maxFileSize: ", maxFileSize);
 
       if (sizeMB > maxFileSize) {
         alert(
@@ -230,10 +232,8 @@ export default function MeetingUpdate() {
   const onIssueSelect = async (selectedId: string) => {
     try {
       const idNumber = Number(selectedId);
-      console.log("number로 변환된 ID:", idNumber);
       // 1. 선택된 이슈 상세 데이터 가져오기
       const issue: IssueInMeeting = await getSelectedINM(idNumber);
-      console.log("issue(getSelectedINM) :", issue);
       // 2.  formData 동기화
       setFormData((prev) => {
         const updatedFormData = {
@@ -249,11 +249,12 @@ export default function MeetingUpdate() {
       });
 
       setMeetingMembers(issue.members);
-      console.log("업데이트 후 meetingMembers:", issue.members);
       alert("이슈의 카테고리, 부서, 참여자 정보를 불러왔습니다.");
     } catch (error) {
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+      alert(response ?? "이슈 정보를 불러오지 못했습니다.");
       console.error("이슈 상세 조회 실패:", error);
-      alert("이슈 정보를 불러오지 못했습니다.");
     }
   };
 
@@ -261,13 +262,6 @@ export default function MeetingUpdate() {
     dayjs(value).format("YYYY-MM-DD HH:mm");
 
   const handleSubmit = async () => {
-    console.log(
-      "startDate raw:",
-      JSON.stringify(formData.startDate),
-      "length:",
-      formData.startDate.length
-    );
-
     if (!formData.title.trim()) {
       alert("제목을 입력해주세요.");
       return;
@@ -341,15 +335,13 @@ export default function MeetingUpdate() {
     try {
       setIsSaving(true);
       await updateMeeting(meetingId as string, formDataObj);
-      console.log(formDataObj);
       alert("회의가 수정되었습니다.");
       navigate(`/meeting/${meetingId}`);
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
-        return;
-      }
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+      alert(response ?? "회의 수정 중 오류가 발생했습니다.");
       console.error("회의 수정 실패:", error);
-      alert("회의 수정 중 오류가 발생했습니다.");
     } finally {
       setIsSaving(false);
     }

@@ -18,8 +18,7 @@ import {
   getMemberDtl,
   updateMember,
 } from "../api/MemberApi";
-import axios from "axios";
-import { BASE_URL } from "../../../config/httpClient";
+import { BASE_URL, type ApiError } from "../../../config/httpClient";
 
 type UpdateMemberModalProps = {
   open: boolean; // 모달이 열려있는지, 닫혀있는지
@@ -71,13 +70,15 @@ export default function UpdateMemberModal({
           setMember(memberData);
           setOriginalLoginId(memberData.loginId); // 기존 아이디 저장.
           setProfileFileId(memberData.profileFileId ?? null);
-          console.log(memberData.profileFileId);
           // 사진 URL 설정
           setProfileUrl(
             memberData.profileUrl ? `${BASE_URL}${memberData.profileUrl}` : ""
           );
         } catch (error) {
-          console.log("데이터를 불러오는 중 오류 발생", error);
+          const apiError = error as ApiError;
+          const response = apiError.response?.data?.message;
+
+          alert(response ?? "데이터를 불러오는 중 오류가 발생했습니다.");
         }
       }
       fetchData();
@@ -145,10 +146,14 @@ export default function UpdateMemberModal({
       const result = await checkId(loginId);
       setIsDuplicate(result.exists);
       setIsChecked(true);
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+
+      alert(response ?? "아이디 중복 확인 중 오류가 발생했습니다.");
       setIsDuplicate(false);
       setIsChecked(true);
+      console.error(error);
     }
   };
 
@@ -159,8 +164,11 @@ export default function UpdateMemberModal({
       handleChange("password", newPwd); // 비밀번호 입력창에 들어감
       alert(`임시 비밀번호가 생성되었습니다.\n새 비밀번호: ${newPwd}`);
     } catch (error) {
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+
+      alert(response ?? "임시 비밀번호 생성에 실패했습니다.");
       console.error("임시 비밀번호 생성 중 오류:", error);
-      alert("임시 비밀번호 생성에 실패했습니다.");
     }
   };
 
@@ -245,11 +253,11 @@ export default function UpdateMemberModal({
       alert("회원 수정 완료");
       handleClose();
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
-        return;
-      }
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+
+      alert(response ?? "회원 수정 중 오류가 발생했습니다.");
       console.error("회원 수정 중 오류 발생:", error);
-      alert("회원 수정 중 오류가 발생했습니다.");
     }
   };
 

@@ -9,6 +9,7 @@ import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { useNavigate } from "react-router-dom";
 import { getMeetingListSrc } from "../api/MeetingApi";
 import { getStatusLabel } from "../../common/commonFunction";
+import type { ApiError } from "../../config/httpClient";
 import { SearchBar } from "../../common/SearchBar/SearchBar";
 import Filter from "../../common/PageHeader/Filter";
 import DateFilter from "../../common/PageHeader/DateFilter";
@@ -40,11 +41,12 @@ export default function MeetingList() {
           ...item,
           status: getStatusLabel(item.status),
         }));
-
         setData(list);
         setTotalCount(data.totalElements);
       } catch (error) {
-        console.error("회의 조회 실패", error);
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+        alert(response ?? "오류가 발생했습니다.");
       }
     };
     fetchData();
@@ -155,6 +157,7 @@ export default function MeetingList() {
           component="h1"
           textAlign="left"
           fontWeight="bold"
+          minWidth={100}
         >
           회의
         </Typography>

@@ -12,6 +12,7 @@ export const createMember = async (formData: FormData) => {
   return response.data;
 };
 
+//아이디 중복 확인
 export const checkId = async (loginId: string) => {
   const response = await httpClient.get(`/signup/check_loginId`, {
     params: { loginId: loginId },
@@ -59,7 +60,6 @@ export const updateMember = async (id: number, formData: FormData) => {
 //멤버 리스트(참여자, 참석자)
 export const getPartMemberList = async (): Promise<PartMemberList[]> => {
   const response = await httpClient.get(`/partMember/list`);
-  console.log("getPartMemberList response:", response.data);
   return response.data;
 };
 

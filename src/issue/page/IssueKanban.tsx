@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { getKanbanIssuesSrc } from "../api/issueApi";
 import type { IssueListItem } from "../type/type";
 import type { KanbanIssue } from "../../common/Kanban/type";
+import type { ApiError } from "../../config/httpClient";
 import { SearchBar } from "../../common/SearchBar/SearchBar";
 import Filter from "../../common/PageHeader/Filter";
 import DateFilter from "../../common/PageHeader/DateFilter";
@@ -57,7 +58,11 @@ export default function IssueKanban() {
           delay: res.delayed,
         });
       } catch (error) {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+
         console.error("칸반 이슈 조회 실패", error);
+        alert(response ?? "오류가 발생했습니다.");
       } finally {
         setIsLoading(false);
       }
@@ -105,8 +110,9 @@ export default function IssueKanban() {
         <Typography
           variant="h4"
           component="h1"
-          textAlign="left"
-          fontWeight="bold"
+          textAlign="left" // 왼쪽 정렬
+          fontWeight="bold" // 볼드
+          minWidth={100}
         >
           이슈
         </Typography>

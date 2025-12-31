@@ -1,17 +1,32 @@
-import { AppBar, Toolbar, IconButton, Typography, Box } from "@mui/material";
+import {
+  AppBar,
+  Toolbar,
+  IconButton,
+  Typography,
+  Box,
+  Avatar,
+} from "@mui/material";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import type { HeaderProps } from "./type";
 import NotificationDropdown from "../../webpush/page/NotificationDropdown";
 import { useEffect, useState } from "react";
 import { getUnreadNotificationCount } from "../../webpush/api/notificationApi";
+import { BASE_URL, type ApiError } from "../../config/httpClient";
 
-export default function Header({ name, jobPosition }: HeaderProps) {
+export default function Header({ name, jobPosition, profileUrl }: HeaderProps) {
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const fetchUnreadCount = async () => {
-      const count = await getUnreadNotificationCount();
-      setUnreadCount(count);
+      try {
+        const count = await getUnreadNotificationCount();
+        setUnreadCount(count);
+      } catch (error) {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+
+        alert(response ?? "알림 조회 중 오류가 발생했습니다.");
+      }
     };
 
     fetchUnreadCount();
@@ -22,7 +37,7 @@ export default function Header({ name, jobPosition }: HeaderProps) {
       position="fixed"
       sx={{
         backgroundColor: "#fff",
-        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+        boxShadow: "none",
       }}
     >
       <Toolbar sx={{ justifyContent: "flex-end", gap: 2 }}>
@@ -67,7 +82,13 @@ export default function Header({ name, jobPosition }: HeaderProps) {
           sx={{ color: "#333" }}
           onClick={() => (window.location.href = "/mypage")}
         >
-          <AccountCircleIcon fontSize="large" />
+          <Avatar
+            src={profileUrl ? `${BASE_URL}${profileUrl}` : undefined}
+            sx={{ width: 40, height: 40 }}
+          >
+            {/* 이미지 없을 때 fallback 아이콘 */}
+            <AccountCircleIcon fontSize="large" />
+          </Avatar>
         </IconButton>
       </Toolbar>
     </AppBar>

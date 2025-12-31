@@ -14,7 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/useAuthStore";
 import { loginAndGetToken } from "../api/LoginApi";
 import { usePushNotification } from "../../webpush/usePushNotification";
-import axios from "axios";
+import type { ApiError } from "../../config/httpClient";
 
 export default function Login() {
   const [loginId, setLoginId] = useState("");
@@ -44,34 +44,24 @@ export default function Login() {
     try {
       const res = await loginAndGetToken({ loginId, password });
 
-      if (!res) {
-        setError("아이디 또는 비밀번호가 올바르지 않습니다.");
-        return;
-      }
-
       // 토큰 + 유저정보 store 저장
       login(res.token, {
         memberId: res.memberId,
         name: res.name,
         jobPosition: res.jobPosition,
+        profileUrl: res.profileUrl,
         role: res.role,
       });
 
       // 권한 요청
-      console.log("2. 현재 권한 상태:", Notification.permission);
       await requestPermission();
 
       navigate("/");
-    } catch (error: unknown) {
-      //퇴사 메세지
-      let message = "아이디 또는 비밀번호가 올바르지 않습니다.";
+    } catch (error) {
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
 
-      if (axios.isAxiosError(error)) {
-        message =
-          (error.response?.data as { message?: string })?.message ?? message;
-      }
-
-      setError(message);
+      setError(response ?? "시스템 오류가 발생했습니다.");
     }
   };
 

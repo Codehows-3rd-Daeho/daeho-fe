@@ -14,7 +14,7 @@ export const CommonPagination = ({
   };
 
   return (
-    <Box display="flex" justifyContent="center" mt={3}>
+    <Box display="flex" justifyContent="center" mt={3} minWidth="200px">
       <Pagination
         count={totalPages}
         page={page > totalPages ? totalPages : page}

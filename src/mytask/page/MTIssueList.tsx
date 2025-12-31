@@ -11,6 +11,7 @@ import { useAuthStore } from "../../store/useAuthStore";
 import { getStatusLabel } from "../../common/commonFunction";
 import { getIssueListMT } from "../../issue/api/issueApi";
 import type { IssueListItem } from "../../issue/type/type";
+import type { ApiError } from "../../config/httpClient";
 import { SearchBar } from "../../common/SearchBar/SearchBar";
 import DateFilter from "../../common/PageHeader/DateFilter";
 import Filter from "../../common/PageHeader/Filter";
@@ -47,6 +48,10 @@ export default function MTIssueList() {
 
       setData(list);
       setTotalCount(data.totalElements); // 전체 개수
+    }).catch((error) => {
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+      alert(response ?? "오류가 발생했습니다.");
     });
   }, [page, filter, member?.memberId]);
 
@@ -168,12 +173,11 @@ export default function MTIssueList() {
           component="h1"
           textAlign="left"
           fontWeight="bold"
+          minWidth={100}
         >
           이슈
-        </Typography>
-        {role === "USER" && (
-          <AddButton onClick={() => navigate("/issue/create")} />
-        )}
+        </Typography
+        <AddButton onClick={() => navigate("/issue/create")} />
       </Box>
 
       <PageHeader>

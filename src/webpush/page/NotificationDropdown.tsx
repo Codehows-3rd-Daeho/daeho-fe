@@ -19,6 +19,7 @@ import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
 import CloseIcon from "@mui/icons-material/Close";
 import type { NotificationType } from "../type";
 import { useNavigate } from "react-router-dom";
+import type { ApiError } from "../../config/httpClient";
 
 interface Props {
   unreadCount: number;
@@ -43,15 +44,23 @@ export default function NotificationDropdown({
         pageToLoad === 0 ? content : [...prev, ...content]
       );
       setHasNext(!res.last);
-    } catch (e) {
-      console.error("알림 조회 실패", e);
+    } catch (error) {
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+      alert(response ?? "알림 조회 중 오류가 발생했습니다.");
     }
   };
 
   const handleClick = async (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
-    setPage(0);
-    await fetchNotifications(0);
+    try {
+      await fetchNotifications(0);
+      setPage(0);
+    } catch (error) {
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+      alert(response ?? "알림 불러오기 중 오류가 발생했습니다.");
+    }
   };
 
   const handleClose = () => {
@@ -153,13 +162,22 @@ export default function NotificationDropdown({
                   }}
                   onClick={async () => {
                     if (!notification.isRead) {
-                      await readNotification(notification.id);
-                      setNotifications((prev) =>
-                        prev.map((n) =>
-                          n.id === notification.id ? { ...n, isRead: true } : n
-                        )
-                      );
-                      onReadNotification();
+                      try {
+                        await readNotification(notification.id);
+                        setNotifications((prev) =>
+                          prev.map((n) =>
+                            n.id === notification.id
+                              ? { ...n, isRead: true }
+                              : n
+                          )
+                        );
+                        onReadNotification();
+                      } catch (error) {
+                        const apiError = error as ApiError;
+                        const response = apiError.response?.data?.message;
+                        alert(response ?? "알림 읽기 중 오류가 발생했습니다.");
+                        return;
+                      }
                     }
                     navigate(notification.forwardUrl);
                   }}

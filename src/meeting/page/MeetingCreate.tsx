@@ -19,11 +19,11 @@ import {
   getExtensions,
   getFileSize,
 } from "../../admin/setting/api/FileSettingApi";
-import axios from "axios";
 import { getIssueInMeeting, getSelectedINM } from "../../issue/api/issueApi";
 import type { IssueIdTitle } from "../../issue/type/type";
 import dayjs, { Dayjs } from "dayjs";
 import { Box, CircularProgress } from "@mui/material";
+import type { ApiError } from "../../config/httpClient";
 
 export default function MeetingCreate() {
   const [formData, setFormData] = useState<MeetingFormValues>({
@@ -104,10 +104,10 @@ export default function MeetingCreate() {
           console.log("memberId 없음:", memberId);
         }
       } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.status === 401) {
-          return;
-        }
-        console.log("데이터를 불러오는 중 오류 발생", error);
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+
+        alert(response ?? "데이터를 불러오는 중 오류가 발생했습니다.");
       } finally {
         setIsLoading(false);
       }
@@ -120,17 +120,24 @@ export default function MeetingCreate() {
     if (!issueId) return;
 
     const fetchIssue = async () => {
-      const issue = await getSelectedINM(Number(issueId));
+      try {
+        const issue = await getSelectedINM(Number(issueId));
 
-      setFormData((prev) => ({
-        ...prev,
-        issue: String(issue.id),
-        categoryId: issue.categoryId,
-        departmentIds: issue.departmentIds,
-        members: issue.members,
-      }));
+        setFormData((prev) => ({
+          ...prev,
+          issue: String(issue.id),
+          categoryId: issue.categoryId,
+          departmentIds: issue.departmentIds,
+          members: issue.members,
+        }));
 
-      setMeetingMembers(issue.members);
+        setMeetingMembers(issue.members);
+      } catch (error) {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+
+        alert(response ?? "오류가 발생했습니다.");
+      }
     };
 
     fetchIssue();
@@ -205,18 +212,17 @@ export default function MeetingCreate() {
 
     //============================전송============================
     try {
-      setIsSaving(true); // 저장 시작 (중복 클릭 방지)
-      console.log("보내는 데이터", meetingDto);
-      const meetingId = await meetingCreate(formDataObj);
+      setIsSaving(true); // 저장 시작 (중복 클릭 방지
+      await meetingCreate(formDataObj);
 
       alert("회의가 등록되었습니다!");
-      navigator(`/meeting/${meetingId}`);
+      navigator(`/meeting/list`);
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
-        return;
-      }
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+
+      alert(response ?? "회의 등록 중 오류가 발생했습니다.");
       console.error("회의 등록 실패:", error);
-      alert("회의 등록 중 오류가 발생했습니다.");
     } finally {
       setIsSaving(false); // 버튼 원상복귀
     }
@@ -314,16 +320,11 @@ export default function MeetingCreate() {
   //                          이슈 선택시 카테고리,부서,멤버 자동선택
 
   const onIssueSelect = async (selectedId: string) => {
-    console.log("onIssueSelect 실행");
-    console.log("선택된 ID:", selectedId);
-
     try {
       //string => number
       const idNumber = Number(selectedId);
-      console.log("number로 변환된 ID:", idNumber);
       // 1. 선택된 이슈 상세 데이터 가져오기
       const issue: IssueInMeeting = await getSelectedINM(idNumber);
-      console.log("issue(getSelectedINM) :", issue);
       // 2.  formData 동기화
       setFormData((prev) => {
         const updatedFormData = {
@@ -335,18 +336,18 @@ export default function MeetingCreate() {
             : [],
           members: issue.members, // IssueMemberDto[]
         };
-        console.log("업데이트 전 formData(prev):", prev);
-        console.log("업데이트 후 formData(updatedFormData):", updatedFormData);
         return updatedFormData;
       });
 
       // 3️⃣ PartMember UI 업데이트 (선택된 멤버 표시 등)
       setMeetingMembers(issue.members);
-      console.log("업데이트 후 meetingMembers:", issue.members);
       alert("이슈의 카테고리, 부서, 참여자 정보를 불러왔습니다.");
     } catch (error) {
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+
+      alert(response ?? "이슈 정보를 불러오지 못했습니다.");
       console.error("이슈 상세 조회 실패:", error);
-      alert("이슈 정보를 불러오지 못했습니다.");
     }
   };
 

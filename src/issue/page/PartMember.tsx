@@ -21,6 +21,7 @@ import {
 } from "../../admin/setting/api/MasterDataApi";
 import { getPartMemberList } from "../../admin/member/api/MemberApi";
 import type { Group } from "../../admin/setting/type/SettingType";
+import type { ApiError } from "../../config/httpClient";
 
 interface Participant extends PartMemberList {
   selected: boolean;
@@ -121,6 +122,9 @@ export default function PartMember({
         setAllParticipants(mapped);
         handleSave(mapped);
       } catch (error) {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+        alert(response ?? "로딩 오류가 발생했습니다.");
         console.error("로딩 실패:", error);
       }
     };

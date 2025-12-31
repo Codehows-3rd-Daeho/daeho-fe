@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getIssueLog } from "../../api/issueLogApi";
 import { useParams } from "react-router-dom";
 import { ListDataGrid } from "../../../common/List/ListDataGrid";
+import type { ApiError } from "../../../config/httpClient";
 import { convertStatusMessage } from "../../../common/commonFunction";
 
 export type IssueLoglist = {
@@ -32,17 +33,23 @@ export default function TabLog() {
   const pageSize = 5;
 
   useEffect(() => {
-    getIssueLog(issueId as string, page - 1, pageSize).then((data) => {
-      const list = (data.content ?? data).map(
-        (item: IssueLoglist, index: number) => ({
-          ...item,
-          no: data.totalElements - ((page - 1) * pageSize + index),
-        })
-      );
+    getIssueLog(issueId as string, page - 1, pageSize)
+      .then((data) => {
+        const list = (data.content ?? data).map(
+          (item: IssueLoglist, index: number) => ({
+            ...item,
+            no: data.totalElements - ((page - 1) * pageSize + index),
+          })
+        );
 
-      setData(list);
-      setTotalCount(data.totalElements);
-    });
+        setData(list);
+        setTotalCount(data.totalElements);
+      })
+      .catch((error) => {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+        alert(response ?? "오류가 발생했습니다.");
+      });
   }, [issueId, page]);
 
   const allColumns: GridColDef[] = [

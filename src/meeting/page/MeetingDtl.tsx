@@ -15,9 +15,8 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
 
-import { BASE_URL } from "../../config/httpClient";
+import { BASE_URL, type ApiError } from "../../config/httpClient";
 import { useAuthStore } from "../../store/useAuthStore";
-import axios from "axios";
 import { getFileInfo, getStatusLabel } from "../../common/commonFunction";
 import { useNavigate, useParams } from "react-router-dom";
 import type { MeetingDto } from "../type/type";
@@ -51,10 +50,9 @@ export default function MeetingDtl() {
     getMeetingDtl(id)
       .then((data) => setMeeting(data))
       .catch((error) => {
-        if (axios.isAxiosError(error) && error.response?.status === 401) {
-          return;
-        }
-        alert("회의 정보를 불러오는 중 오류가 발생했습니다.");
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+        alert(response ?? "오류가 발생했습니다.");
       });
   };
 
@@ -92,7 +90,9 @@ export default function MeetingDtl() {
           });
         })
         .catch((error) => {
-          console.error("회의 확인 상태 업데이트 실패:", error);
+          const apiError = error as ApiError;
+          const response = apiError.response?.data?.message;
+          alert(response ?? "오류가 발생했습니다.");
         });
     }
   }, [meetingId, meeting, currentMemberId]);
@@ -158,10 +158,10 @@ export default function MeetingDtl() {
         alert("회의가 삭제되었습니다.");
         navigate("/meeting/list");
       } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.status === 401) {
-          return;
-        }
-        alert("회의 삭제 중 오류가 발생했습니다.");
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+
+        alert(response ?? "회의 삭제 중 오류가 발생했습니다.");
       }
     }
   };
@@ -176,10 +176,10 @@ export default function MeetingDtl() {
       alert("회의록이 삭제되었습니다.");
       fetchMeetingDetail(meetingId as string);
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
-        return;
-      }
-      alert("회의록 삭제 중 오류가 발생했습니다.");
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+
+      alert(response ?? "회의록 삭제 중 오류가 발생했습니다.");
     }
   };
 
@@ -190,12 +190,20 @@ export default function MeetingDtl() {
         gap: 3,
         p: 3,
         bgcolor: "#f5f5f5",
-        minWidth: "1000px",
+        minWidth: 300,
+        flexDirection: { xs: "column-reverse", md: "row" }, // 모바일: 세로(2,1), 데스크탑: 가로(1,2)
       }}
     >
       {/* 왼쪽 섹션 */}
       <Box
-        sx={{ flex: 1, bgcolor: "white", borderRadius: 2, p: 3, boxShadow: 1 }}
+        sx={{
+          flex: 1,
+          bgcolor: "white",
+          borderRadius: 2,
+          p: 3,
+          boxShadow: 1,
+          minWidth: 200,
+        }}
       >
         {/* 제목 */}
         <Typography variant="h5" sx={{ fontWeight: 700, mb: 3 }}>
@@ -340,9 +348,27 @@ export default function MeetingDtl() {
 
       {/* 오른쪽 섹션 */}
       <Box
-        sx={{ width: 430, display: "flex", flexDirection: "column", gap: 2 }}
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
       >
-        <Box sx={{ bgcolor: "white", borderRadius: 2, p: 3, boxShadow: 1 }}>
+        <Box
+          sx={{
+            height: 800,
+            display: "flex",
+            flexDirection: "column",
+            gap: 2,
+            p: 3,
+            bgcolor: "white",
+            borderRadius: 2,
+            boxShadow: 1,
+            minWidth: 150,
+            maxWidth: 360,
+          }}
+        >
           {/* 상태 */}
           <InfoRow
             label="상태"
@@ -595,13 +621,24 @@ export default function MeetingDtl() {
         {((meeting.isEditPermitted && meeting.status !== "COMPLETED") ||
           role === "ADMIN") &&
           meeting.isDel === false && (
-            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1 }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "flex-end",
+                width: "100%",
+                gap: 1,
+              }}
+            >
+              {" "}
               <Button
                 variant="contained"
                 startIcon={<EditIcon />}
                 sx={{
+                  mt: 3,
+                  width: 100,
+                  fontWeight: 600,
                   borderRadius: 1.5,
-                  backgroundColor: "#5497ff",
+                  "&:hover": { boxShadow: 3 },
                 }}
                 onClick={() => {
                   navigate(`/meeting/${meetingId}/update`);
@@ -612,7 +649,13 @@ export default function MeetingDtl() {
               <Button
                 variant="contained"
                 startIcon={<DeleteIcon />}
-                sx={{ borderRadius: 1.5, backgroundColor: "#5497ff" }}
+                sx={{
+                  mt: 3,
+                  width: 100,
+                  fontWeight: 600,
+                  borderRadius: 1.5,
+                  "&:hover": { boxShadow: 3 },
+                }}
                 onClick={handleDelete}
               >
                 삭제
@@ -643,12 +686,12 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
         display: "flex",
         alignItems: "flex-start",
         mb: 3,
+        gap: 2,
       }}
     >
       <Typography
         sx={{
           fontWeight: 500,
-          width: "90px",
         }}
       >
         {label}

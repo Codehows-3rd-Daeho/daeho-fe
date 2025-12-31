@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { ListDataGrid } from "../../../common/List/ListDataGrid";
 import { getMeetingLog } from "../../api/MeetingLogApi";
+import type { ApiError } from "../../../config/httpClient";
 import { convertStatusMessage } from "../../../common/commonFunction";
 
 export type MeetingLoglist = {
@@ -52,8 +53,10 @@ export default function TabLog({ meetingId }: TabLogProps) {
         setData(list);
         setTotalCount(total);
       })
-      .catch((err) => {
-        console.error("로그 로딩 실패:", err);
+      .catch((error) => {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+        alert(response ?? "오류가 발생했습니다.");
       });
   }, [meetingId, page]);
 

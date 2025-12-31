@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Box, TextField, Typography } from "@mui/material";
 import type { Mention, MentionMemberDto } from "../../type/type";
 import { searchMembersForMention } from "../../api/CommentApi";
+import type { ApiError } from "../../../config/httpClient";
 
 interface MentionTextInputProps {
   value: string;
@@ -119,10 +120,16 @@ export default function MentionTextInput({
       setShowMentionBox(false);
       return;
     }
+    try {
+      const data = await searchMembersForMention(keyword);
+      setMentionList(data);
+      setShowMentionBox(true);
+    } catch (error) {
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
 
-    const data = await searchMembersForMention(keyword);
-    setMentionList(data);
-    setShowMentionBox(true);
+      alert(response ?? "오류가 발생했습니다.");
+    }
   };
 
   /* =========================

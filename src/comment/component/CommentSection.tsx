@@ -12,6 +12,9 @@ import {
 
 import type { CommentDto, Mention } from "../type/type";
 import MentionTextInput from "./mention/MentionTextInput";
+import { BASE_URL, type ApiError } from "../../config/httpClient";
+import { useAuthStore } from "../../store/useAuthStore";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 
 // =====================================================================
 //  Props
@@ -53,6 +56,8 @@ export default function CommentSection({
   onDeleteComment,
   currentMemberId,
 }: Props) {
+  const { member } = useAuthStore();
+
   /* =========================
      멘션 상태 (작성용)
   ========================= */
@@ -74,17 +79,47 @@ export default function CommentSection({
   ========================= */
   useEffect(() => {
     async function fetchFileSetting() {
-      const sizeConfig = await getFileSize();
-      const extensionConfig = await getExtensions();
+      try {
+        const sizeConfig = await getFileSize();
+        const extensionConfig = await getExtensions();
 
-      const maxFileSizeByte = Number(sizeConfig.name);
-      const maxFileSizeMB = maxFileSizeByte / 1024 / 1024;
+        const maxFileSizeByte = Number(sizeConfig.name);
+        const maxFileSizeMB = maxFileSizeByte / 1024 / 1024;
 
-      setMaxFileSize(maxFileSizeMB);
-      setAllowedExtensions(extensionConfig.map((e) => e.name.toLowerCase()));
+        setMaxFileSize(maxFileSizeMB);
+        setAllowedExtensions(extensionConfig.map((e) => e.name.toLowerCase()));
+      } catch (error) {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+
+        alert(response ?? "파일 설정을 불러오는 중 오류가 발생했습니다.");
+      }
     }
     fetchFileSetting();
   }, []);
+
+  /* =========================
+     파일 검증
+  ========================= */
+
+  const validateFiles = (incomingFiles: File[]) => {
+    if (!maxFileSize || !allowedExtensions) return [];
+
+    return incomingFiles.filter((file) => {
+      const ext = file.name.split(".").pop()?.toLowerCase();
+      if (!ext || !allowedExtensions.includes(ext)) {
+        alert(`허용되지 않은 확장자입니다: ${file.name}`);
+        return false;
+      }
+
+      const sizeMB = file.size / 1024 / 1024;
+      if (sizeMB > maxFileSize) {
+        alert(`${file.name} 파일 크기 초과`);
+        return false;
+      }
+      return true;
+    });
+  };
 
   /* =========================
      Drag & Drop
@@ -95,25 +130,7 @@ export default function CommentSection({
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    if (!e.dataTransfer.files) return;
-
-    const droppedFiles = Array.from(e.dataTransfer.files);
-
-    const validFiles = droppedFiles.filter((file) => {
-      const ext = file.name.split(".").pop()?.toLowerCase() || "";
-      if (allowedExtensions && !allowedExtensions.includes(ext)) {
-        alert(`허용되지 않은 확장자입니다: ${file.name}`);
-        return false;
-      }
-      if (maxFileSize && file.size / 1024 / 1024 > maxFileSize) {
-        alert(
-          `${file.name} 파일의 크기가 최대 용량(${maxFileSize}MB)을 초과했습니다.`
-        );
-        return false;
-      }
-      return true;
-    });
-
+    const validFiles = validateFiles(Array.from(e.dataTransfer.files));
     setFiles((prev) => [...prev, ...validFiles]);
   };
 
@@ -138,8 +155,20 @@ export default function CommentSection({
       {/* ================= 댓글 입력 ================= */}
       {enableInput && (
         <Box sx={{ display: "flex", gap: 2, mt: 3 }}>
-          <Avatar sx={{ width: 40, height: 40 }}>👤</Avatar>
-
+          {/* 작성자 */}
+          <Box>
+            <Avatar
+              src={
+                member?.profileUrl
+                  ? `${BASE_URL}${member.profileUrl}`
+                  : undefined
+              }
+              sx={{ width: 40, height: 40 }}
+            >
+              {/* 이미지 없을 때 fallback 아이콘 */}
+              <AccountCircleIcon fontSize="large" />
+            </Avatar>
+          </Box>
           <Box sx={{ flex: 1 }}>
             {/* ===== 멘션 입력 ===== */}
             <MentionTextInput
@@ -161,7 +190,8 @@ export default function CommentSection({
                 ref={fileInputRef}
                 onChange={(e) => {
                   if (!e.target.files) return;
-                  setFiles((prev) => [...prev, ...Array.from(e.target.files!)]);
+                  const validFiles = validateFiles(Array.from(e.target.files));
+                  setFiles((prev) => [...prev, ...validFiles]);
                 }}
                 onClick={(e) => (e.currentTarget.value = "")}
               />

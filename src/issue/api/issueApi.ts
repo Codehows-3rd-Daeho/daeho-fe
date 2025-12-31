@@ -131,14 +131,12 @@ export const getKanbanIssuesMT = async (
 // 상세 조회
 export const getIssueDtl = async (issueId: string): Promise<IssueDto> => {
   const response = await httpClient.get(`/issue/${issueId}`);
-  console.log(response);
   return response.data;
 };
 
 // 상세 조회 - 참여자의 이슈 확인 상태 업데이트
 export const updateReadStatus = async (issueId: string): Promise<void> => {
   await httpClient.put(`/issue/${issueId}/readStatus`);
-  console.log(`API: 이슈 ${issueId}의 읽음 상태를 '확인'으로 업데이트`);
 };
 
 // 상세 조회 - 해당 이슈의 관련 회의 list받아오기
@@ -150,7 +148,6 @@ export const getMeetingRelatedIssue = async (
   const response = await httpClient.get(`/issue/${issueId}/meeting`, {
     params: { page, size },
   });
-  console.log(response);
   return response.data;
 };
 

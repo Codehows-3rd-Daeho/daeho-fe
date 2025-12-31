@@ -2,12 +2,12 @@ import { Box, Button } from "@mui/material";
 import { type GridColDef } from "@mui/x-data-grid";
 import { useCallback, useEffect, useState } from "react";
 import { getMemberList } from "../api/MemberApi";
-import axios from "axios";
 import type { MemberList } from "../type/MemberType";
 import { ListDataGrid } from "../../../common/List/ListDataGrid";
 import { CommonPagination } from "../../../common/Pagination/Pagination";
 import CreateMemberModal from "../component/CreateMemberModal";
 import UpdateMemberModal from "../component/UpdateMemberModal";
+import type { ApiError } from "../../../config/httpClient";
 import { SearchBar } from "../../../common/SearchBar/SearchBar";
 
 export default function MemberList() {
@@ -40,8 +40,10 @@ export default function MemberList() {
       setRows(data.content);
       setTotalCount(data.totalElements);
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 401) return;
-      alert("회원 정보 조회 중 오류가 발생했습니다.");
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+
+      alert(response ?? "회원 정보 조회 중 오류가 발생했습니다.");
     }
   }, [page, pageSize, searchQuery]);
 

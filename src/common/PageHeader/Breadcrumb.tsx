@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
+import { getIssueDtl } from "../../issue/api/issueApi";
+import { getMeetingDtl } from "../../meeting/api/MeetingApi";
+import type { ApiError } from "../../config/httpClient";
 import httpClient from "../../config/httpClient";
 
 export default function Breadcrumb() {
@@ -88,13 +91,17 @@ export default function Breadcrumb() {
 
     // 이슈 제목만 가져오기
     if (info.type === "issue") {
+
       httpClient
         .get(`/issue/${info.id}/title`)
         .then((res) => {
           setDynamicNameMap((prev) => ({ ...prev, [info.id]: res.data }));
         })
-        .catch(() => {
+        .catch((error) => {
           setDynamicNameMap((prev) => ({ ...prev, [info.id]: `#${info.id}` }));
+          const apiError = error as ApiError;
+          const response = apiError.response?.data?.message;
+          alert(response ?? "오류가 발생했습니다.");
         });
     }
 
@@ -107,6 +114,9 @@ export default function Breadcrumb() {
         })
         .catch(() => {
           setDynamicNameMap((prev) => ({ ...prev, [info.id]: `#${info.id}` }));
+          const apiError = error as ApiError;
+          const response = apiError.response?.data?.message;
+          alert(response ?? "오류가 발생했습니다.");
         });
     }
   }, [location.pathname]);
@@ -135,12 +145,14 @@ export default function Breadcrumb() {
           });
 
           return (
-            <li key={to} className="flex items-center">
+            <li key={to} className="flex items-center  min-w-[30px]">
               {index !== 0 && <span className="mx-2">/</span>}
               {isLast || !isValidLink ? (
-                <span className="text-gray-700 font-semibold">{name}</span>
+                <span className="text-gray-700 font-semibold min-w-[30px]">
+                  {name}
+                </span>
               ) : (
-                <Link to={to} className="hover:text-gray-700">
+                <Link to={to} className="hover:text-gray-700 min-w-[30px]">
                   {name}
                 </Link>
               )}

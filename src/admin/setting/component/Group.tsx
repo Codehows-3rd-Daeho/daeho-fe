@@ -14,9 +14,9 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import { deleteGroup, getGroupList } from "../api/MasterDataApi";
-import axios from "axios";
 import type { Group } from "../type/SettingType";
 import GroupModal from "./GroupModal";
+import type { ApiError } from "../../../config/httpClient";
 
 export default function Group() {
   const [groups, setGroups] = useState<Group[]>([]);
@@ -31,9 +31,10 @@ export default function Group() {
         const list = await getGroupList();
         setGroups(list);
       } catch (error) {
-        if (axios.isAxiosError(error) && error.response?.status === 401) {
-          return;
-        }
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+
+        alert(response ?? "오류가 발생했습니다.");
         console.error("그룹 로드 실패:", error);
       }
     };
@@ -51,6 +52,10 @@ export default function Group() {
       const list = await getGroupList();
       setGroups(list);
     } catch (error) {
+      const apiError = error as ApiError;
+      const response = apiError.response?.data?.message;
+
+      alert(response ?? "그룹 목록 갱신에 실패하였습니다.");
       console.error("그룹 목록 갱신 실패", error);
     }
   };
@@ -62,8 +67,11 @@ export default function Group() {
         setGroups((prev) => prev.filter((g) => g.id !== groupId));
         alert("삭제되었습니다.");
       } catch (error) {
-        alert("삭제 실패");
-        console.error(error);
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+
+        alert(response ?? "삭제를 실패하였습니다.");
+        console.error("삭제 실패", error);
       }
     }
     handleCloseMenu();

@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import type { KanbanIssue } from "../../common/Kanban/type";
 import type { IssueListItem } from "../../issue/type/type";
 import { getKanbanIssuesMT } from "../../issue/api/issueApi";
+import type { ApiError } from "../../config/httpClient";
 import { SearchBar } from "../../common/SearchBar/SearchBar";
 import DateFilter from "../../common/PageHeader/DateFilter";
 import Filter from "../../common/PageHeader/Filter";
@@ -19,7 +20,6 @@ export type KanbanData = Record<string, KanbanIssue[]>;
 export default function MTIssueKanban() {
   const navigate = useNavigate();
   const { member } = useAuthStore();
-  const role = member?.role;
   const [data, setData] = useState<KanbanData>({
     pending: [],
     done: [],
@@ -59,7 +59,9 @@ export default function MTIssueKanban() {
           delay: res.delayed,
         });
       } catch (error) {
-        console.error("칸반 이슈 조회 실패", error);
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+        alert(response ?? "오류가 발생했습니다.");
       }
     };
 
@@ -85,7 +87,12 @@ export default function MTIssueKanban() {
         alignItems="flex-end"
         mb={3}
       >
-        <Typography variant="h4" component="h1" fontWeight="bold">
+        <Typography 
+          variant="h4" 
+          component="h1" 
+          fontWeight="bold"
+          minWidth={100}
+          >
           이슈
         </Typography>
         {role === "USER" && (

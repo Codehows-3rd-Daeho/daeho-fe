@@ -11,6 +11,7 @@ export interface CommentDto {
   isDel: boolean;
   fileList: FileItem[];
   mentions?: Mention[];
+  profileUrl?: string;
 }
 
 export interface CommentsResponse {

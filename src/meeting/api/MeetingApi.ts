@@ -83,7 +83,6 @@ export const getMeetingMonthMT = async (
   year: number,
   month: number
 ): Promise<MeetingListItem[]> => {
-  console.log("getMeetingMonthMT id: ", id);
   const response = await httpClient.get(`/meeting/scheduler/mytask/${id}`, {
     params: { year, month },
   });
@@ -103,7 +102,6 @@ export const meetingCreate = async (formData: FormData) => {
 // 상세 조회
 export const getMeetingDtl = async (meetingId: string): Promise<MeetingDto> => {
   const response = await httpClient.get(`/meeting/${meetingId}`);
-  console.log(response);
   return response.data;
 };
 
@@ -112,7 +110,6 @@ export const updateMeetingReadStatus = async (
   meetingId: string
 ): Promise<void> => {
   await httpClient.put(`/meeting/${meetingId}/readStatus`);
-  console.log(`API: 회의 ${meetingId}의 읽음 상태를 '확인'으로 업데이트`);
 };
 
 // 수정

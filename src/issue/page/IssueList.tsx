@@ -12,6 +12,7 @@ import { Box, Typography } from "@mui/material";
 import { getIssueListSrc } from "../api/issueApi";
 import { getStatusLabel } from "../../common/commonFunction";
 import { SearchBar } from "../../common/SearchBar/SearchBar";
+import type { ApiError } from "../../config/httpClient";
 import Filter from "../../common/PageHeader/Filter";
 import DateFilter from "../../common/PageHeader/DateFilter";
 import type { FilterDto } from "../../common/PageHeader/type";
@@ -46,6 +47,10 @@ export default function IssueList() {
         setData(list);
         setTotalCount(data.totalElements);
       } catch (error) {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+
+        alert(response ?? "오류가 발생했습니다.");
         console.error("이슈 조회 실패", error);
       }
     };
@@ -172,6 +177,7 @@ export default function IssueList() {
           component="h1"
           textAlign="left" // 왼쪽 정렬
           fontWeight="bold" // 볼드
+          minWidth={100}
         >
           이슈
         </Typography>
