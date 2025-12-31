@@ -20,7 +20,6 @@ import type { FilterDto } from "../../common/PageHeader/type";
 export default function MTIssueList() {
   const navigate = useNavigate();
   const { member } = useAuthStore();
-  const role = member?.role;
   const [filter, setFilter] = useState<FilterDto>({
     keyword: "",
     departmentIds: [],

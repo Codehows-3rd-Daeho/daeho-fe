@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 import { useLocation, Link } from "react-router-dom";
-import { getIssueDtl } from "../../issue/api/issueApi";
-import { getMeetingDtl } from "../../meeting/api/MeetingApi";
 import type { ApiError } from "../../config/httpClient";
 import httpClient from "../../config/httpClient";
 
@@ -91,7 +89,6 @@ export default function Breadcrumb() {
 
     // 이슈 제목만 가져오기
     if (info.type === "issue") {
-
       httpClient
         .get(`/issue/${info.id}/title`)
         .then((res) => {
@@ -112,7 +109,7 @@ export default function Breadcrumb() {
         .then((res) => {
           setDynamicNameMap((prev) => ({ ...prev, [info.id]: res.data }));
         })
-        .catch(() => {
+        .catch((error) => {
           setDynamicNameMap((prev) => ({ ...prev, [info.id]: `#${info.id}` }));
           const apiError = error as ApiError;
           const response = apiError.response?.data?.message;

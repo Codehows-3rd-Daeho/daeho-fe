@@ -6,39 +6,42 @@ import { useAuthStore } from "./store/useAuthStore";
 import { usePushNotification } from "./webpush/usePushNotification";
 import Breadcrumb from "./common/PageHeader/Breadcrumb";
 import useRecordingStore from "./store/useRecordingStore";
-import { IconButtonIcon } from "@mui/icons-material/IconButton";
 import MenuIcon from "@mui/icons-material/Menu";
+import { IconButton } from "@mui/material";
 
 type AppLayoutProps = {
   children: ReactNode;
 };
 
 function usePreventPageLeave(
-  shouldPrevent: boolean, 
-  message: string, 
-  handleLastChunk: () => void, 
+  shouldPrevent: boolean,
+  message: string,
+  handleLastChunk: () => void,
   clear: () => void
 ) {
   useEffect(() => {
     if (!shouldPrevent) return;
-    const handleBeforeUnload = (e: { preventDefault: () => void; returnValue: string; }) => {
+    const handleBeforeUnload = (e: {
+      preventDefault: () => void;
+      returnValue: string;
+    }) => {
       e.preventDefault();
       e.returnValue = message;
       handleLastChunk();
       clear();
       return message;
     };
-    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener("beforeunload", handleBeforeUnload);
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, [message, shouldPrevent]);
 }
 
 function useBlockRouterNavigation(
-  shouldBlock: boolean, 
-  message: string, 
-  handleLastChunk: () => void, 
+  shouldBlock: boolean,
+  message: string,
+  handleLastChunk: () => void,
   clear: () => void
 ) {
   const isBlockingRef = useRef(false);
@@ -49,10 +52,10 @@ function useBlockRouterNavigation(
     }
     isBlockingRef.current = true;
     const handleClick = (e: MouseEvent) => {
-      const link = (e.target as HTMLElement).closest('a');
+      const link = (e.target as HTMLElement).closest("a");
       if (link && isBlockingRef.current) {
-        const href = link.getAttribute('href');
-        if (href && !href.startsWith('http') && href !== '#') {
+        const href = link.getAttribute("href");
+        if (href && !href.startsWith("http") && href !== "#") {
           e.preventDefault();
           e.stopPropagation();
           if (window.confirm(message)) {
@@ -64,18 +67,18 @@ function useBlockRouterNavigation(
         }
       }
     };
-    document.addEventListener('click', handleClick, true);
+    document.addEventListener("click", handleClick, true);
     return () => {
-      document.removeEventListener('click', handleClick, true);
+      document.removeEventListener("click", handleClick, true);
       isBlockingRef.current = false;
     };
   }, [shouldBlock, message]);
 }
 
 function useBlockNavigation(
-  shouldBlock: boolean, 
-  message: string, 
-  handleLastChunk: () => void, 
+  shouldBlock: boolean,
+  message: string,
+  handleLastChunk: () => void,
   clear: () => void
 ) {
   useEffect(() => {
@@ -86,35 +89,48 @@ function useBlockNavigation(
       const userConfirmed = window.confirm(message);
       if (!userConfirmed) {
         isNavigating = true;
-        window.history.pushState(null, '', window.location.href);
+        window.history.pushState(null, "", window.location.href);
         isNavigating = false;
-      }else {
+      } else {
         handleLastChunk();
         clear();
       }
     };
-    window.history.pushState(null, '', window.location.href);
-    window.addEventListener('popstate', handlePopState);
+    window.history.pushState(null, "", window.location.href);
+    window.addEventListener("popstate", handlePopState);
     return () => {
-      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener("popstate", handlePopState);
     };
   }, [shouldBlock, message]);
 }
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const { member } = useAuthStore();
-  const [collapsed, setCollapsed] = useState(false); // 사이드바 접기 상태
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileHidden, setMobileHidden] = useState(true);
   const { isAnyRecordingActive, handleLastChunk, clear } = useRecordingStore();
   const isCurrentlyRecording = isAnyRecordingActive();
-  const confirmationMessage = "페이지를 벗어나면 녹음이 중단됩니다. 계속하시겠습니까?";
+  const confirmationMessage =
+    "페이지를 벗어나면 녹음이 중단됩니다. 계속하시겠습니까?";
 
-  usePreventPageLeave(isCurrentlyRecording, confirmationMessage, handleLastChunk, clear);
-  useBlockRouterNavigation(isCurrentlyRecording, confirmationMessage, handleLastChunk, clear);
-  useBlockNavigation(isCurrentlyRecording, confirmationMessage, handleLastChunk, clear);
-  //사이드바 간소화
-  const [collapsed, setCollapsed] = useState(false);
-  //모바일 사이드바 숨김
-  const [mobileHidden, setMobileHidden] = useState(true);
+  usePreventPageLeave(
+    isCurrentlyRecording,
+    confirmationMessage,
+    handleLastChunk,
+    clear
+  );
+  useBlockRouterNavigation(
+    isCurrentlyRecording,
+    confirmationMessage,
+    handleLastChunk,
+    clear
+  );
+  useBlockNavigation(
+    isCurrentlyRecording,
+    confirmationMessage,
+    handleLastChunk,
+    clear
+  );
 
   const handleToggleSidebar = () => setCollapsed((prev) => !prev);
 
@@ -142,12 +158,12 @@ export default function AppLayout({ children }: AppLayoutProps) {
             onToggle={() => setMobileHidden(true)}
           />
         )}
-        <IconButtonIcon
+        <IconButton
           onClick={() => setMobileHidden((prev) => !prev)}
           style={{ position: "fixed", top: "10px", left: "10px", zIndex: 9999 }}
         >
           <MenuIcon />
-        </IconButtonIcon>
+        </IconButton>
       </div>
 
       <div className="flex flex-col flex-1 overflow-hidden">
