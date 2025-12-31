@@ -28,8 +28,10 @@ export default function MentionTextInput({
   const [mentionKeyword, setMentionKeyword] = useState<string | null>(null);
   const [mentionList, setMentionList] = useState<MentionMemberDto[]>([]);
   const [showMentionBox, setShowMentionBox] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0); // 멘션 선택인덱스
 
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
   const mentionBoxRef = useRef<HTMLDivElement | null>(null);
 
   /* =========================
@@ -47,6 +49,18 @@ export default function MentionTextInput({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!showMentionBox) return;
+
+    // selectedIndex가 바뀔 때 스크롤 이동
+    const el = itemRefs.current[selectedIndex];
+    if (el) {
+      el.scrollIntoView({
+        block: "nearest",
+      });
+    }
+  }, [selectedIndex, showMentionBox]);
 
   /* =========================
      멘션 하이라이트 렌더
@@ -123,6 +137,7 @@ export default function MentionTextInput({
     try {
       const data = await searchMembersForMention(keyword);
       setMentionList(data);
+      setSelectedIndex(0);
       setShowMentionBox(true);
     } catch (error) {
       const apiError = error as ApiError;
@@ -130,6 +145,30 @@ export default function MentionTextInput({
 
       alert(response ?? "오류가 발생했습니다.");
     }
+  };
+
+  // 멘션 선택 로직 함수로 분리
+  const selectMention = (m: MentionMemberDto) => {
+    if (mentionKeyword === null || !inputRef.current) return;
+
+    const cursorPosition = inputRef.current.selectionStart;
+    const textBeforeCursor = value.slice(0, cursorPosition);
+    const textAfterCursor = value.slice(cursorPosition);
+
+    const newBeforeCursor = textBeforeCursor.replace(
+      new RegExp(`@${mentionKeyword}$`),
+      `@${m.name} `
+    );
+
+    const nextText = newBeforeCursor + textAfterCursor;
+    onChange(nextText);
+
+    setMentions((prev) => [...prev, { memberId: m.id, name: m.name }]);
+
+    onAddMention?.(m.id);
+    setShowMentionBox(false);
+
+    setTimeout(() => inputRef.current?.focus(), 0);
   };
 
   /* =========================
@@ -174,6 +213,33 @@ export default function MentionTextInput({
         placeholder={placeholder}
         inputRef={inputRef}
         onChange={(e) => handleChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (!showMentionBox || mentionList.length === 0) return;
+
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            setSelectedIndex((prev) =>
+              prev < mentionList.length - 1 ? prev + 1 : prev
+            );
+          }
+
+          if (e.key === "ArrowUp") {
+            e.preventDefault();
+            setSelectedIndex((prev) => (prev > 0 ? prev - 1 : 0));
+          }
+
+          if (e.key === "Enter") {
+            e.preventDefault();
+            const selected = mentionList[selectedIndex];
+            if (selected) {
+              selectMention(selected);
+            }
+          }
+
+          if (e.key === "Escape") {
+            setShowMentionBox(false);
+          }
+        }}
         sx={{
           "& .MuiOutlinedInput-root": {
             "&:hover .MuiOutlinedInput-notchedOutline": {
@@ -190,7 +256,7 @@ export default function MentionTextInput({
       />
 
       {/* 멘션 박스 */}
-      {enableMention && showMentionBox && mentionList.length > 0 && (
+      {enableMention && showMentionBox && (
         <Box
           ref={mentionBoxRef}
           sx={{
@@ -208,50 +274,38 @@ export default function MentionTextInput({
             zIndex: 1300,
           }}
         >
-          {mentionList.map((m) => (
-            <Box
-              key={m.id}
-              sx={{
-                px: 2,
-                py: 1,
-                height: 56,
-                cursor: "pointer",
-                "&:hover": { backgroundColor: "#f5f5f5" },
-              }}
-              onClick={() => {
-                if (mentionKeyword === null || !inputRef.current) return;
-
-                const cursorPosition = inputRef.current.selectionStart;
-                const textBeforeCursor = value.slice(0, cursorPosition);
-                const textAfterCursor = value.slice(cursorPosition);
-
-                const newBeforeCursor = textBeforeCursor.replace(
-                  new RegExp(`@${mentionKeyword}$`),
-                  `@${m.name} `
-                );
-
-                const nextText = newBeforeCursor + textAfterCursor;
-                onChange(nextText);
-
-                setMentions((prev) => [
-                  ...prev,
-                  { memberId: m.id, name: m.name },
-                ]);
-
-                onAddMention?.(m.id);
-                setShowMentionBox(false);
-
-                setTimeout(() => inputRef.current?.focus(), 0);
-              }}
-            >
-              <Typography fontWeight={500}>
-                {m.name} {m.jobPositionName}
-              </Typography>
-              <Typography fontSize="0.8rem" color="text.secondary">
-                {m.departmentName}
-              </Typography>
-            </Box>
-          ))}
+          {mentionList.length === 0 ? (
+            <Typography sx={{ p: 2 }} color="text.secondary">
+              검색 결과가 없습니다
+            </Typography>
+          ) : (
+            mentionList.map((m, idx) => (
+              <Box
+                key={m.id}
+                ref={(el) => {
+                  itemRefs.current[idx] = el as HTMLDivElement | null;
+                }}
+                sx={{
+                  px: 2,
+                  py: 1,
+                  height: 56,
+                  cursor: "pointer",
+                  backgroundColor:
+                    idx === selectedIndex ? "#e3f2fd" : "transparent",
+                  "&:hover": { backgroundColor: "#f5f5f5" },
+                }}
+                onMouseEnter={() => setSelectedIndex(idx)}
+                onClick={() => selectMention(m)}
+              >
+                <Typography fontWeight={500}>
+                  {m.name} {m.jobPositionName}
+                </Typography>
+                <Typography fontSize="0.8rem" color="text.secondary">
+                  {m.departmentName}
+                </Typography>
+              </Box>
+            ))
+          )}
         </Box>
       )}
     </Box>
