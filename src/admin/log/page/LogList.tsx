@@ -24,7 +24,7 @@ export default function LogList() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    getLogList(page - 1, pageSize)
+    getLogList(page - 1, pageSize, currentFilter)
       .then((data) => {
         const list = (data.content ?? data).map(
           (item: LogList, index: number) => ({
@@ -40,7 +40,7 @@ export default function LogList() {
         const response = apiError.response?.data?.message;
         alert(response ?? "오류가 발생했습니다.");
       });
-  }, [page, pageSize]);
+  }, [page, pageSize, currentFilter]);
 
   const changeTypeMap: Record<string, string> = {
     CREATE: "생성",
@@ -181,7 +181,12 @@ export default function LogList() {
         <ToggleButtonGroup
           value={currentFilter}
           exclusive
-          onChange={(_, newValue) => newValue && setCurrentFilter(newValue)}
+          onChange={(_, newValue) => {
+            if (newValue) {
+              setCurrentFilter(newValue);
+              setPage(1); // <-- 탭 바뀌면 페이지 1로 초기화
+            }
+          }}
           size="small"
           sx={{
             backgroundColor: "#f1f5f9",
@@ -205,6 +210,7 @@ export default function LogList() {
           <ToggleButton value="ALL">전체</ToggleButton>
           <ToggleButton value="ISSUE">이슈</ToggleButton>
           <ToggleButton value="MEETING">회의</ToggleButton>
+          <ToggleButton value="COMMENT">댓글</ToggleButton>
         </ToggleButtonGroup>
 
         <Box display="flex" alignItems="center" gap={1.5}>

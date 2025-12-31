@@ -155,3 +155,9 @@ export const deleteMeetingMinutes = async (
   );
   return response.data;
 };
+
+// 제목만 조회
+export const getTitleMT = async (id: string): Promise<string> => {
+  const response = await httpClient.get(`/meeting/${id}/title`);
+  return response.data;
+};
