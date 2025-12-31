@@ -87,17 +87,15 @@ export default function MTIssueKanban() {
         alignItems="flex-end"
         mb={3}
       >
-        <Typography 
-          variant="h4" 
-          component="h1" 
+        <Typography
+          variant="h4"
+          component="h1"
           fontWeight="bold"
           minWidth={100}
-          >
+        >
           이슈
         </Typography>
-        {role === "USER" && (
-          <AddButton onClick={() => navigate("/issue/create")} />
-        )}
+        <AddButton onClick={() => navigate("/issue/create")} />
       </Box>
 
       {/* 헤더 */}

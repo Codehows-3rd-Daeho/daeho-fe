@@ -40,19 +40,21 @@ export default function MTIssueList() {
   useEffect(() => {
     if (!member?.memberId) return;
 
-    getIssueListMT(member.memberId, page - 1, 10, filter).then((data) => {
-      const list = (data.content ?? data).map((item: IssueListItem) => ({
-        ...item,
-        status: getStatusLabel(item.status),
-      }));
+    getIssueListMT(member.memberId, page - 1, 10, filter)
+      .then((data) => {
+        const list = (data.content ?? data).map((item: IssueListItem) => ({
+          ...item,
+          status: getStatusLabel(item.status),
+        }));
 
-      setData(list);
-      setTotalCount(data.totalElements); // 전체 개수
-    }).catch((error) => {
-      const apiError = error as ApiError;
-      const response = apiError.response?.data?.message;
-      alert(response ?? "오류가 발생했습니다.");
-    });
+        setData(list);
+        setTotalCount(data.totalElements); // 전체 개수
+      })
+      .catch((error) => {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+        alert(response ?? "오류가 발생했습니다.");
+      });
   }, [page, filter, member?.memberId]);
 
   // 리스트 컬럼
@@ -176,7 +178,7 @@ export default function MTIssueList() {
           minWidth={100}
         >
           이슈
-        </Typography
+        </Typography>
         <AddButton onClick={() => navigate("/issue/create")} />
       </Box>
 

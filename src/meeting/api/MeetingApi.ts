@@ -45,20 +45,25 @@ export const getMeetingListMT = async (
   id: number,
   page: number,
   size: number = 10,
-  filter: FilterDto
+  filter?: FilterDto
 ): Promise<MeetingListResponse> => {
-  const params = {
-    page,
-    size,
-    keyword: filter.keyword || null,
-    startDate: filter.startDate || null,
-    endDate: filter.endDate || null,
-    departmentIds: toParam(filter.departmentIds),
-    categoryIds: toParam(filter.categoryIds),
-    hostIds: toParam(filter.hostIds),
-    participantIds: toParam(filter.participantIds),
-    statuses: toParam(filter.statuses),
-  };
+  const params = filter
+    ? {
+        page,
+        size,
+        keyword: filter.keyword || null,
+        startDate: filter.startDate || null,
+        endDate: filter.endDate || null,
+        departmentIds: toParam(filter.departmentIds),
+        categoryIds: toParam(filter.categoryIds),
+        hostIds: toParam(filter.hostIds),
+        participantIds: toParam(filter.participantIds),
+        statuses: toParam(filter.statuses),
+      }
+    : {
+        page,
+        size,
+      };
   const { data } = await httpClient.get(`/meeting/mytask/${id}`, {
     params,
   });

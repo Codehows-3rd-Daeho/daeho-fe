@@ -330,7 +330,7 @@ export default function IssueDtl() {
           </Tabs>
 
           {/* 회의 탭일 때만 오른쪽에 버튼 */}
-          {tabValue === 1 && role === "USER" && (
+          {tabValue === 1 && (
             <Button
               variant="outlined"
               onClick={() => navigate(`/meeting/create?issueId=${issueId}`)}

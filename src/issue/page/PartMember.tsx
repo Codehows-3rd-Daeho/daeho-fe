@@ -115,7 +115,7 @@ export default function PartMember({
           return {
             ...m,
             isHost,
-            selected: mode === "create" ? isHost : isHost || !!existingMember,
+            selected: isHost || !!existingMember,
             isPermitted: isHost ? true : existingMember?.isPermitted ?? false,
           };
         });
