@@ -5,17 +5,18 @@ import PauseIcon from '@mui/icons-material/Pause';
 import { Box } from '@mui/material';
 import { BASE_URL } from '../../config/httpClient';
 import type { STTWithRecording } from '../page/TabSTT';
+import useRecordingStore from '../../store/useRecordingStore';
 
 interface AudioPlayerProps {
-    stts: STTWithRecording[]
-    sttId: number | null;
+    stt: STTWithRecording
 }
 
-const AudioPlayer: React.FC<AudioPlayerProps> = ({ stts, sttId }) => {
+const AudioPlayer: React.FC<AudioPlayerProps> = ({ stt }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(stts.find(s => s.id === sttId)?.recordingTime || 0);
+  const [duration, setDuration] = useState(0);
+  const { getRecordingTime } = useRecordingStore();
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -27,7 +28,7 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ stts, sttId }) => {
 
     audio.addEventListener('timeupdate', updateTime);
     audio.addEventListener('loadedmetadata', () => {
-      setDuration(audio.duration || stts.find(s => s.id === sttId)?.recordingTime || 0);
+      setDuration(audio.duration);
     });
 
     return () => {
@@ -56,18 +57,18 @@ const AudioPlayer: React.FC<AudioPlayerProps> = ({ stts, sttId }) => {
 
         // time이 유효하지 않으면 recordingTime 사용
         if (typeof time !== "number" || !isFinite(time)) {
-            const recordingTime = stts.find(s => s.id === sttId)?.recordingTime ?? 0;
+            if(!stt.id) return;
+            const recordingTime = getRecordingTime(stt.id)
             return recordingTime > 0 ? toMinSec(recordingTime) : "--";
         }
 
         return toMinSec(time);
     };
 
-  if(sttId == null) return;
-
+  if(!stt) return;
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1 }}>
-      <audio ref={audioRef} src={`${BASE_URL}${stts.find(s => s.id === sttId)?.file?.path}`} preload="metadata" />
+      <audio ref={audioRef} src={`${BASE_URL}${stt?.file?.path}`} preload="metadata" />
       
       <IconButton onClick={togglePlay} size="small">
         {isPlaying ? <PauseIcon /> : <PlayArrowIcon />}
