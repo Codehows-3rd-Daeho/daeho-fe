@@ -11,6 +11,7 @@ export interface STT {
   isEditable: boolean;
   isLoading: boolean;
   isTemp: boolean;
+  isPlayable?: boolean;
   file?: FileDto;
   chunkingCnt?: number;
   memberId: number;
