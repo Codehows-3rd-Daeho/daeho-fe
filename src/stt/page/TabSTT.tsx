@@ -573,6 +573,7 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
     const currentStt = findSttById(selectedSttId);
     if (currentStt?.isLoading && !currentStt?.isTemp) {
         if (currentStt.status === "ENCODING") return "인코딩중..";
+        if (currentStt.status === "ENCODED") return "불러오는중..";
         if (currentStt.status === "PROCESSING") return `변환중.. ${currentStt.progress ?? 0}%`;
         if (currentStt.status === "SUMMARIZING") return `요약중.. ${currentStt.progress ?? 0}%`;
     }
