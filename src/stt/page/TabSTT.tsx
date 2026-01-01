@@ -790,7 +790,8 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
               </Box>
             );
           } else if (currentStt.status === "RECORDING") {
-            <Box
+            return (
+              <Box
                 sx={{
                   p: 3,
                   border: "2px dashed #d0d0d0",
@@ -805,6 +806,7 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                   녹음 중인 회의가 있습니다.
                 </Typography>
               </Box>
+            )
           } else if (
             currentStt.status === "ENCODING" ||
             currentStt.status === "ENCODED"
