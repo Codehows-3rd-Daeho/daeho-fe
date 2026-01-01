@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState, type SetStateAction } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type SetStateAction,
+  useCallback,
+} from "react";
 import {
   deleteSTT,
   getSTT,
@@ -36,6 +42,7 @@ import useRecordingStore, {
   type RecordingStatus,
 } from "../../store/useRecordingStore";
 import MarkdownText from "../component/MarkdownText";
+import RecordingTimer from "../component/RecordingTimer";
 import axios from "axios";
 
 export interface STTWithRecording extends STT {
@@ -84,21 +91,21 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
   const { member } = useAuthStore();
   const role = member?.role;
 
-  const {
-    startRecording,
-    pauseRecording,
-    resumeRecording,
-    stopRecording,
-    confirmUpload,
-    cancelRecording,
-    isAnyRecordingActive,
-    getSessionState,
-    getRecordingTime,
-  } = useRecordingStore();
+  const startRecording = useRecordingStore((state) => state.startRecording);
+  const pauseRecording = useRecordingStore((state) => state.pauseRecording);
+  const resumeRecording = useRecordingStore((state) => state.resumeRecording);
+  const stopRecording = useRecordingStore((state) => state.stopRecording);
+  const confirmUpload = useRecordingStore((state) => state.confirmUpload);
+  const cancelRecording = useRecordingStore((state) => state.cancelRecording);
+  const isAnyRecordingActive = useRecordingStore(
+    (state) => state.isAnyRecordingActive
+  );
+  const getSessionState = useRecordingStore((state) => state.getSessionState);
 
   const [stts, setStts] = useState<STTWithRecording[]>([]);
   const [selectedSttId, setSelectedSttId] = useState<number | null>(null);
   const sttPollingIntervalRef = useRef<Map<number, number>>(new Map());
+  const encodingPollingIntervalRef = useRef<Map<number, number>>(new Map());
   const deletingIds = useRef<Set<number>>(new Set());
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -135,7 +142,6 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
               progress: res.progress,
               isLoading: false,
             });
-            fetchMeetingDetail(meetingId);
           }
         } catch (error) {
           handleError(error, "회의 내용을 불러오는데 실패했습니다.");
@@ -150,6 +156,37 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
     if (intervalId) {
       clearInterval(intervalId);
       sttPollingIntervalRef.current.delete(sttId);
+    }
+  };
+
+  const startEncodingPolling = (sttId: number, pollingRate: number) => {
+    if (!meetingId) return;
+    encodingPollingIntervalRef.current.set(
+      sttId,
+      window.setInterval(async () => {
+        try {
+          const res = await getSTT(sttId);
+          if (res.status !== "ENCODING") {
+            stopEncodingPolling(sttId);
+            console.log("Encoding Interval cleared");
+            updateSttState(sttId, {
+              ...res,
+              isLoading: false,
+            });
+          }
+        } catch (error) {
+          handleError(error, "인코딩 상태 확인에 실패했습니다.");
+          stopEncodingPolling(sttId);
+        }
+      }, pollingRate)
+    );
+  }
+
+  const stopEncodingPolling = (sttId: number) => {
+    const intervalId = encodingPollingIntervalRef.current.get(sttId);
+    if (intervalId) {
+      clearInterval(intervalId);
+      encodingPollingIntervalRef.current.delete(sttId);
     }
   };
 
@@ -180,6 +217,10 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
         const response = await getSTTs(meetingId);
         setStts(
           response.map((stt) => {
+            if (stt.status === "ENCODING") {
+              startEncodingPolling(stt.id, 2000);
+              return { ...stt, isLoading: true };
+            }
             if (stt.status === "PROCESSING" || stt.status === "SUMMARIZING") {
               startSttPolling(stt.id, 2000);
               return {
@@ -207,72 +248,71 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
         clearInterval(intervalId)
       );
       sttPollingIntervalRef.current.clear();
+      encodingPollingIntervalRef.current.forEach((intervalId) =>
+        clearInterval(intervalId)
+      );
+      encodingPollingIntervalRef.current.clear();
     };
   }, [meetingId]);
 
-  const handleDelete = async (sttId: number) => {
-    if (!sttId || !meetingId || deletingIds.current.has(sttId)) return;
+  const handleDelete = useCallback(
+    async (sttId: number) => {
+      if (!sttId || !meetingId || deletingIds.current.has(sttId)) return;
 
-    const sessionState = getSessionState(sttId);
-    const isThisSttRecording =
-      sessionState?.recordingStatus === "recording" ||
-      sessionState?.recordingStatus === "paused";
+      const sessionState = getSessionState(sttId);
+      const isThisSttRecording =
+        sessionState?.recordingStatus === "recording" ||
+        sessionState?.recordingStatus === "paused";
 
-    if (isThisSttRecording) {
-      if (!window.confirm("녹음이 진행 중입니다. 정말로 삭제하시겠습니까?"))
-        return;
-      await cancelRecording(sttId);
-    } else {
-      const isTemp = findSttById(sttId)?.isTemp;
-      if (!isTemp && !window.confirm("선택한 회의 내용을 삭제하시겠습니까?"))
-        return;
-    }
-
-    deletingIds.current.add(sttId);
-    stopSttPolling(sttId);
-
-    setStts((prev) => {
-      const current = prev.filter((stt) => stt.id !== sttId);
-      setSelectedSttId(
-        current.length === 0 ? null : current[current.length - 1].id
-      );
-      return current;
-    });
-
-    const sttToDelete = findSttById(sttId);
-    if (sttToDelete?.isTemp) {
-      deletingIds.current.delete(sttId);
-      return;
-    }
-
-    try {
-      if (!isThisSttRecording) {
-        await deleteSTT(sttId);
+      if (isThisSttRecording) {
+        if (!window.confirm("녹음이 진행 중입니다. 정말로 삭제하시겠습니까?"))
+          return;
+        await cancelRecording(sttId);
+      } else {
+        const sttToDelete = findSttById(sttId);
+        if (!sttToDelete?.isTemp && !window.confirm("선택한 회의 내용을 삭제하시겠습니까?"))
+          return;
       }
-      alert("회의 내용이 삭제되었습니다.");
-    } catch (error) {
-      handleError(error, "삭제 중 오류가 발생했습니다.");
-      // Re-add the stt to the list if deletion failed
-      if (sttToDelete) {
-        setStts((prev) => [...prev, sttToDelete]);
+
+      deletingIds.current.add(sttId);
+      stopSttPolling(sttId);
+      stopEncodingPolling(sttId);
+
+      setStts((prev) => {
+        const current = prev.filter((stt) => stt.id !== sttId);
+        setSelectedSttId(
+          current.length === 0 ? null : current[current.length - 1].id
+        );
+        return current;
+      });
+    
+      const sttToDelete = findSttById(sttId);
+      if (sttToDelete?.isTemp) {
+        deletingIds.current.delete(sttId);
+        return;
       }
-    } finally {
-      fetchMeetingDetail(meetingId);
-      deletingIds.current.delete(sttId);
-    }
-  };
+
+      try {
+        if (!isThisSttRecording) {
+          await deleteSTT(sttId);
+        }
+        alert("회의 내용이 삭제되었습니다.");
+      } catch (error) {
+        handleError(error, "삭제 중 오류가 발생했습니다.");
+        if (sttToDelete) {
+          setStts((prev) => [...prev, sttToDelete]);
+        }
+      } finally {
+        fetchMeetingDetail(meetingId);
+        deletingIds.current.delete(sttId);
+      }
+    },
+    [meetingId, getSessionState, cancelRecording, stts, fetchMeetingDetail]
+  );
 
   {
     /* Recording */
   }
-  const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${String(minutes).padStart(2, "0")}:${String(
-      remainingSeconds
-    ).padStart(2, "0")}`;
-  };
-
   const handleStartRecording = async () => {
     if (!meetingId) return;
     if (isAnyRecordingActive()) {
@@ -303,10 +343,13 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
     updateSttState(sttId, {
       ...newStt,
       isEditable: false,
-      isLoading: false,
+      isLoading: newStt?.status === "ENCODING",
       isTemp: false,
       recordingStatus: "finished",
     });
+    if (newStt?.status === "ENCODING") {
+      startEncodingPolling(sttId, 2000);
+    }
   }
 
   const handleConfirmUpload = async (sttId: number | null) => {
@@ -628,6 +671,11 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
           <div className="absolute inset-0 bg-black/10 backdrop-blur-none z-40 flex items-center justify-center rounded-lg">
             <div className="bg-white/50 px-6 py-3 rounded-xl shadow-2xl flex flex-col items-center gap-1">
               <div className="w-10 h-10 mb-1 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin"></div>
+              {findSttById(selectedSttId)?.status === "ENCODING" && (
+                <Typography padding={0} margin={0}>
+                  인코딩중..
+                </Typography>
+              )}
               {findSttById(selectedSttId)?.status === "PROCESSING" && (
                 <Typography padding={0} margin={0}>
                   변환중..
@@ -638,9 +686,13 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                   요약중..
                 </Typography>
               )}
-              <Typography>{`${
-                findSttById(selectedSttId)?.progress ?? 0
-              }%`}</Typography>
+              {findSttById(selectedSttId)?.status !== "ENCODING"  
+              && findSttById(selectedSttId)?.progress 
+              && findSttById(selectedSttId)?.progress !== 0 && (
+                <Typography>{`${
+                  findSttById(selectedSttId)?.progress
+                }%`}</Typography>
+              )}
             </div>
           </div>
         ) : (
@@ -659,7 +711,6 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
 
           const sessionState = getSessionState(currentStt.id);
           const currentRecordingStatus = sessionState?.recordingStatus ?? currentStt.recordingStatus ?? "idle";
-          const currentRecordingTime = getRecordingTime(currentStt.id);
 
           if (
             currentRecordingStatus === "recording" ||
@@ -678,12 +729,7 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                   minHeight: 300,
                 }}
               >
-                <Typography
-                  variant="h4"
-                  sx={{ mb: 2, fontFamily: "monospace" }}
-                >
-                  {formatTime(currentRecordingTime)}
-                </Typography>
+                <RecordingTimer sttId={currentStt.id} />
                 <Box sx={{ display: "flex", gap: 2 }}>
                   {currentRecordingStatus === "recording" ? (
                     <Tooltip title="일시정지">
@@ -716,11 +762,7 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                 </Box>
               </Box>
             );
-          } else if (
-            currentStt.status === "RECORDING" ||
-            currentRecordingStatus === "finished" ||
-            currentRecordingStatus === "encoding"
-          ) {
+          } else if (currentStt.status === "RECORDING" || currentStt.status === "ENCODING") {
             return (
               <Box
                 sx={{
@@ -735,7 +777,7 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1 }}>
                   <audio key={currentStt.id}  className='w-full' preload="metadata" controls>
-                    <source src={`${BASE_URL}${currentStt?.file?.path}`} type="audio/mpeg" />
+                    <source src={`${BASE_URL}${currentStt?.file?.path}?v=${currentStt?.file?.updatedAt}`} type="audio/mpeg" />
                   </audio>
                 </Box>
                 <Box
@@ -749,12 +791,9 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                   <Button
                     variant="contained"
                     color="primary"
-                    disabled={currentRecordingStatus === "encoding"}
                     onClick={() => handleConfirmUpload(selectedSttId)}
                   >
-                    {currentRecordingStatus === "encoding"
-                      ? "인코딩중.."
-                      : "음성 변환 시작"}
+                    음성 변환 시작
                   </Button>
                   <Button
                     variant="outlined"
@@ -904,7 +943,7 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                           <Typography
                             fontSize="small"
                             component="a"
-                            href={`${BASE_URL}${currentStt.file?.path}`}
+                            href={`${BASE_URL}${currentStt.file?.path}?v=${currentStt.file?.updatedAt}`}
                             download={currentStt.file?.originalName}
                           >
                             {currentStt.file?.originalName}
@@ -925,7 +964,7 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                         <IconButton
                           size="small"
                           component="a"
-                          href={`${BASE_URL}${currentStt.file?.path}`}
+                          href={`${BASE_URL}${currentStt.file?.path}?v=${currentStt.file?.updatedAt}`}
                           download={currentStt.file?.originalName}
                         >
                           <GridDownloadIcon fontSize="small" />
@@ -933,7 +972,7 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1 }}>
                         <audio key={currentStt.id} className='w-full' preload="metadata" controls>
-                          <source src={`${BASE_URL}${currentStt?.file?.path}`} type="audio/mpeg" />
+                          <source src={`${BASE_URL}${currentStt?.file?.path}?v=${currentStt?.file?.updatedAt}`} type="audio/mpeg" />
                         </audio>
                       </Box>
                     </Box>
