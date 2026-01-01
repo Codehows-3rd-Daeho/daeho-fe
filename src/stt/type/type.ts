@@ -6,7 +6,7 @@ export interface STT {
   content: string;
   summary: string;
   meetingId: string;
-  status?: "RECORDING" | "ENCODING" | "PROCESSING" | "SUMMARIZING" | "COMPLETED";
+  status?: "RECORDING" | "ENCODING" | "ENCODED" | "PROCESSING" | "SUMMARIZING" | "COMPLETED";
   progress?: number;
   isEditable: boolean;
   isLoading: boolean;
