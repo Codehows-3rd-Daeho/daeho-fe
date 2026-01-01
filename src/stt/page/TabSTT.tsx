@@ -766,7 +766,7 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                 </Box>
               </Box>
             );
-          } else if (currentStt.status === "RECORDING" || currentStt.status === "ENCODING") {
+          } else if (currentStt.status === "RECORDING" || currentStt.status === "ENCODING" || currentStt.status === "ENCODED") {
             return (
               <Box
                 sx={{
