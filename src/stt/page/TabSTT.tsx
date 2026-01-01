@@ -116,6 +116,8 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
   const [isStartingProcessing, setIsStartingProcessing] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [isFetchingStts, setIsFetchingStts] = useState(false);
+  const [audioRetryCount, setAudioRetryCount] = useState(0);
+  const [isAudioLoadingError, setIsAudioLoadingError] = useState(false);
 
   const handleError = (error: unknown, msg: string) => {
     if (axios.isAxiosError(error) && error.response?.status === 401) return;
@@ -316,8 +318,29 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
         deletingIds.current.delete(sttId);
       }
     },
-    [meetingId, getSessionState, cancelRecording, stts, fetchMeetingDetail]
+    [meetingId, getSessionState, cancelRecording, stts, fetchMeetingDetail, findSttById]
   );
+
+  const handleAudioError = useCallback(() => {
+    if (audioRetryCount < 3) { // 최대 3회 재시도
+      console.warn(`Audio loading failed. Retrying... (Attempt ${audioRetryCount + 1})`);
+      setAudioRetryCount(prev => prev + 1);
+      setTimeout(() => {
+        // audio 태그의 src를 변경하여 리로드 트리거 (key prop 변경)
+        setSelectedSttId(null);
+        setTimeout(() => setSelectedSttId(selectedSttId), 0);
+      }, 1000); // 1초 후 재시도
+    } else {
+      console.error("Audio loading failed after multiple retries.");
+      setIsAudioLoadingError(true);
+    }
+  }, [audioRetryCount, selectedSttId, setSelectedSttId]);
+
+  useEffect(() => {
+    // selectedSttId가 변경될 때마다 오디오 에러 상태 초기화
+    setAudioRetryCount(0);
+    setIsAudioLoadingError(false);
+  }, [selectedSttId]);
 
   {
     /* Recording */
@@ -573,7 +596,7 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
     const currentStt = findSttById(selectedSttId);
     if (currentStt?.isLoading && !currentStt?.isTemp) {
         if (currentStt.status === "ENCODING") return "인코딩중..";
-        if (currentStt.status === "ENCODED") return "불러오는중..";
+        if (currentStt.status === "ENCODED") return "로딩중..";
         if (currentStt.status === "PROCESSING") return `변환중.. ${currentStt.progress ?? 0}%`;
         if (currentStt.status === "SUMMARIZING") return `요약중.. ${currentStt.progress ?? 0}%`;
     }
@@ -766,7 +789,11 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                 </Box>
               </Box>
             );
-          } else if (currentStt.status === "RECORDING" || currentStt.status === "ENCODING" || currentStt.status === "ENCODED") {
+          } else if (
+            currentStt.status === "RECORDING" ||
+            currentStt.status === "ENCODING" ||
+            currentStt.status === "ENCODED"
+          ) {
             return (
               <Box
                 sx={{
@@ -779,11 +806,33 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                 <Typography variant="h6" sx={{ mb: 2 }}>
                   녹음 완료
                 </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1 }}>
-                  <audio key={currentStt.id}  className='w-full' preload="metadata" controls>
-                    <source src={`${BASE_URL}${currentStt?.file?.path}?v=${currentStt?.file?.updatedAt}`} type="audio/mpeg" />
-                  </audio>
-                </Box>
+                {isAudioLoadingError ? (
+                  <Typography color="error" sx={{ my: 2 }}>
+                    오디오 파일을 불러올 수 없습니다.
+                  </Typography>
+                ) : (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 2,
+                      py: 1,
+                    }}
+                  >
+                    <audio
+                      key={`${currentStt.id}-${audioRetryCount}`} // key prop을 사용하여 강제 리로드
+                      className="w-full"
+                      preload="metadata"
+                      controls
+                      onError={handleAudioError}
+                    >
+                      <source
+                        src={`${BASE_URL}${currentStt?.file?.path}?v=${currentStt?.file?.updatedAt}`}
+                        type="audio/mpeg"
+                      />
+                    </audio>
+                  </Box>
+                )}
                 <Box
                   sx={{
                     mt: 3,
@@ -795,15 +844,15 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                   <Button
                     variant="contained"
                     color="primary"
-                    disabled={isStoppingRecording || isStartingProcessing}
+                    disabled={currentStt.isLoading || isStoppingRecording || isAudioLoadingError}
                     onClick={() => handleConfirmUpload(selectedSttId)}
                   >
-                    {isStoppingRecording ? "인코딩 요청 중..." : "음성 변환 시작"}
+                    {isStoppingRecording ? "인코딩 요청 중..." : "음성 변환"}
                   </Button>
                   <Button
                     variant="outlined"
                     color="secondary"
-                    disabled={currentStt.isLoading}
+                    disabled={currentStt.isLoading || isAudioLoadingError}
                     onClick={() => handleDelete(currentStt.id)}
                   >
                     취소
