@@ -2,7 +2,6 @@ import {
   useEffect,
   useRef,
   useState,
-  type SetStateAction,
   useCallback,
 } from "react";
 import {
