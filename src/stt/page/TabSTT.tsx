@@ -43,6 +43,7 @@ import useRecordingStore, {
 } from "../../store/useRecordingStore";
 import MarkdownText from "../component/MarkdownText";
 import RecordingTimer from "../component/RecordingTimer";
+import Spinner from "../component/Spinner";
 import axios from "axios";
 
 export interface STTWithRecording extends STT {
@@ -110,6 +111,11 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [isStartingRecording, setIsStartingRecording] = useState(false);
+  const [isStoppingRecording, setIsStoppingRecording] = useState(false);
+  const [isStartingProcessing, setIsStartingProcessing] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isFetchingStts, setIsFetchingStts] = useState(false);
 
   const handleError = (error: unknown, msg: string) => {
     if (axios.isAxiosError(error) && error.response?.status === 401) return;
@@ -213,6 +219,7 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
   useEffect(() => {
     if (!meetingId) return;
     const fetch = async () => {
+      setIsFetchingStts(true);
       try {
         const response = await getSTTs(meetingId);
         setStts(
@@ -239,6 +246,8 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
         });
       } catch (error) {
         handleError(error, "회의 내용을 불러오는데 실패했습니다.");
+      } finally {
+        setIsFetchingStts(false);
       }
     };
     fetch();
@@ -320,6 +329,7 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
       return;
     }
 
+    setIsStartingRecording(true);
     try {
       const newStt = await startRecording(meetingId);
       if (newStt) {
@@ -335,25 +345,33 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
       }
     } catch (error) {
       handleError(error, "녹음을 시작할 수 없습니다.");
+    } finally {
+      setIsStartingRecording(false);
     }
   };
 
   const finishRecording = async (sttId: number) => {
-    const newStt = await stopRecording(sttId);
-    updateSttState(sttId, {
-      ...newStt,
-      isEditable: false,
-      isLoading: newStt?.status === "ENCODING",
-      isTemp: false,
-      recordingStatus: "finished",
-    });
-    if (newStt?.status === "ENCODING") {
-      startEncodingPolling(sttId, 2000);
+    setIsStoppingRecording(true);
+    try {
+      const newStt = await stopRecording(sttId);
+      updateSttState(sttId, {
+        ...newStt,
+        isEditable: false,
+        isLoading: newStt?.status === "ENCODING",
+        isTemp: false,
+        recordingStatus: "finished",
+      });
+      if (newStt?.status === "ENCODING") {
+        startEncodingPolling(sttId, 2000);
+      }
+    } finally {
+      setIsStoppingRecording(false);
     }
-  }
+  };
 
   const handleConfirmUpload = async (sttId: number | null) => {
     if (!sttId || !window.confirm("음성 파일을 등록하시겠습니까?")) return;
+    setIsStartingProcessing(true);
     updateSttState(sttId, {
       isLoading: true,
       isTemp: false,
@@ -376,6 +394,8 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
         isLoading: false,
         status: "RECORDING",
       });
+    } finally {
+      setIsStartingProcessing(false);
     }
   };
 
@@ -418,7 +438,7 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
       return;
 
     const tempSttId = selectedSttId;
-
+    setIsUploading(true);
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -451,6 +471,8 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
         isLoading: false,
         isTemp: true,
       });
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -542,6 +564,19 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
   ) => {
     handleSummarySave();
     setSelectedSttId(newValue);
+  }
+  const getLoadingMessage = () => {
+    if (isFetchingStts) return "회의 내용을 불러오는 중...";
+    if (isUploading) return "업로드 중...";
+    if (isStartingRecording) return "녹음 세션 시작 중...";
+    
+    const currentStt = findSttById(selectedSttId);
+    if (currentStt?.isLoading && !currentStt?.isTemp) {
+        if (currentStt.status === "ENCODING") return "인코딩중..";
+        if (currentStt.status === "PROCESSING") return `변환중.. ${currentStt.progress ?? 0}%`;
+        if (currentStt.status === "SUMMARIZING") return `요약중.. ${currentStt.progress ?? 0}%`;
+    }
+    return undefined;
   };
 
   return (
@@ -561,6 +596,7 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                 minWidth: 40,
                 marginLeft: "10px",
               }}
+              disabled={isUploading || isStartingRecording}
             >
               +
             </Button>
@@ -666,47 +702,14 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
       </Box>
 
       <div className="relative p-3">
-        {findSttById(selectedSttId)?.isLoading &&
-        !findSttById(selectedSttId)?.isTemp ? (
-          <div className="absolute inset-0 bg-black/10 backdrop-blur-none z-40 flex items-center justify-center rounded-lg">
-            <div className="bg-white/50 px-6 py-3 rounded-xl shadow-2xl flex flex-col items-center gap-1">
-              <div className="w-10 h-10 mb-1 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin"></div>
-              {findSttById(selectedSttId)?.status === "ENCODING" && (
-                <Typography padding={0} margin={0}>
-                  인코딩중..
-                </Typography>
-              )}
-              {findSttById(selectedSttId)?.status === "PROCESSING" && (
-                <Typography padding={0} margin={0}>
-                  변환중..
-                </Typography>
-              )}
-              {findSttById(selectedSttId)?.status === "SUMMARIZING" && (
-                <Typography padding={0} margin={0}>
-                  요약중..
-                </Typography>
-              )}
-              {findSttById(selectedSttId)?.status !== "ENCODING"  
-              && findSttById(selectedSttId)?.progress 
-              && findSttById(selectedSttId)?.progress !== 0 && (
-                <Typography>{`${
-                  findSttById(selectedSttId)?.progress
-                }%`}</Typography>
-              )}
-            </div>
-          </div>
-        ) : (
-          <></>
-        )}
+        {getLoadingMessage() && <Spinner message={getLoadingMessage()} />}
         {(() => {
           const currentStt = findSttById(selectedSttId);
           if (!currentStt)
-            return stts.length === 0 ? (
-              <Box sx={{ textAlign: "center", color: "text.disabled", my: 2 }}>
+            return (
+              <Box sx={{ minWidth: 10, minHeight: 10, textAlign: "center", color: "text.disabled", my: 2 }}>
                 등록된 회의 내용이 없습니다.
               </Box>
-            ) : (
-              <></>
             );
 
           const sessionState = getSessionState(currentStt.id);
@@ -791,13 +794,15 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                   <Button
                     variant="contained"
                     color="primary"
+                    disabled={isStoppingRecording || isStartingProcessing}
                     onClick={() => handleConfirmUpload(selectedSttId)}
                   >
-                    음성 변환 시작
+                    {isStoppingRecording ? "인코딩 요청 중..." : "음성 변환 시작"}
                   </Button>
                   <Button
                     variant="outlined"
                     color="secondary"
+                    disabled={currentStt.isLoading}
                     onClick={() => handleDelete(currentStt.id)}
                   >
                     취소
@@ -807,7 +812,7 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
             );
           } else if (currentStt.isTemp) {
             return (
-              <Box sx={{ mb: 3 }}>
+              <Box sx={{ position: "relative", mb: 3 }}>
                 <Typography
                   sx={{ fontWeight: 600, fontSize: "0.875rem", mb: 1 }}
                 >
@@ -876,7 +881,11 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                       color="primary"
                       sx={{ border: "1px solid", p: 2 }}
                       onClick={handleStartRecording}
-                      disabled={isAnyRecordingActive()}
+                      disabled={
+                        isAnyRecordingActive() ||
+                        isStartingRecording ||
+                        isUploading
+                      }
                     >
                       <MicIcon sx={{ fontSize: 40 }} />
                     </IconButton>
