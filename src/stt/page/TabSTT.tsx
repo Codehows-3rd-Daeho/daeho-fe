@@ -844,7 +844,7 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                   <Button
                     variant="contained"
                     color="primary"
-                    disabled={currentStt.isLoading || isStoppingRecording || isAudioLoadingError}
+                    disabled={currentStt.isLoading || isStoppingRecording || isStartingProcessing || isAudioLoadingError}
                     onClick={() => handleConfirmUpload(selectedSttId)}
                   >
                     {isStoppingRecording ? "인코딩 요청 중..." : "음성 변환"}
