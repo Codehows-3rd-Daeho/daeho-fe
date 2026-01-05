@@ -24,17 +24,23 @@ import type { SidebarProps } from "./type";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../store/useAuthStore";
 import useRecordingStore from "../../store/useRecordingStore";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+
 export default function Sidebar({
   items,
   collapsed = false,
   onSelect,
   onToggle,
   width = 300,
+  variant = "permanent",
+  isMobileSidebarOpen: isMobileSidebarOpen,
+  onClose,
 }: SidebarProps & { isAdmin?: boolean }) {
   const navigate = useNavigate();
   const { member, logout } = useAuthStore();
   const { clear, isAnyRecordingActive, handleLastChunk } = useRecordingStore();
   const role = member?.role;
+  const isMobile = variant === "temporary";
 
   //로그아웃
   const handleLogout = async () => {
@@ -48,7 +54,7 @@ export default function Sidebar({
     navigate("/login");
   };
   // 초기 open 상태
-  const [open, setOpen] = useState<{ [key: string]: boolean }>(() => {
+  const [menuOpen, setMenuOpen] = useState<{ [key: string]: boolean }>(() => {
     const path = window.location.pathname;
     const initialOpen: Record<string, boolean> = {};
     items.forEach((item) => {
@@ -58,8 +64,9 @@ export default function Sidebar({
     });
     return initialOpen;
   });
+
   const handleToggle = (id: string) => {
-    setOpen((prev) => ({ ...prev, [id]: !prev[id] }));
+    setMenuOpen((prev) => ({ ...prev, [id]: !prev[id] }));
   };
   // 현재 선택된 메뉴
   const selectedId = (() => {
@@ -73,11 +80,14 @@ export default function Sidebar({
     });
     return selected;
   })();
+
   const userMenu = items.filter((item) => item.id !== "admin");
   const adminMenu = items.find((item) => item.id === "admin");
   return (
     <Drawer
-      variant="permanent"
+      variant={variant}
+      open={variant === "temporary" ? isMobileSidebarOpen : true} // 모바일일때는 상태 관리, 데스크탑은 항상 open
+      onClose={onClose}
       sx={{
         width: collapsed ? 72 : width,
         flexShrink: 0,
@@ -102,13 +112,11 @@ export default function Sidebar({
         {/* 로고 */}
         <Toolbar
           sx={{
-            // px: 0,
-            // py: 2,
             px: 2,
             py: 3.7,
             minHeight: collapsed ? 64 : undefined,
             display: "flex",
-            justifyContent: collapsed ? "center" : "space-between",
+            justifyContent: isMobile ? "center" : "space-between",
             alignItems: "center",
           }}
         >
@@ -127,16 +135,18 @@ export default function Sidebar({
               />
             </Box>
           )}
-          <IconButton
-            onClick={onToggle}
-            sx={{
-              backgroundColor: "#eee",
-              "&:hover": { backgroundColor: "#aaa" },
-              zIndex: 10,
-            }}
-          >
-            {collapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
-          </IconButton>
+          {variant === "permanent" && (
+            <IconButton
+              onClick={onToggle}
+              sx={{
+                backgroundColor: "#eee",
+                "&:hover": { backgroundColor: "#aaa" },
+                zIndex: 10,
+              }}
+            >
+              {collapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}
+            </IconButton>
+          )}
         </Toolbar>
         <Divider />
         {/* 일반 메뉴 */}
@@ -221,11 +231,11 @@ export default function Sidebar({
                     }}
                   >
                     {hasChildren &&
-                      (open[item.id] ? <ExpandLess /> : <ExpandMore />)}
+                      (menuOpen[item.id] ? <ExpandLess /> : <ExpandMore />)}
                   </Box>
                 </ListItemButton>
                 {hasChildren && (
-                  <Collapse in={open[item.id]} timeout="auto">
+                  <Collapse in={menuOpen[item.id]} timeout="auto">
                     <List component="div" disablePadding>
                       {children.map((child) => (
                         <ListItemButton
@@ -334,10 +344,14 @@ export default function Sidebar({
 
                       {!collapsed &&
                         adminChildren.length > 0 &&
-                        (open[adminMenu.id] ? <ExpandLess /> : <ExpandMore />)}
+                        (menuOpen[adminMenu.id] ? (
+                          <ExpandLess />
+                        ) : (
+                          <ExpandMore />
+                        ))}
                     </ListItemButton>
                     {adminChildren.length > 0 && (
-                      <Collapse in={open[adminMenu.id]} timeout="auto">
+                      <Collapse in={menuOpen[adminMenu.id]} timeout="auto">
                         <List component="div" disablePadding>
                           {adminChildren.map((child) => (
                             <ListItemButton
@@ -390,10 +404,10 @@ export default function Sidebar({
           </>
         )}
       </Box>
-      {/* Logout */}
       <Box flexGrow={1} />
       <Divider />
-      <Box p={2}>
+      <Box p={2} display="flex" alignItems="center" gap={1}>
+        {/* Logout */}
         <Button
           variant="text"
           startIcon={<LogoutIcon />}
@@ -407,6 +421,20 @@ export default function Sidebar({
         >
           {!collapsed && "Logout"}
         </Button>
+
+        {/* PWA Guide */}
+        <Tooltip title="앱 설치 가이드">
+          <IconButton
+            size="small"
+            onClick={() => navigate("/pwa-guide")}
+            sx={{
+              color: "#555",
+              "&:hover": { backgroundColor: "#eee" },
+            }}
+          >
+            <HelpOutlineIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
       </Box>
     </Drawer>
   );

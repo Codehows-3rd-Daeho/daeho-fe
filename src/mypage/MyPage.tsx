@@ -166,7 +166,6 @@ export default function MyPage() {
 }
 
 /* ---------------- InfoRow ---------------- */
-
 const InfoRow: React.FC<InfoRowProps> = ({
   label,
   value,
@@ -179,18 +178,38 @@ const InfoRow: React.FC<InfoRowProps> = ({
   onToggleShowPassword,
 }) => {
   return (
-    <Box sx={{ display: "flex", alignItems: "center", m: 5 }}>
-      {/* 라벨 */}
-      <Box sx={{ width: "33%" }}>
-        <Typography variant="body1" fontWeight="medium">
+    <Box sx={{ display: "flex", alignItems: "center", mb: 5, mt: 5 }}>
+      {" "}
+      {/* 기존 간격 유지 */}
+      {/* 라벨 영역 */}
+      <Box
+        sx={{
+          width: "33%",
+          flexShrink: 0, // 화면이 좁아져도 라벨 너비가 줄어들지 않음
+          mr: 2, // 라벨과 값 사이의 최소 여유 공간
+        }}
+      >
+        <Typography
+          variant="body1"
+          fontWeight="medium"
+          sx={{ whiteSpace: "nowrap" }} // 글자가 밑으로 내려가는 것 방지
+        >
           {label}
         </Typography>
       </Box>
-
-      {/* 값 */}
-      <Box sx={{ flexGrow: 1 }}>
+      {/* 값 영역 */}
+      <Box sx={{ flexGrow: 1, minWidth: 0 }}>
         {isText ? (
-          <Typography variant="body1">{value}</Typography>
+          <Typography
+            variant="body1"
+            sx={{
+              whiteSpace: "nowrap", // 텍스트도 줄바꿈 방지
+              overflow: "hidden",
+              textOverflow: "ellipsis", // 영역보다 길어지면 ... 처리
+            }}
+          >
+            {value}
+          </Typography>
         ) : (
           <TextField
             fullWidth

@@ -3,7 +3,7 @@ const URLS_TO_CACHE = [
   "/",
   "/index.html",
   "/manifest.webmanifest",
-  "/icon/apple-touch-icon-180x180.png",
+  "/icon/apple-touch-icon.png",
   "/icon/android-chrome-192x192.png",
   "/icon/android-chrome-512x512.png",
 ];
