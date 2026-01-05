@@ -99,20 +99,32 @@ export default function LogList() {
       headerAlign: "center",
       align: "left",
       renderCell: (params) => {
-        const { targetId, targetType, title } = params.row;
+        const { title } = params.row;
+
         const handleLink = () => {
-          if (!targetId) return;
-          const path =
-            targetType === "MEETING"
-              ? `/meeting/${targetId}`
-              : `/issue/${targetId}`;
+          const { targetId, targetType, parentId, parentType } = params.row;
+          let path = "";
+
+          if (targetType === "COMMENT") {
+            const folder = parentType === "MEETING" ? "meeting" : "issue";
+            const id = parentId || targetId;
+            path = `/${folder}/${id}`;
+          } else if (targetType === "MEETING") {
+            path = `/meeting/${targetId}`;
+          } else {
+            path = `/issue/${targetId}`;
+          }
+
           navigate(path);
         };
+
         return (
           <div
             onClick={handleLink}
             style={{
               cursor: "pointer",
+              textDecoration: "underline",
+              color: "#3b82f6",
             }}
           >
             {title || "제목 없음"}
