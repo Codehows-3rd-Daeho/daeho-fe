@@ -82,6 +82,7 @@ export interface FileDto {
   originalName: string;
   size: string; //단위포함
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface FilterDto {
