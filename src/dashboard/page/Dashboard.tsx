@@ -13,7 +13,6 @@ import type { MeetingListItem } from "../../meeting/type/type";
 import { ListDataGrid } from "../../common/List/ListDataGrid";
 import { useAuthStore } from "../../store/useAuthStore";
 import type { GridColDef } from "@mui/x-data-grid";
-import { calculateDDay } from "../../common/Kanban/KanbanDDay";
 import type { ApiError } from "../../config/httpClient";
 
 const days = ["일", "월", "화", "수", "목", "금", "토"];
@@ -24,8 +23,6 @@ export default function Dashboard() {
     done: [],
     delay: [],
   });
-  const [issueCount, setIssueCount] = useState(0);
-  const [imminentCount, setImminentCount] = useState(0);
   //회의
   const [meetingData, setMeetingData] = useState<MeetingListItem[]>([]);
   //캘린더 회의 조회용
@@ -166,10 +163,6 @@ export default function Dashboard() {
       try {
         // 1. 이슈 데이터==============================================================
         const issueRes = await getKanbanIssues();
-        const inProgressCount = issueRes.inProgress.length;
-        const imminentCount = issueRes.inProgress.filter(
-          (issue) => calculateDDay(issue.endDate).isImminent
-        ).length;
         const delayIds = new Set(issueRes.delayed.map((item) => item.id));
         const filteredPending = issueRes.inProgress.filter(
           (item) => !delayIds.has(item.id)
@@ -180,8 +173,6 @@ export default function Dashboard() {
           done: issueRes.completed.slice(0, 1),
           delay: issueRes.delayed.slice(0, 1),
         });
-        setIssueCount(inProgressCount);
-        setImminentCount(imminentCount);
 
         // 2. 회의 리스트============================================================
         const meetingList = await getMeetingListMT(member.memberId, 0, 3);
@@ -238,19 +229,8 @@ export default function Dashboard() {
         // minWidth: 1000, // ✅ 전체 최소 너비
         mx: "auto", // 가운데 정렬
         px: 2, // 양쪽 여백
-        overflowX: "auto", // 화면 작을 때 가로 스크롤
       }}
     >
-      {/* 헤더 */}
-      <Box className="flex gap-6 mb-6 text-sm w-100">
-        <Box>
-          전체 진행중인 이슈 <strong>{issueCount}</strong>개
-        </Box>
-        <Box>
-          전체 마감임박 이슈 <strong>{imminentCount}</strong>개
-        </Box>
-      </Box>
-
       {/* 나의 이슈 목록(칸반) */}
       {/* 헤더 */}
       <Box
@@ -352,14 +332,15 @@ export default function Dashboard() {
             {year}년 {month + 1}월
           </Typography>
         </Box>
-        <Box sx={{ display: "grid", mb: 1 }}>
-          {/* 요일 표시 */}
+
+        <Box sx={{ overflowX: "auto" }}>
+          {/* 요일 */}
           <Box
             sx={{
               display: "grid",
               gridTemplateColumns: "repeat(7, 1fr)",
               mb: 1,
-              minWidth: 1200,
+              minWidth: 180 * 7,
             }}
           >
             {days.map((d) => (
@@ -374,152 +355,147 @@ export default function Dashboard() {
               </Typography>
             ))}
           </Box>
-
           {/* 날짜 칸 */}
-          <Box sx={{ overflowX: "auto" }}>
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateRows: `repeat(${matrix.length}, 1fr)`,
-                gap: 1,
-                minWidth: 980,
-              }}
-            >
-              {matrix.map((week, wi) => (
-                <Box
-                  key={wi}
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(7, 1fr)",
-                    gap: 1,
-                  }}
-                >
-                  {week.map((day, di) => (
-                    <Box
-                      key={di}
-                      sx={{
-                        borderRadius: 2,
-                        border:
-                          day && isToday(day)
-                            ? "3px solid #2563EB"
-                            : "2px solid #eef2f7",
-                        p: 1,
-                        position: "relative",
-                        backgroundColor: "#fff",
-                      }}
-                    >
-                      {day && (
-                        <>
-                          <Typography
-                            fontSize={15}
-                            fontWeight={isToday(day) ? 700 : 500}
-                            color={isToday(day) ? "#2563EB" : "#374151"}
-                          >
-                            {day.getDate()}
-                          </Typography>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateRows: `repeat(${matrix.length}, 1fr)`,
+              gap: 1,
+              minWidth: 980,
+            }}
+          >
+            {matrix.map((week, wi) => (
+              <Box
+                key={wi}
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(7, 1fr)",
+                  gap: 1,
+                }}
+              >
+                {week.map((day, di) => (
+                  <Box
+                    key={di}
+                    sx={{
+                      borderRadius: 2,
+                      border:
+                        day && isToday(day)
+                          ? "3px solid #2563EB"
+                          : "2px solid #eef2f7",
+                      p: 1,
+                      position: "relative",
+                      backgroundColor: "#fff",
+                    }}
+                  >
+                    {day && (
+                      <>
+                        <Typography
+                          fontSize={15}
+                          fontWeight={isToday(day) ? 700 : 500}
+                          color={isToday(day) ? "#2563EB" : "#374151"}
+                        >
+                          {day.getDate()}
+                        </Typography>
 
-                          <Box
-                            sx={{
-                              mt: 0.5,
-                              display: "flex",
-                              flexDirection: "column",
-                              gap: 0.5,
-                              minWidth: 150,
-                            }}
-                          >
-                            {(expandedDays.has(day.getDate())
-                              ? meetingsByDay.get(day.getDate())
-                              : meetingsByDay.get(day.getDate())?.slice(0, 3)
-                            )?.map((meeting) => (
-                              <Card
-                                key={meeting.id}
-                                variant="outlined"
+                        <Box
+                          sx={{
+                            mt: 0.5,
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 0.5,
+                            minWidth: 150,
+                          }}
+                        >
+                          {(expandedDays.has(day.getDate())
+                            ? meetingsByDay.get(day.getDate())
+                            : meetingsByDay.get(day.getDate())?.slice(0, 3)
+                          )?.map((meeting) => (
+                            <Card
+                              key={meeting.id}
+                              variant="outlined"
+                              sx={{
+                                boxSizing: "border-box",
+                                px: 1,
+                                py: 0.75,
+                                cursor: "pointer",
+                                // border: "2px solid #bb91ff",
+                                backgroundColor: "#4b6485",
+                                width: 180,
+                                "&:hover": {
+                                  backgroundColor: "#1a3260",
+                                  // borderColor: "#2563eb",
+                                },
+                              }}
+                              onClick={() => navigate(`/meeting/${meeting.id}`)}
+                            >
+                              {/* 일시 , 카테고리 */}
+                              <Box
                                 sx={{
-                                  boxSizing: "border-box",
-                                  px: 1,
-                                  py: 0.75,
-                                  cursor: "pointer",
-                                  // border: "2px solid #bb91ff",
-                                  backgroundColor: "#4b6485",
-                                  width: 180,
-                                  "&:hover": {
-                                    backgroundColor: "#1a3260",
-                                    // borderColor: "#2563eb",
-                                  },
+                                  display: "flex",
+                                  justifyContent: "space-between", // 좌우로 벌리기
+                                  gridTemplateColumns: "auto 1fr",
+                                  gap: 1,
+                                  width: "100%",
                                 }}
-                                onClick={() =>
-                                  navigate(`/meeting/${meeting.id}`)
-                                }
                               >
-                                {/* 일시 , 카테고리 */}
-                                <Box
-                                  sx={{
-                                    display: "flex",
-                                    justifyContent: "space-between", // 좌우로 벌리기
-                                    gridTemplateColumns: "auto 1fr",
-                                    gap: 1,
-                                    width: "100%",
-                                  }}
-                                >
-                                  {meeting.startDate && (
-                                    <Box sx={{ fontSize: 10, color: "white" }}>
-                                      {meeting.startDate?.split(" ")[1]}
-                                    </Box>
-                                  )}
-
-                                  <Box
-                                    sx={{
-                                      fontSize: 10,
-                                      color: "white",
-                                      overflow: "hidden",
-                                      textOverflow: "ellipsis",
-                                      whiteSpace: "nowrap",
-                                    }}
-                                  >
-                                    {meeting.categoryName}
+                                {meeting.startDate && (
+                                  <Box sx={{ fontSize: 10, color: "white" }}>
+                                    {meeting.startDate?.split(" ")[1]}
                                   </Box>
-                                </Box>
+                                )}
+
                                 <Box
                                   sx={{
-                                    fontSize: 14,
-                                    fontWeight: 500,
+                                    fontSize: 10,
                                     color: "white",
                                     overflow: "hidden",
                                     textOverflow: "ellipsis",
                                     whiteSpace: "nowrap",
-                                    width: "100%", // 카드 폭에 맞춤
                                   }}
                                 >
-                                  {meeting.title}
+                                  {meeting.categoryName}
                                 </Box>
-                              </Card>
-                            ))}
+                              </Box>
+                              <Box
+                                sx={{
+                                  fontSize: 14,
+                                  fontWeight: 500,
+                                  color: "white",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                  width: "100%", // 카드 폭에 맞춤
+                                }}
+                              >
+                                {meeting.title}
+                              </Box>
+                            </Card>
+                          ))}
 
-                            {/* 더보기 / 접기 버튼 */}
-                            {meetingsByDay.get(day.getDate()) &&
-                              meetingsByDay.get(day.getDate())!.length > 3 && (
-                                <Typography
-                                  fontSize={12}
-                                  color="text.secondary"
-                                  sx={{ mt: 0.5, cursor: "pointer" }}
-                                  onClick={() => toggleExpand(day.getDate())}
-                                >
-                                  {expandedDays.has(day.getDate())
-                                    ? "접기"
-                                    : `+${
-                                        meetingsByDay.get(day.getDate())!
-                                          .length - 3
-                                      } more`}
-                                </Typography>
-                              )}
-                          </Box>
-                        </>
-                      )}
-                    </Box>
-                  ))}
-                </Box>
-              ))}
-            </Box>
+                          {/* 더보기 / 접기 버튼 */}
+                          {meetingsByDay.get(day.getDate()) &&
+                            meetingsByDay.get(day.getDate())!.length > 3 && (
+                              <Typography
+                                fontSize={12}
+                                color="text.secondary"
+                                sx={{ mt: 0.5, cursor: "pointer" }}
+                                onClick={() => toggleExpand(day.getDate())}
+                              >
+                                {expandedDays.has(day.getDate())
+                                  ? "접기"
+                                  : `+${
+                                      meetingsByDay.get(day.getDate())!.length -
+                                      3
+                                    } more`}
+                              </Typography>
+                            )}
+                        </Box>
+                      </>
+                    )}
+                  </Box>
+                ))}
+              </Box>
+            ))}
           </Box>
         </Box>
       </Box>

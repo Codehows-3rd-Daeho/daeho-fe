@@ -143,8 +143,12 @@ export default function MTMeetingScheduler() {
 
       {/* 등록 버튼 */}
       <PageHeader>
-        <Box />
-        <AddButton onClick={() => navigate("/meeting/create")} />
+        {() => (
+          <>
+            <Box />
+            <AddButton onClick={() => navigate("/meeting/create")} />
+          </>
+        )}
       </PageHeader>
 
       {/* 요일 표시 */}

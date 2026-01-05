@@ -169,7 +169,7 @@ export default function IssueDtl() {
         p: 3,
         bgcolor: "#f5f5f5",
         minWidth: 300,
-        flexDirection: { xs: "column-reverse", md: "row" }, // 모바일: 세로(2,1), 데스크탑: 가로(1,2)
+        flexDirection: { xs: "column", md: "row" }, // 모바일: 세로(1, 2), 데스크탑: 가로(1,2)
       }}
     >
       {/* 왼쪽 섹션 */}

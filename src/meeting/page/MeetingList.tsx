@@ -165,37 +165,50 @@ export default function MeetingList() {
       </Box>
 
       <PageHeader>
-        {/* 탭 공간 (왼쪽) */}
-        <Box />
+        {(width) => (
+          <>
+            {/* 탭 공간 (왼쪽) */}
+            <Box />
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <DateFilter
-            startDate={filter.startDate ?? ""}
-            endDate={filter.endDate ?? ""}
-            onStartDateChange={(v) =>
-              setFilter((prev) => ({ ...prev, startDate: v }))
-            }
-            onEndDateChange={(v) =>
-              setFilter((prev) => ({ ...prev, endDate: v }))
-            }
-          />
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              {width >= 900 && ( // md 대신 containerWidth 기준
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                  }}
+                >
+                  <DateFilter
+                    startDate={filter.startDate ?? ""}
+                    endDate={filter.endDate ?? ""}
+                    onStartDateChange={(v) =>
+                      setFilter((prev) => ({ ...prev, startDate: v }))
+                    }
+                    onEndDateChange={(v) =>
+                      setFilter((prev) => ({ ...prev, endDate: v }))
+                    }
+                  />
 
-          <Filter
-            type="meeting"
-            value={filter}
-            onChange={(f) => {
-              setPage(1); // 필터 변경 시 1페이지로 이동
-              setFilter(f);
-            }}
-          />
-
-          <SearchBar
-            onSearch={(value) =>
-              setFilter((prev) => ({ ...prev, keyword: value }))
-            }
-            placeholder="검색"
-          />
-        </Box>
+                  <Filter
+                    type="meeting"
+                    value={filter}
+                    onChange={(f) => {
+                      setPage(1); // 필터 변경 시 1페이지로 이동
+                      setFilter(f);
+                    }}
+                  />
+                </Box>
+              )}
+              <SearchBar
+                onSearch={(value) =>
+                  setFilter((prev) => ({ ...prev, keyword: value }))
+                }
+                placeholder="검색"
+              />
+            </Box>
+          </>
+        )}
       </PageHeader>
       {/* 리스트 */}
       <ListDataGrid<MeetingListItem>

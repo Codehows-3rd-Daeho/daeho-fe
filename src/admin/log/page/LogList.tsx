@@ -189,45 +189,44 @@ export default function LogList() {
   return (
     <>
       <PageHeader>
-        {/* 3. 로그 전용 토글 버튼 그룹 */}
-        <ToggleButtonGroup
-          value={currentFilter}
-          exclusive
-          onChange={(_, newValue) => {
-            if (newValue) {
-              setCurrentFilter(newValue);
-              setPage(1); // <-- 탭 바뀌면 페이지 1로 초기화
-            }
-          }}
-          size="small"
-          sx={{
-            backgroundColor: "#f1f5f9",
-            borderRadius: "12px",
-            p: 0.5,
-            "& .MuiToggleButton-root": {
-              border: "none",
-              borderRadius: "8px !important",
-              px: 4,
-              py: 1,
-              fontWeight: 600,
-              color: "#64748b",
-              "&.Mui-selected": {
-                backgroundColor: "white",
-                color: "#1e293b",
-                boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
-              },
-            },
-          }}
-        >
-          <ToggleButton value="ALL">전체</ToggleButton>
-          <ToggleButton value="ISSUE">이슈</ToggleButton>
-          <ToggleButton value="MEETING">회의</ToggleButton>
-          <ToggleButton value="COMMENT">댓글</ToggleButton>
-        </ToggleButtonGroup>
+        {/* width를 사용하지 않음 */}
+        {() => (
+          <>
+            {/* 3. 로그 전용 토글 버튼 그룹 */}
+            <ToggleButtonGroup
+              value={currentFilter}
+              exclusive
+              onChange={(_, newValue) => newValue && setCurrentFilter(newValue)}
+              size="small"
+              sx={{
+                backgroundColor: "#f1f5f9",
+                borderRadius: "12px",
+                p: 0.5,
+                "& .MuiToggleButton-root": {
+                  border: "none",
+                  borderRadius: "8px !important",
+                  px: 4,
+                  py: 1,
+                  fontWeight: 600,
+                  color: "#64748b",
+                  "&.Mui-selected": {
+                    backgroundColor: "white",
+                    color: "#1e293b",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+                  },
+                },
+              }}
+            >
+              <ToggleButton value="ALL">전체</ToggleButton>
+              <ToggleButton value="ISSUE">이슈</ToggleButton>
+              <ToggleButton value="MEETING">회의</ToggleButton>
+            </ToggleButtonGroup>
 
-        <Box display="flex" alignItems="center" gap={1.5}>
-          <SearchBar onSearch={setSearchQuery} placeholder="검색" />
-        </Box>
+            <Box display="flex" alignItems="center" gap={1.5}>
+              <SearchBar onSearch={setSearchQuery} placeholder="검색" />
+            </Box>
+          </>
+        )}
       </PageHeader>
 
       <ListDataGrid<LogList>
