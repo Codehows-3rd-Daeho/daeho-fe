@@ -54,7 +54,7 @@ const urlBase64ToUint8Array = (base64String: string): Uint8Array => {
   for (let i = 0; i < rawData.length; ++i) {
     outputArray[i] = rawData.charCodeAt(i);
   }
-  return outputArray;
+  return outputArray as Uint8Array;
 };
 
 /**
@@ -161,7 +161,7 @@ export const usePushNotification = (
       console.log("푸시 구독 시도 중...");
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: applicationServerKey, // Uint8Array로 전달!
+        applicationServerKey: applicationServerKey as BufferSource, // 타입 단언 추가
       });
 
       console.log("푸시 구독 성공:", subscription);
