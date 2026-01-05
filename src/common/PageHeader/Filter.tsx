@@ -154,7 +154,7 @@ export default function Filter({
   const isAnyFilterApplied = appliedCount > 0;
 
   return (
-    <Box sx={{ p: 2 }}>
+    <Box>
       {/* 필터 버튼 */}
       <Badge
         badgeContent={appliedCount}
@@ -173,10 +173,11 @@ export default function Filter({
           }}
           sx={{
             py: 0.95,
-            color: "black",
-            borderColor: "black",
+            color: "#1c468d",
+            borderColor: "#1c468d",
+            borderRadius: "12px",
             "&:hover": {
-              borderColor: "black",
+              borderColor: "#edf0f6",
             },
           }}
         >

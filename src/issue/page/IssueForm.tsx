@@ -138,7 +138,7 @@ export default function IssueForm({
           p: 3,
           bgcolor: "#f5f5f5",
           minWidth: 300,
-          flexDirection: { xs: "column-reverse", md: "row" }, // 모바일: 세로(2,1), 데스크탑: 가로(1,2)
+          flexDirection: { xs: "column", md: "row" }, // 모바일: 세로(1, 2), 데스크탑: 가로(1,2)
         }}
       >
         {/* 왼쪽 섹션 */}
@@ -426,7 +426,6 @@ export default function IssueForm({
             )}
           </Box>
         </Box>
-
         {/* 오른쪽 섹션 */}
         <Box
           sx={{
@@ -553,7 +552,7 @@ export default function IssueForm({
                 </Box>
               </Box>
 
-              <Box sx={{ mt: 2, width: 260 }}>
+              <Box sx={{ mt: 2 }}>
                 <DateRange
                   ranges={range}
                   onChange={(ranges) => {
