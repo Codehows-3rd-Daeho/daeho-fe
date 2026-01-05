@@ -3,7 +3,9 @@ const URLS_TO_CACHE = [
   "/",
   "/index.html",
   "/manifest.webmanifest",
-  "/vite.svg",
+  "/icon/apple-touch-icon.png",
+  "/icon/android-chrome-192x192.png",
+  "/icon/android-chrome-512x512.png",
 ];
 
 /** install: 필요한 파일들을 캐시에 “미리 넣어두는 단계”
@@ -79,8 +81,8 @@ self.addEventListener("push", (event) => {
   const title = pushData.title || "새로운 알림"; // 서버가 제목을 보내지 않으면 기본값 사용
   const options = {
     body: pushData.body || "새로운 메시지가 도착했습니다.", // 알림 본문
-    icon: pushData.icon || "/vite.svg", // 알림 아이콘
-    badge: pushData.badge || "/vite.svg", // 알림 배지(작은 아이콘, 모바일 등에서 사용)
+    icon: pushData.icon || "/icon/android-chrome-192x192.png", // 알림 아이콘
+    badge: pushData.badge || "/icon/android-chrome-192x192.png", // 알림 배지(작은 아이콘, 모바일 등에서 사용)
     data: {
       url: pushData.url || "/", // 알림 클릭 시 이동할 URL을 data에 저장
     },
