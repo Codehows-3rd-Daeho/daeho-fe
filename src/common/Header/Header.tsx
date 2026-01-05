@@ -19,7 +19,9 @@ import { BASE_URL, type ApiError } from "../../config/httpClient";
 const formatTime = (seconds: number) => {
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
-  return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+  return `${String(minutes).padStart(2, "0")}:${String(
+    remainingSeconds
+  ).padStart(2, "0")}`;
 };
 
 const RecordingIndicator = () => {
@@ -43,41 +45,64 @@ const RecordingIndicator = () => {
     <Box
       onClick={handleClick}
       sx={{
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
         gap: 1,
-        backgroundColor: 'rgba(255, 0, 0, 0.1)',
-        border: '1px solid rgba(255, 0, 0, 0.2)',
+        backgroundColor: "rgba(255, 0, 0, 0.1)",
+        border: "1px solid rgba(255, 0, 0, 0.2)",
         borderRadius: 5,
         px: 2,
         py: 0.5,
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-        <Box 
+      <Box sx={{ display: "flex", alignItems: "center" }}>
+        <Box
           component="span"
           sx={{
-            width: 8, height: 8, borderRadius: '50%', bgcolor: 'red',
-            '@keyframes heartbeat': {
-              '0%': { transform: 'scale(0.8)', boxShadow: '0 0 0 0 rgba(255, 82, 82, 0.7)' },
-              '70%': { transform: 'scale(1)', boxShadow: '0 0 0 8px rgba(255, 82, 82, 0)' },
-              '100%': { transform: 'scale(0.8)', boxShadow: '0 0 0 0 rgba(255, 82, 82, 0)' }
+            width: 8,
+            height: 8,
+            borderRadius: "50%",
+            bgcolor: "red",
+            "@keyframes heartbeat": {
+              "0%": {
+                transform: "scale(0.8)",
+                boxShadow: "0 0 0 0 rgba(255, 82, 82, 0.7)",
+              },
+              "70%": {
+                transform: "scale(1)",
+                boxShadow: "0 0 0 8px rgba(255, 82, 82, 0)",
+              },
+              "100%": {
+                transform: "scale(0.8)",
+                boxShadow: "0 0 0 0 rgba(255, 82, 82, 0)",
+              },
             },
-            animation: recordingStatus === 'recording' ? 'heartbeat 1.5s infinite' : 'none',
+            animation:
+              recordingStatus === "recording"
+                ? "heartbeat 1.5s infinite"
+                : "none",
           }}
         />
-        <Typography variant="body2" color="red" sx={{ ml: 1, fontWeight: 'bold' }}>
+        <Typography
+          variant="body2"
+          color="red"
+          sx={{ ml: 1, fontWeight: "bold" }}
+        >
           Live
         </Typography>
       </Box>
-      <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        sx={{ fontFamily: "monospace" }}
+      >
         {formatTime(recordingTime)}
       </Typography>
-      <MicIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+      <MicIcon fontSize="small" sx={{ color: "text.secondary" }} />
     </Box>
   );
-}
+};
 
 export default function Header({ name, jobPosition, profileUrl }: HeaderProps) {
   const [unreadCount, setUnreadCount] = useState(0);
@@ -106,7 +131,7 @@ export default function Header({ name, jobPosition, profileUrl }: HeaderProps) {
         boxShadow: "none",
       }}
     >
-      <Toolbar sx={{ justifyContent: "flex-end", gap: 2 }}>
+      <Toolbar sx={{ justifyContent: "flex-end", gap: 2, px: 50 }}>
         <RecordingIndicator />
         {/* 알림 */}
         <NotificationDropdown
@@ -116,9 +141,12 @@ export default function Header({ name, jobPosition, profileUrl }: HeaderProps) {
 
         {/* 이름 + 직책 */}
         <Box
-          display="inline-flex" // inline-flex로 텍스트 길이에 맞게 가로 늘어나게
           alignItems="center"
           sx={{
+            display: {
+              xs: "none", // 모바일에서는 숨김
+              sm: "inline-flex", // inline-flex로 텍스트 길이에 맞게 가로 늘어나게
+            },
             height: "auto", // 높이는 텍스트 패딩에 맞게
             border: "1px solid #ccc",
             borderRadius: 5,
