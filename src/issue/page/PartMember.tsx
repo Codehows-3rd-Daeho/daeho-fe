@@ -383,20 +383,12 @@ export default function PartMember({
             {/* 참여자 목록 */}
             <Box
               sx={{
-                display: "flex",
-                flex: 1,
-                flexDirection: "column",
-                maxHeight: 500,
-                overflowY: "auto",
-                pr: 2,
-                "&::-webkit-scrollbar": {
-                  width: 6,
-                },
-                "&::-webkit-scrollbar-thumb": {
-                  backgroundColor: "#ccc",
-                  borderRadius: 3,
-                },
-              }}
+      flex: 1,
+      overflowY: "auto",
+      pb: isMobile ? "70px" : 0, 
+      "&::-webkit-scrollbar": { width: "5px" }, 
+      "&::-webkit-scrollbar-thumb": { backgroundColor: "#bbb", borderRadius: "10px" }
+    }}
             >
               {currentParticipants
                 .slice() 
@@ -465,11 +457,35 @@ export default function PartMember({
                   </Box>
                 ))}
             </Box>
+            {isMobile && (
+    <Box
+      sx={{
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        p: 1.5,
+        background: "linear-gradient(to top, rgba(255,255,255,1) 85%, rgba(255,255,255,0) 100%)",
+        zIndex: 10,
+      }}
+    >
+      <Button
+        fullWidth
+        onClick={handleClose}
+        variant="contained"
+        size="large"
+        sx={{
+          boxShadow: "0 -2px 10px rgba(0,0,0,0.08)",
+          borderRadius: 1.5,
+          fontWeight: "bold"
+        }}
+      >
+        확인
+      </Button>
+      </Box>)}
           </DialogContent>
         </Box>
-        {isMobile && (
-            <Button onClick={handleClose} variant="contained" sx={{ m: 2 }}>확인</Button>
-        )}
+      
       </Dialog>
     </>
   );
