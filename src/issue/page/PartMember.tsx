@@ -11,8 +11,11 @@ import {
   IconButton,
   Tabs,
   Tab,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import MenuIcon from "@mui/icons-material/Menu";
 import type { IssueMemberDto, PartMemberList } from "../type/type";
 import { useAuthStore } from "../../store/useAuthStore";
 import {
@@ -43,14 +46,25 @@ export default function PartMember({
   mode,
 }: PartMemberProps) {
   const [open, setOpen] = useState(false);
-  const handleOpen = () => setOpen(true);
+  const handleOpen = () => {
+    setOpen(true);
+    setIsSidebarOpen(!isMobile); 
+  };
   const handleClose = () => setOpen(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
 
   // 분류탭
   const [activeTab, setActiveTab] = useState(0);
   const [categories, setCategories] = useState<CategoryType[]>(["전체"]);
   const [allParticipants, setAllParticipants] = useState<Participant[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
+
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setActiveTab(newValue);
+    if (isMobile) setIsSidebarOpen(false); // 모바일에서 카테고리 선택 시 탭 닫기
+  };
 
   const currentCategory = categories[activeTab];
 
@@ -132,9 +146,6 @@ export default function PartMember({
     loadData();
   }, [memberId, initialMembers, mode]);
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
-  };
 
   // 개별 선택 핸들러
   const handleSelectParticipant = (id: number) => {
@@ -214,7 +225,7 @@ export default function PartMember({
     });
   };
 
-  const selectedCount = allParticipants.filter((p) => p.selected).length;
+  // const selectedCount = allParticipants.filter((p) => p.selected).length;
   const allSelected =
     currentParticipants.length > 0 &&
     currentParticipants.every((p) => p.selected);
@@ -236,18 +247,19 @@ export default function PartMember({
           textTransform: "none",
         }}
       >
-        참여자 추가 ({selectedCount} 명)
+        참여자 추가 ({allParticipants.filter((p) => p.selected).length} 명)
       </Button>
 
       <Dialog
         open={open}
         onClose={handleClose}
         maxWidth="md"
+        fullScreen={isMobile}
         slotProps={{
           paper: {
             sx: {
-              maxHeight: "90vh",
-              width: "750px",
+              maxHeight: isMobile ? "100vh" : "90vh",
+              width: isMobile ? "100%" : "750px",
             },
           },
         }}
@@ -260,16 +272,35 @@ export default function PartMember({
             pb: 2,
           }}
         >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {/* 🍔 사이드바 토글 버튼 */}
+            <IconButton onClick={() => setIsSidebarOpen(!isSidebarOpen)} size="small" color="primary">
+              <MenuIcon />
+            </IconButton>
           <Typography variant="h6" component="div">
             참여자 추가
           </Typography>
+          </Box>
           <IconButton onClick={handleClose} size="small">
             <CloseIcon />
           </IconButton>
         </DialogTitle>
 
-        <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>
+        <Box sx={{ display: "flex", flex: 1, overflow: "hidden", position: "relative" }}>
           {/* 왼쪽 세로 탭 */}
+          <Box
+            sx={{
+              width: isSidebarOpen ? (isMobile ? "100%" : 220) : 0,
+              transition: "width 0.3s ease",
+              overflow: "hidden",
+              borderRight: isSidebarOpen && !isMobile ? 1 : 0,
+              borderColor: "divider",
+              position: isMobile ? "absolute" : "relative", 
+              zIndex: 10,
+              bgcolor: "background.paper",
+              height: "100%",
+            }}
+          >
           <Tabs
             orientation="vertical"
             value={activeTab}
@@ -298,7 +329,7 @@ export default function PartMember({
               <Tab key={category} label={category} />
             ))}
           </Tabs>
-
+</Box>
           {/* 오른쪽 컨텐츠 */}
           <DialogContent
             sx={{
@@ -430,6 +461,9 @@ export default function PartMember({
             </Box>
           </DialogContent>
         </Box>
+        {isMobile && (
+            <Button onClick={handleClose} variant="contained" sx={{ m: 2 }}>확인</Button>
+        )}
       </Dialog>
     </>
   );
