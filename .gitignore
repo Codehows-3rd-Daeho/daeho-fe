@@ -12,6 +12,8 @@ dist
 dist-ssr
 *.local
 vite.config.ts
+localhost-key.pem
+localhost.pem
 
 certs/
 *.pem
