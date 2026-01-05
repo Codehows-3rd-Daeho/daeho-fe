@@ -130,7 +130,8 @@ export default function Sidebar({
           <IconButton
             onClick={onToggle}
             sx={{
-              "&:hover": { backgroundColor: "#f0f0f0" },
+              backgroundColor: "#eee",
+              "&:hover": { backgroundColor: "#aaa" },
               zIndex: 10,
             }}
           >

@@ -552,7 +552,7 @@ export default function IssueForm({
                 </Box>
               </Box>
 
-              <Box sx={{ mt: 2, width: 260 }}>
+              <Box sx={{ mt: 2 }}>
                 <DateRange
                   ranges={range}
                   onChange={(ranges) => {
