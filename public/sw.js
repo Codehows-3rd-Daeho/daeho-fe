@@ -1,4 +1,4 @@
-const CACHE_NAME = "daehoint-issue-v5"; // 버전 업데이트
+const CACHE_NAME = "daehoint-issue-v6"; // 버전 업데이트
 const URLS_TO_CACHE = [
   "/",
   "/index.html",
