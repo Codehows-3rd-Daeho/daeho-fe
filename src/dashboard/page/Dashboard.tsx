@@ -106,6 +106,12 @@ export default function Dashboard() {
       align: "center",
     },
   ];
+  const displayColumns = useMemo(() => {
+  if (isMobile) {
+    return allColumns.filter((col) => col.field === "title");
+  }
+  return allColumns;
+}, [isMobile, allColumns]);
 
   //회의 캘린더====================================================================================
 
@@ -291,7 +297,7 @@ export default function Dashboard() {
       </Box>
       <ListDataGrid<MeetingListItem>
         rows={meetingData}
-        columns={allColumns}
+        columns={displayColumns}
         rowIdField="id"
       />
 
