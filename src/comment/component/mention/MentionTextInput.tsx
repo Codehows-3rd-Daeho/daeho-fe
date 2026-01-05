@@ -66,27 +66,48 @@ export default function MentionTextInput({
     }
   }, [selectedIndex, showMentionBox]);
 
+  /* 멘션 텍스트 하이라이트 (안전한 버전) */
   const renderMentionText = (text: string, mentions: Mention[]) => {
-    if (!mentions.length) return text;
-    const mentionNames = mentions.map((m) => `@${m.name}`);
-    const regex = new RegExp(`(${mentionNames.join("|")})`, "g");
-    const parts = text.split(regex);
+    // 1. 텍스트가 없거나 멘션이 없으면 그대로 반환
+    if (!text) return "";
+    if (!mentions || mentions.length === 0) return text;
 
-    return parts.map((part, idx) => {
-      const isMention = mentionNames.includes(part);
-      return (
-        <span
-          key={idx}
-          style={{
-            color: isMention ? "#1976d2" : "inherit",
-            fontWeight: isMention ? 700 : 400,
-            backgroundColor: isMention ? "rgba(25, 118, 210, 0.1)" : "transparent",
-          }}
-        >
-          {part}
-        </span>
-      );
-    });
+    try {
+      // 2. 멘션 이름들만 추출하여 정규식 패턴 생성 (@이름)
+      // 특수문자가 섞일 수 있으므로 Escape 처리 (필요시)
+      const mentionNames = mentions
+        .map((m) => m.name ? `@${m.name}` : null)
+        .filter(Boolean) as string[];
+
+      if (mentionNames.length === 0) return text;
+
+      // 정규식 예약어 처리를 위해 escape 후 합침
+      const pattern = mentionNames
+        .map(name => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+        .join("|");
+      
+      const regex = new RegExp(`(${pattern})`, "g");
+      const parts = text.split(regex);
+
+      return parts.map((part, idx) => {
+        const isMention = mentionNames.includes(part);
+        return (
+          <span
+            key={`${part}-${idx}`} // key값 고유화
+            style={{
+              color: isMention ? "#1976d2" : "inherit",
+              fontWeight: isMention ? 700 : 400,
+              backgroundColor: isMention ? "rgba(25, 118, 210, 0.1)" : "transparent",
+            }}
+          >
+            {part}
+          </span>
+        );
+      });
+    } catch (error) {
+      console.error("Rendering mention text error:", error);
+      return text; // 에러 발생 시 원문 텍스트라도 보여줌
+    }
   };
 
   const handleChange = (text: string) => {
