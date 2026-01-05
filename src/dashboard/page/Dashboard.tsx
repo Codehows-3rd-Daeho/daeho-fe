@@ -14,6 +14,7 @@ import { ListDataGrid } from "../../common/List/ListDataGrid";
 import { useAuthStore } from "../../store/useAuthStore";
 import type { GridColDef } from "@mui/x-data-grid";
 import type { ApiError } from "../../config/httpClient";
+import { useTheme, useMediaQuery } from "@mui/material";
 
 const days = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -28,6 +29,10 @@ export default function Dashboard() {
   //캘린더 회의 조회용
   const [meetings, setMeetings] = useState<MeetingListItem[]>([]);
 
+  const theme = useTheme();
+
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
   const allColumns: GridColDef[] = [
     {
       field: "id",
@@ -40,13 +45,19 @@ export default function Dashboard() {
     {
       field: "title",
       headerName: "제목",
-      flex: 2,
-      minWidth: 600,
+      flex: isMobile ? 1 : 2,
+      minWidth: isMobile ? 300 : 600, 
       headerAlign: "center",
       align: "left",
       renderCell: (params) => (
         <div
-          style={{ width: "100%", cursor: "pointer" }}
+          style={{ 
+            width: "100%", 
+            cursor: "pointer",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap" 
+          }}
           onClick={() => navigate(`/meeting/${params.id}`)}
         >
           {params.value}
