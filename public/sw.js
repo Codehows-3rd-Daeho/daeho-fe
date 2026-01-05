@@ -3,6 +3,9 @@ const URLS_TO_CACHE = [
   "/",
   "/index.html",
   "/manifest.webmanifest",
+  "/icon/apple-touch-icon.png",
+  "/icon/android-chrome-192x192.png",
+  "/icon/android-chrome-512x512.png",
 ];
 
 // 오디오/비디오 확장자 목록
@@ -116,9 +119,9 @@ self.addEventListener("push", (event) => {
 
   const title = pushData.title || "새로운 알림";
   const options = {
-    body: pushData.body || "새로운 메시지가 도착했습니다.",
-    icon: pushData.icon,
-    badge: pushData.badge,
+    body: pushData.body || "새로운 메시지가 도착했습니다.", // 알림 본문
+    icon: pushData.icon || "/icon/android-chrome-192x192.png", // 알림 아이콘
+    badge: pushData.badge || "/icon/android-chrome-192x192.png", // 알림 배지(작은 아이콘, 모바일 등에서 사용)
     data: {
       url: pushData.url || "/",
     },
