@@ -9,6 +9,9 @@ import { useCommentController } from "../../../comment/component/useCommentContr
 import { useAuthStore } from "../../../store/useAuthStore";
 import CommentSection from "../../../comment/component/CommentSection";
 import { CommonPagination } from "../../../common/Pagination/Pagination";
+import { useEffect, useState } from "react";
+import type { MentionMemberDto } from "../../../comment/type/type";
+import { getPartMemberList } from "../../../admin/member/api/MemberApi";
 
 interface Props {
   meetingId: number;
@@ -41,6 +44,19 @@ export default function TabComment({ meetingId }: Props) {
     updateApi: updateCommentApi,
     deleteApi: deleteCommentApi,
   });
+  const [memberList, setMemberList] = useState<MentionMemberDto[]>([]);
+  
+    useEffect(() => {
+      const fetchMembers = async () => {
+        try {
+          const data = await getPartMemberList();
+          setMemberList(data as unknown as MentionMemberDto[]);
+        } catch (error) {
+          console.error("멘션 멤버 목록 로드 실패:", error);
+        }
+      };
+      fetchMembers();
+    }, []);
 
   return (
     <Box>
@@ -73,6 +89,7 @@ export default function TabComment({ meetingId }: Props) {
         comments={[]}
         enableMention
         commentText={commentText}
+        memberList={memberList}
         onChangeText={setCommentText}
         onAddMention={addMentionedMemberId}
         onSubmit={submit}
