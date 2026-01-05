@@ -119,33 +119,48 @@ export default function IssueKanban() {
         <AddButton onClick={() => navigate("/issue/create")} />
       </Box>
       {/* 헤더 */}
+
       <PageHeader>
-        <Box sx={{ alignSelf: "center" }}>
-          <Toggle
-            options={[
-              { label: "리스트", value: "list", path: "/issue/list" },
-              { label: "칸반", value: "kanban", path: "/issue/kanban" },
-            ]}
-          />
-        </Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <DateFilter
-            startDate={filter.startDate ?? ""}
-            endDate={filter.endDate ?? ""}
-            onStartDateChange={(v) =>
-              setFilter((prev) => ({ ...prev, startDate: v }))
-            }
-            onEndDateChange={(v) =>
-              setFilter((prev) => ({ ...prev, endDate: v }))
-            }
-          />
-          <Filter
-            value={filter}
-            onChange={handleFilterChange}
-            excludeSections={["상태"]}
-          />
-          <SearchBar onSearch={handleSearch} placeholder="검색" />
-        </Box>
+        {(width) => (
+          <>
+            <Box sx={{ alignSelf: "center" }}>
+              <Toggle
+                options={[
+                  { label: "리스트", value: "list", path: "/issue/list" },
+                  { label: "칸반", value: "kanban", path: "/issue/kanban" },
+                ]}
+              />
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              {width >= 900 && ( // md 대신 containerWidth 기준
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                  }}
+                >
+                  <DateFilter
+                    startDate={filter.startDate ?? ""}
+                    endDate={filter.endDate ?? ""}
+                    onStartDateChange={(v) =>
+                      setFilter((prev) => ({ ...prev, startDate: v }))
+                    }
+                    onEndDateChange={(v) =>
+                      setFilter((prev) => ({ ...prev, endDate: v }))
+                    }
+                  />
+                  <Filter
+                    value={filter}
+                    onChange={handleFilterChange}
+                    excludeSections={["상태"]}
+                  />
+                </Box>
+              )}
+              <SearchBar onSearch={handleSearch} placeholder="검색" />
+            </Box>
+          </>
+        )}
       </PageHeader>
 
       {/* 칸반 */}

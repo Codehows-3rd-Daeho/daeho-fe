@@ -182,44 +182,66 @@ export default function MTIssueList() {
       </Box>
 
       <PageHeader>
-        <Box sx={{ alignSelf: "center" }}>
-          <Toggle
-            options={[
-              { label: "리스트", value: "list", path: "/mytask/issue/list" },
-              { label: "칸반", value: "kanban", path: "/mytask/issue/kanban" },
-            ]}
-          />
-        </Box>
+        {(width) => (
+          <>
+            <Box sx={{ alignSelf: "center" }}>
+              <Toggle
+                options={[
+                  {
+                    label: "리스트",
+                    value: "list",
+                    path: "/mytask/issue/list",
+                  },
+                  {
+                    label: "칸반",
+                    value: "kanban",
+                    path: "/mytask/issue/kanban",
+                  },
+                ]}
+              />
+            </Box>
 
-        {/* 3. 오른쪽: 필터 UI 추가 (IssueList와 동일한 구조) */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <DateFilter
-            startDate={filter.startDate ?? ""}
-            endDate={filter.endDate ?? ""}
-            onStartDateChange={(v) =>
-              setFilter((prev) => ({ ...prev, startDate: v }))
-            }
-            onEndDateChange={(v) =>
-              setFilter((prev) => ({ ...prev, endDate: v }))
-            }
-          />
+            {/* 3. 오른쪽: 필터 UI 추가 (IssueList와 동일한 구조) */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              {width >= 900 && ( // md 대신 containerWidth 기준
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                  }}
+                >
+                  <DateFilter
+                    startDate={filter.startDate ?? ""}
+                    endDate={filter.endDate ?? ""}
+                    onStartDateChange={(v) =>
+                      setFilter((prev) => ({ ...prev, startDate: v }))
+                    }
+                    onEndDateChange={(v) =>
+                      setFilter((prev) => ({ ...prev, endDate: v }))
+                    }
+                  />
 
-          <Filter
-            type="meeting"
-            value={filter}
-            onChange={(f) => {
-              setPage(1);
-              setFilter(f);
-            }}
-          />
+                  <Filter
+                    type="meeting"
+                    value={filter}
+                    onChange={(f) => {
+                      setPage(1);
+                      setFilter(f);
+                    }}
+                  />
+                </Box>
+              )}
 
-          <SearchBar
-            placeholder="검색"
-            onSearch={(value) =>
-              setFilter((prev) => ({ ...prev, keyword: value }))
-            }
-          />
-        </Box>
+              <SearchBar
+                placeholder="검색"
+                onSearch={(value) =>
+                  setFilter((prev) => ({ ...prev, keyword: value }))
+                }
+              />
+            </Box>
+          </>
+        )}
       </PageHeader>
 
       <ListDataGrid<IssueListItem>

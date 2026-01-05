@@ -21,6 +21,15 @@ const DateFilter: FC<DateRangePickerProps> = ({
         size="small"
         value={startDate}
         onChange={(e) => onStartDateChange(e.target.value)}
+        sx={{
+          "& .MuiOutlinedInput-root": {
+            borderRadius: "12px",
+          },
+
+          "& .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#94a3b8",
+          },
+        }}
       />
       <Typography>~</Typography>
       <TextField
@@ -28,6 +37,15 @@ const DateFilter: FC<DateRangePickerProps> = ({
         size="small"
         value={endDate}
         onChange={(e) => onEndDateChange(e.target.value)}
+        sx={{
+          "& .MuiOutlinedInput-root": {
+            borderRadius: "12px",
+          },
+
+          "& .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#94a3b8",
+          },
+        }}
       />
     </Box>
   );

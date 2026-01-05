@@ -25,14 +25,15 @@ export function KanbanBoard({
   return (
     <div className="h-full flex flex-col pb-6 pt-6">
       {/* Kanban 보드 */}
-      <div className="flex flex-row flex-wrap gap-8">
+      {/* <div className="flex flex-row flex-wrap gap-8"> */}
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(270px,1fr))] gap-8">
         {columns.map((col) => {
           const fullList = issues[col.key] || [];
           const sliced = fullList.slice(0, visibleCount[col.key]);
           const hasMore = fullList.length > visibleCount[col.key];
 
           return (
-            <div key={col.key} className="flex-1 min-w-[450px] max-w-[500px]">
+            <div key={col.key}>
               <KanbanColumn
                 title={col.title}
                 issues={sliced}
