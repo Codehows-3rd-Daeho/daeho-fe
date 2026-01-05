@@ -131,7 +131,7 @@ export default function Header({ name, jobPosition, profileUrl }: HeaderProps) {
         boxShadow: "none",
       }}
     >
-      <Toolbar sx={{ justifyContent: "flex-end", gap: 2 }}>
+      <Toolbar sx={{ justifyContent: "flex-end", gap: 2, px: 50 }}>
         <RecordingIndicator />
         {/* 알림 */}
         <NotificationDropdown
