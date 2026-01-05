@@ -12,6 +12,7 @@ export type MeetingLoglist = {
   targetId: number;
   targetType: string;
   changeType: string;
+  parentId?: number;
   message: string;
   updateField: string;
   createTime: Date;

@@ -11,6 +11,7 @@ export type IssueLoglist = {
   id: number;
   targetId: number;
   targetType: string;
+  parentId?: number;
   changeType: string;
   message: string;
   updateField: string;

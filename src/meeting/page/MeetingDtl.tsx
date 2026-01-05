@@ -201,7 +201,7 @@ export default function MeetingDtl() {
         p: 3,
         bgcolor: "#f5f5f5",
         minWidth: 300,
-        flexDirection: { xs: "column-reverse", md: "row" }, // 모바일: 세로(2,1), 데스크탑: 가로(1,2)
+        flexDirection: { xs: "column", md: "row" }, // 모바일: 세로(1, 2), 데스크탑: 가로(1,2)
       }}
     >
       {/* 왼쪽 섹션 */}
@@ -350,11 +350,12 @@ export default function MeetingDtl() {
 
           <Box p={2}>
             {tabValue === 0 && <TabComment meetingId={Number(meetingId)} />}
-            {tabValue === 1 && 
-            <TabSTT 
-            meeting={meeting} 
-            fetchMeetingDetail={fetchMeetingDetail}
-            />}
+            {tabValue === 1 && (
+              <TabSTT
+                meeting={meeting}
+                fetchMeetingDetail={fetchMeetingDetail}
+              />
+            )}
             {tabValue === 2 && <TabLog meetingId={meetingId!} />}
           </Box>
         </Box>
@@ -633,19 +634,17 @@ export default function MeetingDtl() {
           <InfoRow
             label="회의 요약"
             value={
-                <Button
-                  variant="outlined"
-                  size="small"
-                  sx={{ borderRadius: 1.5 }}
-                  onClick={() => setShowSummaryModal(true)}
-                >
-                  요약 보기
-                </Button>
+              <Button
+                variant="outlined"
+                size="small"
+                sx={{ borderRadius: 1.5 }}
+                onClick={() => setShowSummaryModal(true)}
+              >
+                요약 보기
+              </Button>
             }
           />
         </Box>
-
-        
 
         {/* 버튼 */}
         {((meeting.isEditPermitted && meeting.status !== "COMPLETED") ||

@@ -35,19 +35,21 @@ export default function MeetingList() {
   });
 
   useEffect(() => {
-    getMeetingListMT(member!.memberId, page - 1, 10, filter).then((data) => {
-      const list = (data.content ?? data).map((item: MeetingListItem) => ({
-        ...item,
-        status: getStatusLabel(item.status),
-      }));
+    getMeetingListMT(member!.memberId, page - 1, 10, filter)
+      .then((data) => {
+        const list = (data.content ?? data).map((item: MeetingListItem) => ({
+          ...item,
+          status: getStatusLabel(item.status),
+        }));
 
-      setData(list);
-      setTotalCount(data.totalElements || 0); // 전체 개수
-    }).catch((error) => {
-      const apiError = error as ApiError;
-      const response = apiError.response?.data?.message;
-      alert(response ?? "오류가 발생했습니다.");
-    });
+        setData(list);
+        setTotalCount(data.totalElements || 0); // 전체 개수
+      })
+      .catch((error) => {
+        const apiError = error as ApiError;
+        const response = apiError.response?.data?.message;
+        alert(response ?? "오류가 발생했습니다.");
+      });
   }, [page, filter]);
 
   const allColumns: GridColDef[] = [
@@ -163,36 +165,52 @@ export default function MeetingList() {
       </Box>
 
       <PageHeader>
-        <Box /> {/* 왼쪽 공간 확보 */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          {/* 날짜 필터 */}
-          <DateFilter
-            startDate={filter.startDate ?? ""}
-            endDate={filter.endDate ?? ""}
-            onStartDateChange={(v) =>
-              setFilter((prev) => ({ ...prev, startDate: v }))
-            }
-            onEndDateChange={(v) =>
-              setFilter((prev) => ({ ...prev, endDate: v }))
-            }
-          />
+        {(width) => (
+          <>
+            <Box /> {/* 왼쪽 공간 확보 */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              {width >= 900 && ( // md 대신 containerWidth 기준
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                  }}
+                >
+                  {/* 날짜 필터 */}
+                  <DateFilter
+                    startDate={filter.startDate ?? ""}
+                    endDate={filter.endDate ?? ""}
+                    onStartDateChange={(v) =>
+                      setFilter((prev) => ({ ...prev, startDate: v }))
+                    }
+                    onEndDateChange={(v) =>
+                      setFilter((prev) => ({ ...prev, endDate: v }))
+                    }
+                  />
 
-          {/* 공통 필터 (부서, 카테고리, 상태 등) */}
-          <Filter
-            type="meeting"
-            value={filter}
-            onChange={(f) => {
-              setPage(1);
-              setFilter(f);
-            }}
-          />
+                  {/* 공통 필터 (부서, 카테고리, 상태 등) */}
+                  <Filter
+                    type="meeting"
+                    value={filter}
+                    onChange={(f) => {
+                      setPage(1);
+                      setFilter(f);
+                    }}
+                  />
+                </Box>
+              )}
 
-          {/* 검색창 */}
-          <SearchBar
-            onSearch={(val) => setFilter((prev) => ({ ...prev, keyword: val }))}
-            placeholder="회의 제목 검색"
-          />
-        </Box>
+              {/* 검색창 */}
+              <SearchBar
+                onSearch={(val) =>
+                  setFilter((prev) => ({ ...prev, keyword: val }))
+                }
+                placeholder="회의 제목 검색"
+              />
+            </Box>
+          </>
+        )}
       </PageHeader>
       {/* 리스트 */}
       <ListDataGrid<MeetingListItem>

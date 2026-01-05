@@ -34,6 +34,15 @@ export const SearchBar = ({ onSearch, placeholder }: SearchBarProps) => {
           </InputAdornment>
         ),
       }}
+      sx={{
+        "& .MuiOutlinedInput-root": {
+          borderRadius: "12px",
+        },
+
+        "& .MuiOutlinedInput-notchedOutline": {
+          borderColor: "#94a3b8",
+        },
+      }}
     />
   );
 };

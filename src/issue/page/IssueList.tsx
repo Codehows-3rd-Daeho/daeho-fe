@@ -185,47 +185,60 @@ export default function IssueList() {
       </Box>
 
       <PageHeader>
-        {/* 왼쪽: 토글 */}
-        <Box sx={{ alignSelf: "center" }}>
-          <Toggle
-            options={[
-              { label: "리스트", value: "list", path: "/issue/list" },
-              { label: "칸반", value: "kanban", path: "/issue/kanban" },
-            ]}
-          />
-        </Box>
+        {(width) => (
+          <>
+            {/* 왼쪽: 토글 */}
+            <Box sx={{ alignSelf: "center" }}>
+              <Toggle
+                options={[
+                  { label: "리스트", value: "list", path: "/issue/list" },
+                  { label: "칸반", value: "kanban", path: "/issue/kanban" },
+                ]}
+              />
+            </Box>
 
-        {/* 오른쪽: 필터 + 검색창 */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          {/* 날짜 필터 */}
-          <DateFilter
-            startDate={filter.startDate ?? ""}
-            endDate={filter.endDate ?? ""}
-            onStartDateChange={(v) =>
-              setFilter((prev) => ({ ...prev, startDate: v }))
-            }
-            onEndDateChange={(v) =>
-              setFilter((prev) => ({ ...prev, endDate: v }))
-            }
-          />
+            {/* 오른쪽: 필터 + 검색창 */}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              {width >= 900 && (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                  }}
+                >
+                  {/* 날짜 필터 */}
+                  <DateFilter
+                    startDate={filter.startDate ?? ""}
+                    endDate={filter.endDate ?? ""}
+                    onStartDateChange={(v) =>
+                      setFilter((prev) => ({ ...prev, startDate: v }))
+                    }
+                    onEndDateChange={(v) =>
+                      setFilter((prev) => ({ ...prev, endDate: v }))
+                    }
+                  />
 
-          {/* 필터 */}
-          <Filter
-            value={filter}
-            onChange={(f) => {
-              setPage(1);
-              setFilter(f);
-            }}
-          />
-
-          {/* 검색창 */}
-          <SearchBar
-            placeholder="검색"
-            onSearch={(value) =>
-              setFilter((prev) => ({ ...prev, keyword: value }))
-            }
-          />
-        </Box>
+                  {/* 필터 */}
+                  <Filter
+                    value={filter}
+                    onChange={(f) => {
+                      setPage(1);
+                      setFilter(f);
+                    }}
+                  />
+                </Box>
+              )}
+              {/* 검색창 */}
+              <SearchBar
+                placeholder="검색"
+                onSearch={(value) =>
+                  setFilter((prev) => ({ ...prev, keyword: value }))
+                }
+              />
+            </Box>
+          </>
+        )}
       </PageHeader>
 
       <ListDataGrid<IssueListItem>
