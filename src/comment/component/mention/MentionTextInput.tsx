@@ -182,6 +182,7 @@ export default function MentionTextInput({
           pointerEvents: "none",
           overflow: "hidden",
           backgroundColor: "#fff",
+          color: "#000",
           zIndex: 1,
           ...textStyle,
         }}
