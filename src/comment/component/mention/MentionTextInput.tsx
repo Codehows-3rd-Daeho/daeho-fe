@@ -29,7 +29,6 @@ export default function MentionTextInput({
   const [showMentionBox, setShowMentionBox] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  // ✅ 이 부분이 올바르게 수정되었습니다.
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
   const mentionBoxRef = useRef<HTMLDivElement | null>(null);
@@ -38,10 +37,17 @@ export default function MentionTextInput({
   const filteredMentionList = useMemo(() => {
     if (mentionKeyword === null) return [];
     
-    return memberList.filter((member) =>
-      member.name.toLowerCase().includes(mentionKeyword.toLowerCase()) ||
-      member.departmentName.toLowerCase().includes(mentionKeyword.toLowerCase())
-    );
+    return memberList.filter((member) => {
+      if (!member || !member.name) return false;
+
+      const nameMatch = member.name.toLowerCase().includes(mentionKeyword.toLowerCase());
+      
+      const deptMatch = member.departmentName 
+        ? member.departmentName.toLowerCase().includes(mentionKeyword.toLowerCase())
+        : false;
+
+      return nameMatch || deptMatch;
+    });
   }, [mentionKeyword, memberList]);
 
   const handleScroll = (e: React.UIEvent<HTMLElement>) => {
@@ -66,15 +72,11 @@ export default function MentionTextInput({
     }
   }, [selectedIndex, showMentionBox]);
 
-  /* 멘션 텍스트 하이라이트 (안전한 버전) */
   const renderMentionText = (text: string, mentions: Mention[]) => {
-    // 1. 텍스트가 없거나 멘션이 없으면 그대로 반환
     if (!text) return "";
     if (!mentions || mentions.length === 0) return text;
 
     try {
-      // 2. 멘션 이름들만 추출하여 정규식 패턴 생성 (@이름)
-      // 특수문자가 섞일 수 있으므로 Escape 처리 (필요시)
       const mentionNames = mentions
         .map((m) => m.name ? `@${m.name}` : null)
         .filter(Boolean) as string[];
@@ -106,7 +108,7 @@ export default function MentionTextInput({
       });
     } catch (error) {
       console.error("Rendering mention text error:", error);
-      return text; // 에러 발생 시 원문 텍스트라도 보여줌
+      return text; 
     }
   };
 
