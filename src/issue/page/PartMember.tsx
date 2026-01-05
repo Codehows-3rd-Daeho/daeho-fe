@@ -332,11 +332,16 @@ export default function PartMember({
 </Box>
           {/* 오른쪽 컨텐츠 */}
           <DialogContent
+          dividers={false}
             sx={{
               flex: 1,
               display: "flex",
               flexDirection: "column",
               overflow: "hidden",
+              p: "0 !important", 
+    "&:first-of-type": { pt: 0 }, 
+    borderTop: "none",
+    borderBottom: "none",
             }}
           >
             {/* 전체 선택 */}
@@ -379,6 +384,7 @@ export default function PartMember({
             <Box
               sx={{
                 display: "flex",
+                flex: 1,
                 flexDirection: "column",
                 maxHeight: 500,
                 overflowY: "auto",
@@ -393,7 +399,7 @@ export default function PartMember({
               }}
             >
               {currentParticipants
-                .slice() // 원본 보호용
+                .slice() 
                 .sort((a, b) => (a.isHost ? -1 : b.isHost ? 1 : 0))
                 .map((participant) => (
                   <Box
