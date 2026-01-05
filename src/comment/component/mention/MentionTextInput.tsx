@@ -222,18 +222,29 @@ export default function MentionTextInput({
           }
         }}
         sx={{
-          "& .MuiOutlinedInput-root": {
-            zIndex: 2,
-            backgroundColor: "transparent",
-            "& fieldset": { borderColor: "#ddd" },
-          },
-          "& textarea": {
-            ...textStyle,
-            color: "transparent",
-            caretColor: "#000",
-            zIndex: 3,
-          },
-        }}
+    "& .MuiOutlinedInput-root": {
+      zIndex: 2,
+      backgroundColor: "transparent", 
+      "& fieldset": { borderColor: "#ddd" },
+      
+      "&.Mui-focused": {
+        backgroundColor: "transparent", 
+      },
+      "&:hover": {
+        backgroundColor: "transparent",
+      },
+      "& input, & textarea": {
+         backgroundColor: "transparent !important",
+      }
+    },
+    "& textarea": {
+      ...textStyle,
+      color: "transparent", 
+      caretColor: "#000",  
+      zIndex: 3,
+      outline: "none",
+    },
+  }}
       />
 
       {enableMention && showMentionBox && (
