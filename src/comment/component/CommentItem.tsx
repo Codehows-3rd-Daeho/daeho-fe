@@ -159,7 +159,7 @@ export const CommentItem = ({
           <AccountCircleIcon fontSize="large" />
         </Avatar>
 
-        <Box sx={{ flex: 1 }}>
+        <Box sx={{ flex: 1 ,backgroundColor: "#fff", borderRadius: 1}}>
           <Typography fontWeight={600}>
             {comment.writerName} {comment.writerJPName}
           </Typography>
