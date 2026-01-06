@@ -101,7 +101,7 @@ export default function MyPage() {
   };
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 5, mb: 5 }}>
+    <Container maxWidth="sm" sx={{ mt: 3, mb: 5 }}>
       <Typography variant="h5" fontWeight="bold" sx={{ mb: 4 }}>
         마이페이지
       </Typography>
@@ -178,7 +178,7 @@ const InfoRow: React.FC<InfoRowProps> = ({
   onToggleShowPassword,
 }) => {
   return (
-    <Box sx={{ display: "flex", alignItems: "center", mb: 5, mt: 5 }}>
+    <Box sx={{ display: "flex", alignItems: "center", mb: 5 }}>
       {" "}
       {/* 기존 간격 유지 */}
       {/* 라벨 영역 */}
