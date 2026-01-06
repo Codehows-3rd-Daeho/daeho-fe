@@ -108,7 +108,7 @@ function useBlockNavigation(
 export default function AppLayout({ children }: AppLayoutProps) {
   const { member } = useAuthStore();
   const [collapsed, setCollapsed] = useState(false);
-  const [mobileHidden, setMobileHidden] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const { isAnyRecordingActive, handleLastChunk, clear } = useRecordingStore();
   const isCurrentlyRecording = isAnyRecordingActive();
   const confirmationMessage =
@@ -152,43 +152,28 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const location = useLocation();
 
   return (
-    <div className="flex h-screen ">
-      {/* 데스크탑 */}
-      <div className="hidden sm:block">
-        <Sidebar
-          items={sidebarItems}
-          selectedId="dashboard"
-          collapsed={collapsed}
-          onToggle={handleToggleSidebar}
-          width={300} // 접힐 때 72px 사용
-        />
-      </div>
+    <div className="flex h-screen overflow-hidden">
+      {/* 1. 사이드바 배치 변경: 
+          Sidebar 내부에서 이미 Permanent/Temporary를 구분하므로 div로 감싸지 않습니다. */}
+      <Sidebar
+        items={sidebarItems}
+        collapsed={collapsed}
+        onToggle={() => setCollapsed(!collapsed)}
+        openMobile={mobileOpen}
+        onCloseMobile={() => setMobileOpen(false)}
+        width={300}
+      />
 
-      {/* 모바일 */}
-      <div className="sm:hidden">
-        <Sidebar
-          items={sidebarItems}
-          variant="temporary" // 모바일 drawer
-          isMobileSidebarOpen={!mobileHidden}
-          onClose={() => setMobileHidden(true)}
-          collapsed={false}
-        />
-
-        <IconButton
-          onClick={() => setMobileHidden((prev) => !prev)}
-          style={{ position: "fixed", top: "10px", left: "10px", zIndex: 9999 }}
-        >
-          <MenuIcon />
-        </IconButton>
-      </div>
-
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <header className="h-[60px] shrink-0 ">
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        {/* 2. 헤더에 onMenuClick 전달 */}
+        <header className="h-[60px] shrink-0">
           <Header
             name={member?.name ?? ""}
             jobPosition={member?.jobPosition ?? ""}
             profileUrl={member?.profileUrl ?? ""}
             notifications={[]}
+            collapsed={collapsed}
+            onMenuClick={() => setMobileOpen(true)}
           />
         </header>
 

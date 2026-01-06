@@ -11,8 +11,11 @@ import {
   IconButton,
   Tabs,
   Tab,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import MenuIcon from "@mui/icons-material/Menu";
 import type { IssueMemberDto, PartMemberList } from "../type/type";
 import { useAuthStore } from "../../store/useAuthStore";
 import {
@@ -43,14 +46,25 @@ export default function PartMember({
   mode,
 }: PartMemberProps) {
   const [open, setOpen] = useState(false);
-  const handleOpen = () => setOpen(true);
+  const handleOpen = () => {
+    setOpen(true);
+    setIsSidebarOpen(!isMobile);
+  };
   const handleClose = () => setOpen(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobile);
 
   // 분류탭
   const [activeTab, setActiveTab] = useState(0);
   const [categories, setCategories] = useState<CategoryType[]>(["전체"]);
   const [allParticipants, setAllParticipants] = useState<Participant[]>([]);
   const [groups, setGroups] = useState<Group[]>([]);
+
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setActiveTab(newValue);
+    if (isMobile) setIsSidebarOpen(false); // 모바일에서 카테고리 선택 시 탭 닫기
+  };
 
   const currentCategory = categories[activeTab];
 
@@ -132,10 +146,6 @@ export default function PartMember({
     loadData();
   }, [memberId, initialMembers, mode]);
 
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
-  };
-
   // 개별 선택 핸들러
   const handleSelectParticipant = (id: number) => {
     setAllParticipants((prev) => {
@@ -214,7 +224,7 @@ export default function PartMember({
     });
   };
 
-  const selectedCount = allParticipants.filter((p) => p.selected).length;
+  // const selectedCount = allParticipants.filter((p) => p.selected).length;
   const allSelected =
     currentParticipants.length > 0 &&
     currentParticipants.every((p) => p.selected);
@@ -236,18 +246,19 @@ export default function PartMember({
           textTransform: "none",
         }}
       >
-        참여자 추가 ({selectedCount} 명)
+        참여자 추가 ({allParticipants.filter((p) => p.selected).length} 명)
       </Button>
 
       <Dialog
         open={open}
         onClose={handleClose}
         maxWidth="md"
+        fullScreen={isMobile}
         slotProps={{
           paper: {
             sx: {
-              maxHeight: "90vh",
-              width: "750px",
+              maxHeight: isMobile ? "100vh" : "90vh",
+              width: isMobile ? "100%" : "750px",
             },
           },
         }}
@@ -260,52 +271,87 @@ export default function PartMember({
             pb: 2,
           }}
         >
-          <Typography variant="h6" component="div">
-            참여자 추가
-          </Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            {/* 🍔 사이드바 토글 버튼 */}
+            <IconButton
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              size="small"
+              color="primary"
+            >
+              <MenuIcon />
+            </IconButton>
+            <Typography variant="h6" component="div">
+              참여자 추가
+            </Typography>
+          </Box>
           <IconButton onClick={handleClose} size="small">
             <CloseIcon />
           </IconButton>
         </DialogTitle>
 
-        <Box sx={{ display: "flex", flex: 1, overflow: "hidden" }}>
+        <Box
+          sx={{
+            display: "flex",
+            flex: 1,
+            overflow: "hidden",
+            position: "relative",
+          }}
+        >
           {/* 왼쪽 세로 탭 */}
-          <Tabs
-            orientation="vertical"
-            value={activeTab}
-            onChange={handleTabChange}
+          <Box
             sx={{
-              borderRight: 1,
+              width: isSidebarOpen ? (isMobile ? "100%" : 220) : 0,
+              transition: "width 0.3s ease",
+              overflow: "hidden",
+              borderRight: isSidebarOpen && !isMobile ? 1 : 0,
               borderColor: "divider",
-              minWidth: 200,
-              mb: 2,
-              "& .MuiTab-root": {
-                alignItems: "flex-start",
-                textAlign: "left",
-                px: 2.5,
-                py: 1.5,
-                minHeight: 44,
-                textTransform: "none",
-              },
-              "& .Mui-selected": {
-                fontWeight: 600,
-                borderRadius: 1,
-                mx: 1,
-              },
+              position: isMobile ? "absolute" : "relative",
+              zIndex: 10,
+              bgcolor: "background.paper",
+              height: "100%",
             }}
           >
-            {categories.map((category) => (
-              <Tab key={category} label={category} />
-            ))}
-          </Tabs>
-
+            <Tabs
+              orientation="vertical"
+              value={activeTab}
+              onChange={handleTabChange}
+              sx={{
+                borderRight: 1,
+                borderColor: "divider",
+                minWidth: 200,
+                mb: 2,
+                "& .MuiTab-root": {
+                  alignItems: "flex-start",
+                  textAlign: "left",
+                  px: 2.5,
+                  py: 1.5,
+                  minHeight: 44,
+                  textTransform: "none",
+                },
+                "& .Mui-selected": {
+                  fontWeight: 600,
+                  borderRadius: 1,
+                  mx: 1,
+                },
+              }}
+            >
+              {categories.map((category) => (
+                <Tab key={category} label={category} />
+              ))}
+            </Tabs>
+          </Box>
           {/* 오른쪽 컨텐츠 */}
           <DialogContent
+            dividers={false}
             sx={{
               flex: 1,
               display: "flex",
               flexDirection: "column",
               overflow: "hidden",
+              p: "0 !important",
+              "&:first-of-type": { pt: 0 },
+              borderTop: "none",
+              borderBottom: "none",
             }}
           >
             {/* 전체 선택 */}
@@ -347,22 +393,18 @@ export default function PartMember({
             {/* 참여자 목록 */}
             <Box
               sx={{
-                display: "flex",
-                flexDirection: "column",
-                maxHeight: 500,
+                flex: 1,
                 overflowY: "auto",
-                pr: 2,
-                "&::-webkit-scrollbar": {
-                  width: 6,
-                },
+                pb: isMobile ? "70px" : 0,
+                "&::-webkit-scrollbar": { width: "5px" },
                 "&::-webkit-scrollbar-thumb": {
-                  backgroundColor: "#ccc",
-                  borderRadius: 3,
+                  backgroundColor: "#bbb",
+                  borderRadius: "10px",
                 },
               }}
             >
               {currentParticipants
-                .slice() // 원본 보호용
+                .slice()
                 .sort((a, b) => (a.isHost ? -1 : b.isHost ? 1 : 0))
                 .map((participant) => (
                   <Box
@@ -428,6 +470,34 @@ export default function PartMember({
                   </Box>
                 ))}
             </Box>
+            {isMobile && (
+              <Box
+                sx={{
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  p: 1.5,
+                  background:
+                    "linear-gradient(to top, rgba(255,255,255,1) 85%, rgba(255,255,255,0) 100%)",
+                  zIndex: 10,
+                }}
+              >
+                <Button
+                  fullWidth
+                  onClick={handleClose}
+                  variant="contained"
+                  size="large"
+                  sx={{
+                    boxShadow: "0 -2px 10px rgba(0,0,0,0.08)",
+                    borderRadius: 1.5,
+                    fontWeight: "bold",
+                  }}
+                >
+                  확인
+                </Button>
+              </Box>
+            )}
           </DialogContent>
         </Box>
       </Dialog>

@@ -15,7 +15,6 @@ export type SidebarProps = {
   onSelect?: (id: string) => void;
   width?: number;
   onToggle?: () => void;
-  variant?: "permanent" | "temporary";
-  isMobileSidebarOpen?: boolean;
-  onClose?: () => void;
+  openMobile?: boolean;
+  onCloseMobile?: () => void;
 };

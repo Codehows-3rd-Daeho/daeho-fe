@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { PageHeader } from "../../common/PageHeader/PageHeader";
 import { Toggle } from "../../common/PageHeader/Toggle/Toggle";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { getIssueListSrc } from "../api/issueApi";
 import { getStatusLabel } from "../../common/commonFunction";
 import { SearchBar } from "../../common/SearchBar/SearchBar";
@@ -19,6 +19,10 @@ import type { FilterDto } from "../../common/PageHeader/type";
 
 export default function IssueList() {
   const navigate = useNavigate();
+
+  const theme = useTheme();
+
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   // 페이징
   const [page, setPage] = useState(1);
@@ -71,13 +75,19 @@ export default function IssueList() {
     {
       field: "title",
       headerName: "제목",
-      flex: 2,
-      minWidth: 500,
+      flex: isMobile ? 1 : 2,
+      minWidth: isMobile ? 300 : 600,
       headerAlign: "center",
       align: "left",
       renderCell: (params) => (
         <div
-          style={{ width: "100%", cursor: "pointer" }}
+          style={{
+            width: "100%",
+            cursor: "pointer",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
           onClick={() => navigate(`/issue/${params.id}`)}
         >
           {params.value}
@@ -162,6 +172,10 @@ export default function IssueList() {
     },
   ];
 
+  const displayColumns = isMobile
+    ? allColumns.filter((col) => col.field === "title")
+    : allColumns;
+
   return (
     <>
       {/* 타이틀 */}
@@ -243,7 +257,7 @@ export default function IssueList() {
 
       <ListDataGrid<IssueListItem>
         rows={data}
-        columns={allColumns}
+        columns={displayColumns}
         rowIdField="id"
       />
       <CommonPagination

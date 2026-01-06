@@ -10,7 +10,7 @@ import {
   getFileSize,
 } from "../../admin/setting/api/FileSettingApi";
 
-import type { CommentDto, Mention } from "../type/type";
+import type { CommentDto, Mention, MentionMemberDto } from "../type/type";
 import MentionTextInput from "./mention/MentionTextInput";
 import { BASE_URL, type ApiError } from "../../config/httpClient";
 import { useAuthStore } from "../../store/useAuthStore";
@@ -23,6 +23,7 @@ interface Props {
   comments?: CommentDto[];
   enableInput?: boolean;
   enableMention?: boolean;
+  memberList?: MentionMemberDto[];
 
   commentText?: string;
   onChangeText?: (text: string) => void;
@@ -52,6 +53,7 @@ export default function CommentSection({
   onChangeText,
   onSubmit,
   onAddMention,
+  memberList,
   onUpdateComment,
   onDeleteComment,
   currentMemberId,
@@ -177,6 +179,7 @@ export default function CommentSection({
               mentions={mentions}
               setMentions={setMentions}
               enableMention={enableMention}
+              memberList={memberList}
               onAddMention={onAddMention}
               placeholder="댓글을 입력하세요"
             />
