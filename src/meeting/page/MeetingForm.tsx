@@ -153,6 +153,7 @@ export default function MeetingForm({
     <Box>
       <Box
         sx={{
+          display: "flex",
           gap: { md: 3 },
           p: { md: 3 },
           bgcolor: { xs: "white", md: "#f5f5f5" },
@@ -454,7 +455,6 @@ export default function MeetingForm({
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            // justifyContent: "center",
           }}
         >
           <Box
