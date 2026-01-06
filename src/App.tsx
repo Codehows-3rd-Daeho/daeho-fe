@@ -2,17 +2,10 @@ import { Routes, Route, Navigate, BrowserRouter } from "react-router-dom";
 import { useAuthStore } from "./store/useAuthStore";
 import type { JSX } from "@emotion/react/jsx-runtime";
 import { lazy } from "react";
-import MeetingCreate from "./meeting/page/MeetingCreate";
 import AppLayout from "./AppLayout";
-import MeetingScheduler from "./meeting/page/MeetingScheduler";
-import MTIssueKanban from "./mytask/page/MTIssueKanban";
-import MTIssueList from "./mytask/page/MTIssueList";
-import MTMeetingList from "./mytask/page/MTMeetingList";
-import MTMeetingScheduler from "./mytask/page/MTMeetingScheduler";
-import MyPage from "./mypage/MyPage";
-import Dashboard from "./dashboard/page/Dashboard";
 
 const Login = lazy(() => import("./login/page/Login"));
+const Dashboard = lazy(() => import("./dashboard/page/Dashboard"));
 const IssueList = lazy(() => import("./issue/page/IssueList"));
 const IssueKanban = lazy(() => import("./issue/page/IssueKanban"));
 const IssueCreate = lazy(() => import("./issue/page/IssueCreate"));
@@ -20,10 +13,20 @@ const IssueUpdate = lazy(() => import("./issue/page/IssueUpdate"));
 const IssueDtl = lazy(() => import("./issue/page/IssueDtl"));
 const MeetingList = lazy(() => import("./meeting/page/MeetingList"));
 const MeetingDtl = lazy(() => import("./meeting/page/MeetingDtl"));
+const MeetingCreate = lazy(() => import("./meeting/page/MeetingCreate"));
 const MeetingUpdate = lazy(() => import("./meeting/page/MeetingUpdate"));
+const MeetingScheduler = lazy(() => import("./meeting/page/MeetingScheduler"));
+const MTIssueKanban = lazy(() => import("./mytask/page/MTIssueKanban"));
+const MTIssueList = lazy(() => import("./mytask/page/MTIssueList"));
+const MTMeetingList = lazy(() => import("./mytask/page/MTMeetingList"));
+const MTMeetingScheduler = lazy(
+  () => import("./mytask/page/MTMeetingScheduler")
+);
+const MyPage = lazy(() => import("./mypage/MyPage"));
 const AdminSetting = lazy(() => import("./admin/setting/page/AdminSetting"));
-const MemberList = lazy(() => import("./admin/member/page/MemberList"));
 const AdminLog = lazy(() => import("./admin/log/page/LogList"));
+const MemberList = lazy(() => import("./admin/member/page/MemberList"));
+const PWAInstallGuide = lazy(() => import("./common/PWAInstallGuide"));
 
 type PrivateRouteProps = {
   children: JSX.Element;
@@ -134,6 +137,7 @@ export default function App() {
                       </PrivateRoute>
                     }
                   />
+                  <Route path="/pwa-guide" element={<PWAInstallGuide />} />
                 </Routes>
               </AppLayout>
             </PrivateRoute>
