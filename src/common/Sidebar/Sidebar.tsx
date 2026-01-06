@@ -25,6 +25,7 @@ import ExpandMore from "@mui/icons-material/ExpandMore";
 import type { SidebarProps, SidebarItem } from "./type";
 import { useAuthStore } from "../../store/useAuthStore";
 import useRecordingStore from "../../store/useRecordingStore";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 
 export default function Sidebar({
   items,
@@ -39,7 +40,6 @@ export default function Sidebar({
   const { member, logout } = useAuthStore();
   const { clear, isAnyRecordingActive, handleLastChunk } = useRecordingStore();
   const role = member?.role;
-  const isMobile = variant === "temporary";
 
   const handleLogout = async () => {
     if (isAnyRecordingActive()) {
@@ -64,7 +64,7 @@ export default function Sidebar({
   });
 
   const handleToggle = (id: string) => {
-    setMenuOpen((prev) => ({ ...prev, [id]: !prev[id] }));
+    setOpen((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   const selectedId = (() => {
