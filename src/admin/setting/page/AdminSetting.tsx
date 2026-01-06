@@ -1,4 +1,4 @@
-import { Box, Chip, CircularProgress } from "@mui/material";
+import { Box, Chip, CircularProgress, TextField } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import React, { useEffect, useState } from "react";
 import type {
@@ -14,6 +14,9 @@ import {
   deleteCategory,
   getNotiSetting,
   saveNotiSetting,
+  updateDepartment,
+  updateJobPosition,
+  updateCategory,
 } from "../api/MasterDataApi";
 import MasterData from "../component/MasterData";
 import FileSetting from "../component/FileSetting";
@@ -107,37 +110,69 @@ export default function AdminSetting() {
     list,
     setList,
     deleteApiFunction,
+    updateApiFunction,
   }: {
     list: TagItem[];
     setList: SetTagList;
     deleteApiFunction: (id: number) => Promise<void>;
-  }) => (
-    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1 }}>
-      {list.map((data) => (
-        <Chip
-          key={data.id}
-          label={data.label}
-          deleteIcon={<CloseIcon sx={{ fontSize: "16px" }} />}
-          onDelete={() => handleDelete(setList, data, deleteApiFunction)}
-          sx={{
-            fontSize: "13px",
-            height: "24px",
-            backgroundColor: "#E7F3FF",
-            borderRadius: "6px",
-            color: "#1A73E8",
-            fontWeight: 500,
-            "& .MuiChip-deleteIcon": {
-              color: "#1A73E8",
-              fontSize: "18px",
-              "&:hover": {
-                color: "#155AB6",
-              },
-            },
-          }}
-        />
-      ))}
-    </Box>
-  );
+    updateApiFunction?: (
+      id: number,
+      data: MasterDataType
+    ) => Promise<MasterDataType>;
+  }) => {
+    // RenderChips 수정 전용 상태
+    const [editingId, setEditingId] = useState<number | null>(null);
+    const [editingValue, setEditingValue] = useState("");
+
+    const handleEditClick = (tag: TagItem) => {
+      if (!updateApiFunction) return;
+      setEditingId(tag.id);
+      setEditingValue(tag.label);
+    };
+
+    return (
+      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 1 }}>
+        {list.map((tag) =>
+          editingId === tag.id && updateApiFunction ? (
+            <TextField
+              key={tag.id}
+              size="small"
+              value={editingValue}
+              autoFocus
+              onChange={(e) => setEditingValue(e.target.value)}
+              onKeyDown={async (e) => {
+                if (e.key === "Enter" && editingValue.trim()) {
+                  const updated = await updateApiFunction(tag.id, {
+                    name: editingValue.trim(),
+                  });
+
+                  setList((prev) =>
+                    prev.map((t) =>
+                      t.id === tag.id ? { ...t, label: updated.name } : t
+                    )
+                  );
+                  setEditingId(null);
+                }
+
+                if (e.key === "Escape") {
+                  setEditingId(null);
+                }
+              }}
+              onBlur={() => setEditingId(null)}
+            />
+          ) : (
+            <Chip
+              key={tag.id}
+              label={tag.label}
+              onClick={() => handleEditClick(tag)}
+              deleteIcon={<CloseIcon sx={{ fontSize: "16px" }} />}
+              onDelete={() => handleDelete(setList, tag, deleteApiFunction)}
+            />
+          )
+        )}
+      </Box>
+    );
+  };
 
   // Chip 삭제 핸들러
   const handleDelete = async (
@@ -265,6 +300,13 @@ export default function AdminSetting() {
                   : props.list === jobPositions
                   ? deleteJobPosition
                   : deleteCategory
+              }
+              updateApiFunction={
+                props.list === departments
+                  ? updateDepartment
+                  : props.list === jobPositions
+                  ? updateJobPosition
+                  : updateCategory
               }
             />
           )}
