@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { PageHeader } from "../../common/PageHeader/PageHeader";
 import { Toggle } from "../../common/PageHeader/Toggle/Toggle";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { useAuthStore } from "../../store/useAuthStore";
 import { getStatusLabel } from "../../common/commonFunction";
 import { getIssueListMT } from "../../issue/api/issueApi";
@@ -30,6 +30,11 @@ export default function MTIssueList() {
     startDate: "",
     endDate: "",
   });
+
+  const theme = useTheme();
+
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
   // 페이징
   const [page, setPage] = useState(1);
   const [data, setData] = useState<IssueListItem[]>([]);
@@ -69,13 +74,19 @@ export default function MTIssueList() {
     {
       field: "title",
       headerName: "제목",
-      flex: 2,
-      minWidth: 600,
+      flex: isMobile ? 1 : 2,
+      minWidth: isMobile ? 300 : 600,
       headerAlign: "center",
       align: "left",
       renderCell: (params) => (
         <div
-          style={{ width: "100%", cursor: "pointer" }}
+          style={{
+            width: "100%",
+            cursor: "pointer",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
           onClick={() => navigate(`/issue/${params.id}`)}
         >
           {params.value}
@@ -159,6 +170,10 @@ export default function MTIssueList() {
       align: "center",
     },
   ];
+
+  const displayColumns = isMobile
+    ? allColumns.filter((col) => col.field === "title")
+    : allColumns;
 
   return (
     <>
@@ -246,7 +261,7 @@ export default function MTIssueList() {
 
       <ListDataGrid<IssueListItem>
         rows={data}
-        columns={allColumns}
+        columns={displayColumns}
         rowIdField="id"
       />
 

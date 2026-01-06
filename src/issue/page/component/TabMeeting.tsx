@@ -7,10 +7,15 @@ import { ListDataGrid } from "../../../common/List/ListDataGrid";
 import { CommonPagination } from "../../../common/Pagination/Pagination";
 import { getMeetingRelatedIssue } from "../../api/issueApi";
 import type { ApiError } from "../../../config/httpClient";
+import { useMediaQuery, useTheme } from "@mui/material";
 
 export default function TabMeeting() {
   const navigate = useNavigate();
   const { issueId } = useParams();
+
+  const theme = useTheme();
+
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const [page, setPage] = useState(1);
   const [data, setData] = useState<MeetingListItem[]>([]);
@@ -45,13 +50,19 @@ export default function TabMeeting() {
     {
       field: "title",
       headerName: "제목",
-      flex: 2,
-      minWidth: 180,
+      flex: isMobile ? 1 : 2,
+      minWidth: isMobile ? 150 : 180,
       headerAlign: "center",
       align: "left",
       renderCell: (params) => (
         <div
-          style={{ width: "100%", cursor: "pointer" }}
+          style={{
+            width: "100%",
+            cursor: "pointer",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
           onClick={() => navigate(`/meeting/${params.id}`)}
         >
           {params.value}
@@ -100,12 +111,16 @@ export default function TabMeeting() {
     },
   ];
 
+  const displayColumns = isMobile
+    ? allColumns.filter((col) => col.field === "title")
+    : allColumns;
+
   return (
     <>
       {/* 리스트 */}
       <ListDataGrid<MeetingListItem>
         rows={data}
-        columns={allColumns}
+        columns={displayColumns}
         rowIdField="id"
       />
       {/* 페이징 */}

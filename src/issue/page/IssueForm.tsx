@@ -134,11 +134,11 @@ export default function IssueForm({
       <Box
         sx={{
           display: "flex",
-          gap: 3,
-          p: 3,
-          bgcolor: "#f5f5f5",
-          minWidth: 300,
-          flexDirection: { xs: "column", md: "row" }, // 모바일: 세로(1, 2), 데스크탑: 가로(1,2)
+          gap: { md: 3 },
+          p: { md: 3 },
+          bgcolor: { xs: "white", md: "#f5f5f5" },
+          minWidth: { xs: "100%", md: 300 },
+          flexDirection: { xs: "column", md: "row" },
         }}
       >
         {/* 왼쪽 섹션 */}
@@ -146,10 +146,10 @@ export default function IssueForm({
           sx={{
             flex: 1,
             bgcolor: "white",
-            borderRadius: 2,
-            p: 3,
-            boxShadow: 1,
-            minWidth: 150,
+            borderRadius: { md: 2 },
+            p: { md: 3 },
+            boxShadow: { md: 1 },
+            // minWidth: 150,
           }}
         >
           {/* 제목 */}
@@ -432,20 +432,22 @@ export default function IssueForm({
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            justifyContent: "center",
+            // justifyContent: "center",
           }}
         >
           <Box
             sx={{
-              height: 800,
               display: "flex",
               flexDirection: "column",
               gap: 2,
               bgcolor: "white",
-              borderRadius: 2,
-              boxShadow: 1,
-              minWidth: 150,
-              maxWidth: 360,
+              borderRadius: { md: 2 },
+              boxShadow: { md: 1 },
+              p: { xs: 2, md: 3 },
+              mt: { xs: 5, md: 0 },
+              width: "100%",
+              minWidth: { xs: 0, md: 250 },
+              maxWidth: 400,
             }}
           >
             {/* 상태 */}
@@ -552,7 +554,11 @@ export default function IssueForm({
                 </Box>
               </Box>
 
-              <Box sx={{ mt: 2 }}>
+              <Box
+                sx={{
+                  "& .rdrMonth": { width: "300px", padding: "0" },
+                }}
+              >
                 <DateRange
                   ranges={range}
                   onChange={(ranges) => {
