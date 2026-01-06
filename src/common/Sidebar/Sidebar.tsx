@@ -25,6 +25,7 @@ import ExpandMore from "@mui/icons-material/ExpandMore";
 import type { SidebarProps, SidebarItem } from "./type";
 import { useAuthStore } from "../../store/useAuthStore";
 import useRecordingStore from "../../store/useRecordingStore";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 
 export default function Sidebar({
   items,
@@ -39,7 +40,6 @@ export default function Sidebar({
   const { member, logout } = useAuthStore();
   const { clear, isAnyRecordingActive, handleLastChunk } = useRecordingStore();
   const role = member?.role;
-  const isMobile = variant === "temporary";
 
   const handleLogout = async () => {
     if (isAnyRecordingActive()) {
@@ -49,6 +49,7 @@ export default function Sidebar({
       clear();
     }
     logout();
+    if (openMobile) onCloseMobile?.(); // 로그아웃 시 모바일 사이드바 닫기
     navigate("/login");
   };
 
@@ -64,7 +65,7 @@ export default function Sidebar({
   });
 
   const handleToggle = (id: string) => {
-    setMenuOpen((prev) => ({ ...prev, [id]: !prev[id] }));
+    setOpen((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   const selectedId = (() => {
@@ -151,7 +152,6 @@ export default function Sidebar({
           {hasChildren && (
             <Collapse in={open[item.id]} timeout="auto" unmountOnExit>
               <List component="div" disablePadding>
-                {/* child에도 SidebarItem 타입 적용 */}
                 {children.map((child: SidebarItem) => (
                   <ListItemButton
                     key={child.id}
@@ -165,14 +165,25 @@ export default function Sidebar({
                       }
                     }}
                   >
+                    {/* 자식 아이콘 추가 영역 */}
+                    {child.icon && (
+                      <ListItemIcon sx={{ minWidth: 40 }}>
+                        {child.icon}
+                      </ListItemIcon>
+                    )}
+
                     <ListItemText
                       primary={child.label}
-                      sx={{ opacity: collapsed && !openMobile ? 0 : 1 }}
+                      sx={{
+                        opacity: collapsed && !openMobile ? 0 : 1,
+
+                        pr: 1,
+                      }}
                       slotProps={{
                         primary: {
                           sx: {
                             fontWeight: child.id === selectedId ? 700 : 500,
-                            pl: 2,
+                            display: "block",
                           },
                         },
                       }}
@@ -200,7 +211,7 @@ export default function Sidebar({
         <Toolbar
           sx={{
             px: 2,
-            py: 3,
+            py: 3.7,
             display: "flex",
             justifyContent:
               collapsed && !openMobile ? "center" : "space-between",
@@ -211,15 +222,13 @@ export default function Sidebar({
               sx={{ cursor: "pointer" }}
               onClick={() => {
                 navigate("/");
-                if (openMobile) {
-                  onCloseMobile?.();
-                }
+                if (openMobile) onCloseMobile?.(); // 로고 클릭 시 모바일 사이드바 닫기
               }}
             >
               <img
                 src="/daehologo.gif"
                 alt="로고"
-                style={{ width: 150, height: "auto" }}
+                style={{ width: 200, height: 45 }}
               />
             </Box>
           )}
@@ -264,13 +273,12 @@ export default function Sidebar({
           variant="text"
           startIcon={<LogoutIcon />}
           fullWidth
-          sx={{ justifyContent: "flex-start", color: "#d32f2f" }}
+          sx={{ justifyContent: "flex-start", color: "#1a1a1adb" }}
           onClick={handleLogout}
         >
           {!(collapsed && !openMobile) && "Logout"}
         </Button>
-
-        {/* PWA Guide */}
+           {/* PWA Guide */}
         <Tooltip title="앱 설치 가이드">
           <IconButton
             size="small"

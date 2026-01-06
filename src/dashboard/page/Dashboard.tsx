@@ -31,7 +31,7 @@ export default function Dashboard() {
 
   const theme = useTheme();
 
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isThemeSmall = useMediaQuery(theme.breakpoints.down("sm"));
 
   const allColumns: GridColDef[] = [
     {
@@ -45,8 +45,8 @@ export default function Dashboard() {
     {
       field: "title",
       headerName: "제목",
-      flex: isMobile ? 1 : 2,
-      minWidth: isMobile ? 300 : 600,
+      flex: isThemeSmall ? 1 : 2,
+      minWidth: isThemeSmall ? 300 : 600,
       headerAlign: "center",
       align: "left",
       renderCell: (params) => (
@@ -107,7 +107,7 @@ export default function Dashboard() {
     },
   ];
 
-  const displayColumns = isMobile
+  const displayColumns = isThemeSmall
     ? allColumns.filter((col) => col.field === "title")
     : allColumns;
 

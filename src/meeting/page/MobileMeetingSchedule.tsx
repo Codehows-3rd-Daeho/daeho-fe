@@ -157,7 +157,7 @@ export default function MobileMeetingSchedule({
                             sx={{
                               color: "black",
                               minWidth: 0,
-                              maxWidth: "80%",
+                              maxWidth: "75%",
                               overflow: "auto",
                             }}
                           >

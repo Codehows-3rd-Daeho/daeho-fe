@@ -6,8 +6,6 @@ import { useAuthStore } from "./store/useAuthStore";
 import { usePushNotification } from "./webpush/usePushNotification";
 import Breadcrumb from "./common/PageHeader/Breadcrumb";
 import useRecordingStore from "./store/useRecordingStore";
-import MenuIcon from "@mui/icons-material/Menu";
-import { IconButton } from "@mui/material";
 import { useLocation } from "react-router-dom";
 
 type AppLayoutProps = {
@@ -133,22 +131,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
     clear
   );
 
-  const handleToggleSidebar = () => setCollapsed((prev) => !prev);
-
-  // 모바일에서 커졌을때 사이드바 닫기
-  useEffect(() => {
-    const handleResize = () => {
-      // md 기준
-      if (window.innerWidth >= 600) {
-        setMobileHidden(true); // 모바일 사이드바 닫기
-      }
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
   usePushNotification(member?.memberId ? String(member.memberId) : "");
+
   const location = useLocation();
 
   return (
@@ -177,14 +161,13 @@ export default function AppLayout({ children }: AppLayoutProps) {
           />
         </header>
 
-        <main className="flex-1 overflow-auto  p-6 flex-col">
-          {/* 브레드크럼 */}
+        <main className="flex-1 overflow-auto p-6 flex-col">
           {location.pathname !== "/pwa-guide" && (
             <div className="w-full max-w-[1500px] mx-auto mb-4">
               <Breadcrumb />
             </div>
           )}
-          <div className="w-full max-w-[1500px]  mx-auto">{children}</div>
+          <div className="w-full max-w-[1500px] mx-auto">{children}</div>
         </main>
       </div>
     </div>
