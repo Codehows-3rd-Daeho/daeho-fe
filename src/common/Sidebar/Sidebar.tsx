@@ -267,7 +267,8 @@ export default function Sidebar({
       </Box>
 
       <Divider />
-      <Box p={2}>
+      <Box p={2} display="flex" alignItems="center" gap={1}>
+        {/* Logout */}
         <Button
           variant="text"
           startIcon={<LogoutIcon />}
@@ -277,6 +278,19 @@ export default function Sidebar({
         >
           {!(collapsed && !openMobile) && "Logout"}
         </Button>
+           {/* PWA Guide */}
+        <Tooltip title="앱 설치 가이드">
+          <IconButton
+            size="small"
+            onClick={() => navigate("/pwa-guide")}
+            sx={{
+              color: "#555",
+              "&:hover": { backgroundColor: "#eee" },
+            }}
+          >
+            <HelpOutlineIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
       </Box>
     </Box>
   );
