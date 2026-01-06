@@ -267,7 +267,8 @@ export default function Sidebar({
       </Box>
 
       <Divider />
-      <Box p={2}>
+      <Box p={2} display="flex" alignItems="center" gap={1}>
+        {" "}
         <Button
           variant="text"
           startIcon={<LogoutIcon />}
