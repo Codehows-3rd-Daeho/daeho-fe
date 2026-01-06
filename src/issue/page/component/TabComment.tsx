@@ -9,6 +9,9 @@ import { CommonPagination } from "../../../common/Pagination/Pagination";
 import CommentSection from "../../../comment/component/CommentSection";
 import { Box } from "@mui/material";
 import { useAuthStore } from "../../../store/useAuthStore";
+import { useEffect, useState } from "react";
+import type { MentionMemberDto } from "../../../comment/type/type";
+import { getPartMemberList } from "../../../admin/member/api/MemberApi";
 
 interface Props {
   issueId: number;
@@ -34,6 +37,19 @@ export default function TabComment({ issueId }: Props) {
     updateApi: updateCommentApi,
     deleteApi: deleteCommentApi,
   });
+  const [memberList, setMemberList] = useState<MentionMemberDto[]>([]);
+
+  useEffect(() => {
+    const fetchMembers = async () => {
+      try {
+        const data = await getPartMemberList();
+        setMemberList(data as unknown as MentionMemberDto[]);
+      } catch (error) {
+        console.error("멘션 멤버 목록 로드 실패:", error);
+      }
+    };
+    fetchMembers();
+  }, []);
 
   return (
     <Box>
@@ -64,8 +80,9 @@ export default function TabComment({ issueId }: Props) {
       {/* 3. 댓글 입력 섹션 (여기에 placeholder 추가) */}
       <CommentSection
         comments={[]}
-        enableInput={true} // 명시적으로 입력창 활성화
+        enableInput={true}
         enableMention
+        memberList={memberList}
         commentText={commentText}
         onChangeText={setCommentText}
         onAddMention={addMentionedMemberId}

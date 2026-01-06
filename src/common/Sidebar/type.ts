@@ -15,4 +15,6 @@ export type SidebarProps = {
   onSelect?: (id: string) => void;
   width?: number;
   onToggle?: () => void;
+  openMobile?: boolean;
+  onCloseMobile?: () => void;
 };

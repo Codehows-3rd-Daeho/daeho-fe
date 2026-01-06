@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import type { MeetingListItem } from "../type/type";
 import { ListDataGrid } from "../../common/List/ListDataGrid";
 import { CommonPagination } from "../../common/Pagination/Pagination";
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { PageHeader } from "../../common/PageHeader/PageHeader";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import { useNavigate } from "react-router-dom";
@@ -17,6 +17,10 @@ import type { FilterDto } from "../../common/PageHeader/type";
 
 export default function MeetingList() {
   const navigate = useNavigate();
+
+  const theme = useTheme();
+
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const [page, setPage] = useState(1);
   const [data, setData] = useState<MeetingListItem[]>([]);
@@ -64,13 +68,19 @@ export default function MeetingList() {
     {
       field: "title",
       headerName: "제목",
-      flex: 2,
-      minWidth: 500,
+      flex: isMobile ? 1 : 2,
+      minWidth: isMobile ? 300 : 600,
       headerAlign: "center",
       align: "left",
       renderCell: (params) => (
         <div
-          style={{ width: "100%", cursor: "pointer" }}
+          style={{
+            width: "100%",
+            cursor: "pointer",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
           onClick={() => navigate(`/meeting/${params.id}`)}
         >
           {params.value}
@@ -144,6 +154,10 @@ export default function MeetingList() {
     },
   ];
 
+  const displayColumns = isMobile
+    ? allColumns.filter((col) => col.field === "title")
+    : allColumns;
+
   return (
     <>
       <Box
@@ -213,7 +227,7 @@ export default function MeetingList() {
       {/* 리스트 */}
       <ListDataGrid<MeetingListItem>
         rows={data}
-        columns={allColumns}
+        columns={displayColumns}
         rowIdField="id"
       />
       {/* 페이징 */}

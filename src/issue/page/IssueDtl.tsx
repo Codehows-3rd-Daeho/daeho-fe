@@ -165,10 +165,10 @@ export default function IssueDtl() {
     <Box
       sx={{
         display: "flex",
-        gap: 3,
-        p: 3,
-        bgcolor: "#f5f5f5",
-        minWidth: 300,
+        gap: { md: 3 }, // 모바일에서는 간격 최소화
+        p: { md: 3 },
+        bgcolor: { xs: "white", md: "#f5f5f5" },
+        minWidth: { xs: "100%", md: 300 },
         flexDirection: { xs: "column", md: "row" }, // 모바일: 세로(1, 2), 데스크탑: 가로(1,2)
       }}
     >
@@ -177,21 +177,28 @@ export default function IssueDtl() {
         sx={{
           flex: 1,
           bgcolor: "white",
-          borderRadius: 2,
-          p: 3,
-          boxShadow: 1,
-          minWidth: 200,
+          borderRadius: { md: 2 },
+          p: { md: 3 },
+          boxShadow: { md: 1 },
+          // minWidth: 400,
         }}
       >
         {/* 제목 */}
-        <Typography variant="h5" sx={{ fontWeight: 700, mb: 3 }}>
+        <Typography
+          variant="h5"
+          sx={{
+            fontWeight: 700,
+            mb: { xs: 2, md: 3 },
+            fontSize: { xs: "1.25rem", md: "1.5rem" },
+          }}
+        >
           {issue.title}
         </Typography>
 
         {/* 본문 */}
         <Box
           sx={{
-            p: 2,
+            p: { xs: 1.5, md: 2 },
             bgcolor: "#fafafa",
             borderRadius: 2,
             mb: 3,
@@ -205,15 +212,18 @@ export default function IssueDtl() {
           {issue.content}
         </Box>
 
-        {/* 첨부 파일 */}
+        {/* 첨부 파일 섹션 */}
         <Box sx={{ mb: 4 }}>
-          <Typography sx={{ fontWeight: 600 }}>첨부 파일</Typography>
+          <Typography sx={{ fontWeight: 600, mb: 1 }}>첨부 파일</Typography>
 
-          {/* 헤더 */}
+          {/* 헤더: 모바일에서는 2컬럼, 데스크탑에서는 4컬럼 */}
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: "1fr 120px 150px 50px",
+              gridTemplateColumns: {
+                xs: "1fr 50px",
+                md: "1fr 120px 150px 50px",
+              },
               px: 1,
               py: 1.5,
               borderRadius: 1,
@@ -224,9 +234,14 @@ export default function IssueDtl() {
             }}
           >
             <Typography>이름</Typography>
-            <Typography>크기</Typography>
-            <Typography>추가된 날짜</Typography>
-            <Typography></Typography>
+            {/* md 이상일 때만 표시 */}
+            <Typography sx={{ display: { xs: "none", md: "block" } }}>
+              크기
+            </Typography>
+            <Typography sx={{ display: { xs: "none", md: "block" } }}>
+              추가된 날짜
+            </Typography>
+            <Typography sx={{ textAlign: "center" }}>다운</Typography>
           </Box>
 
           <Box
@@ -234,16 +249,13 @@ export default function IssueDtl() {
               maxHeight: issue.fileList.length > 4 ? 260 : "auto",
               overflowY: issue.fileList.length > 4 ? "auto" : "visible",
               pr: issue.fileList.length > 4 ? 1 : 0,
-              "&::-webkit-scrollbar": {
-                width: 6,
-              },
+              "&::-webkit-scrollbar": { width: 6 },
               "&::-webkit-scrollbar-thumb": {
                 backgroundColor: "#ccc",
                 borderRadius: 3,
               },
             }}
           >
-            {/* 파일 리스트 */}
             {issue.fileList.map((file) => {
               const { label, color } = getFileInfo(file.originalName);
 
@@ -252,17 +264,30 @@ export default function IssueDtl() {
                   key={file.fileId}
                   sx={{
                     display: "grid",
-                    gridTemplateColumns: "1fr 120px 150px 50px",
+                    // 모바일에서는 이름과 다운로드 아이콘만 배치
+                    gridTemplateColumns: {
+                      xs: "1fr 50px",
+                      sm: "1fr 80px 40px",
+                      md: "1fr 120px 150px 50px",
+                    },
                     alignItems: "center",
-                    px: 2,
+                    px: { xs: 1, md: 2 },
                     py: 1.5,
                     bgcolor: "#fafafa",
                     borderRadius: 1.5,
                     mb: 1,
+                    gap: 1,
                   }}
                 >
                   {/* 파일 이름 + 아이콘 */}
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1.5,
+                      minWidth: 0,
+                    }}
+                  >
                     <Box
                       sx={{
                         width: 32,
@@ -284,30 +309,51 @@ export default function IssueDtl() {
                       component="a"
                       href={`${BASE_URL}${file.path}`}
                       download={file.originalName}
+                      sx={{
+                        textDecoration: "none",
+                        color: "inherit",
+                        // 글자 넘침 방지 처리
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        fontSize: { xs: "0.9rem", md: "1rem" },
+                      }}
                     >
                       {file.originalName}
                     </Typography>
                   </Box>
 
-                  {/* 크기 */}
-                  <Typography sx={{ color: "text.secondary" }}>
+                  {/* 크기 (md 이상) */}
+                  <Typography
+                    sx={{
+                      color: "text.secondary",
+                      display: { xs: "none", md: "block" },
+                    }}
+                  >
                     {file.size}
                   </Typography>
 
-                  {/* 생성 날짜 */}
-                  <Typography sx={{ color: "text.secondary" }}>
+                  {/* 생성 날짜 (md 이상) */}
+                  <Typography
+                    sx={{
+                      color: "text.secondary",
+                      display: { xs: "none", md: "block" },
+                    }}
+                  >
                     {file.createdAt}
                   </Typography>
 
                   {/* 다운로드 버튼 */}
-                  <IconButton
-                    size="small"
-                    component="a"
-                    href={`${BASE_URL}${file.path}`}
-                    download={file.originalName}
-                  >
-                    <DownloadIcon fontSize="small" />
-                  </IconButton>
+                  <Box sx={{ display: "flex", justifyContent: "center" }}>
+                    <IconButton
+                      size="small"
+                      component="a"
+                      href={`${BASE_URL}${file.path}`}
+                      download={file.originalName}
+                    >
+                      <DownloadIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
                 </Box>
               );
             })}
@@ -355,21 +401,22 @@ export default function IssueDtl() {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          justifyContent: "center",
+          // justifyContent: "center",
         }}
       >
         <Box
           sx={{
-            height: 800,
+            width: "100%",
             display: "flex",
             flexDirection: "column",
             gap: 2,
-            p: 3,
+            p: { xs: 2, md: 3 },
+            mt: { xs: 5, md: 0 },
             bgcolor: "white",
-            borderRadius: 2,
-            boxShadow: 1,
-            minWidth: 150,
-            maxWidth: 360,
+            borderRadius: { md: 2 },
+            boxShadow: { md: 1 },
+            minWidth: { xs: 0, md: 250 },
+            maxWidth: 400,
           }}
         >
           {/* 상태 */}
@@ -543,6 +590,7 @@ export default function IssueDtl() {
                 justifyContent: "flex-end",
                 width: "100%",
                 gap: 1,
+                p: { xs: 2, md: 0 },
               }}
             >
               <Button
@@ -601,8 +649,8 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
       <Typography
         sx={{
           fontWeight: 500,
-          // width: "90px",
-          // flexShrink: 0,
+          width: "90px",
+          flexShrink: 0,
         }}
       >
         {label}
