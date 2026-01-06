@@ -268,7 +268,7 @@ export default function Sidebar({
 
       <Divider />
       <Box p={2} display="flex" alignItems="center" gap={1}>
-        {" "}
+        {/* Logout */}
         <Button
           variant="text"
           startIcon={<LogoutIcon />}
@@ -278,7 +278,7 @@ export default function Sidebar({
         >
           {!(collapsed && !openMobile) && "Logout"}
         </Button>
-        {/* PWA Guide */}
+           {/* PWA Guide */}
         <Tooltip title="앱 설치 가이드">
           <IconButton
             size="small"
