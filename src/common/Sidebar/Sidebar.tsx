@@ -25,6 +25,7 @@ import ExpandMore from "@mui/icons-material/ExpandMore";
 import type { SidebarProps, SidebarItem } from "./type";
 import { useAuthStore } from "../../store/useAuthStore";
 import useRecordingStore from "../../store/useRecordingStore";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 
 export default function Sidebar({
   items,

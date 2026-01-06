@@ -1,9 +1,4 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-  useCallback,
-} from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import {
   deleteSTT,
   getSTT,
@@ -127,19 +122,25 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
     const audioUrl = `${BASE_URL}${stt.file.path}`;
     for (let i = 0; i < 3; i++) {
       try {
-        const response = await fetch(audioUrl, { method: 'HEAD' });
+        const response = await fetch(audioUrl, { method: "HEAD" });
         if (response.ok) {
           console.log(`Audio file is ready to play. (Attempt ${i + 1})`);
           updateSttState(stt.id, { isPlayable: true });
           return;
         }
       } catch (e) {
-        console.warn(`HEAD request for audio failed. Retrying... (Attempt ${i + 1})`, e);
+        console.warn(
+          `HEAD request for audio failed. Retrying... (Attempt ${i + 1})`,
+          e
+        );
       }
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
     console.error("Audio file could not be validated after multiple retries.");
-    handleError(new Error("Audio validation failed"), "오디오 파일을 재생할 수 없습니다.");
+    handleError(
+      new Error("Audio validation failed"),
+      "오디오 파일을 재생할 수 없습니다."
+    );
   };
 
   {
@@ -199,7 +200,7 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
             validateAndPlayAudio(res);
           } else if (res.status !== "ENCODING") {
             stopEncodingPolling(sttId);
-             updateSttState(sttId, { ...res, isLoading: false });
+            updateSttState(sttId, { ...res, isLoading: false });
           }
         } catch (error) {
           handleError(error, "인코딩 상태 확인에 실패했습니다.");
@@ -207,7 +208,7 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
         }
       }, pollingRate)
     );
-  }
+  };
 
   const stopEncodingPolling = (sttId: number) => {
     const intervalId = encodingPollingIntervalRef.current.get(sttId);
@@ -248,10 +249,9 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
           firstTabSttId = response[response.length - 1].id;
         }
         firstTabSttId = response[response.length - 1]?.id ?? null;
-        const firstTabStt = response.find(stt =>  stt.id === firstTabSttId);
-        console.log(firstTabStt)
-        if(firstTabStt)
-        validateAndPlayAudio(firstTabStt);
+        const firstTabStt = response.find((stt) => stt.id === firstTabSttId);
+        console.log(firstTabStt);
+        if (firstTabStt) validateAndPlayAudio(firstTabStt);
         setStts(
           response.map((stt) => {
             if (stt.status === "ENCODING") {
@@ -304,7 +304,10 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
         await cancelRecording(sttId);
       } else {
         const sttToDelete = findSttById(sttId);
-        if (!sttToDelete?.isTemp && !window.confirm("선택한 회의 내용을 삭제하시겠습니까?"))
+        if (
+          !sttToDelete?.isTemp &&
+          !window.confirm("선택한 회의 내용을 삭제하시겠습니까?")
+        )
           return;
       }
 
@@ -319,7 +322,7 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
         );
         return current;
       });
-    
+
       const sttToDelete = findSttById(sttId);
       if (sttToDelete?.isTemp) {
         deletingIds.current.delete(sttId);
@@ -341,7 +344,14 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
         deletingIds.current.delete(sttId);
       }
     },
-    [meetingId, getSessionState, cancelRecording, stts, fetchMeetingDetail, findSttById]
+    [
+      meetingId,
+      getSessionState,
+      cancelRecording,
+      stts,
+      fetchMeetingDetail,
+      findSttById,
+    ]
   );
 
   {
@@ -583,10 +593,7 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
     setSelectedSttId(NEW_STT_ID);
   };
 
-  const handleTabChange = async (
-    _event: unknown,
-    newValue: number | null
-  ) => {
+  const handleTabChange = async (_event: unknown, newValue: number | null) => {
     handleSummarySave();
     setSelectedSttId(newValue);
 
@@ -601,13 +608,15 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
     if (isFetchingStts) return "회의 내용을 불러오는 중...";
     if (isUploading) return "업로드 중...";
     if (isStartingRecording) return "녹음 세션 시작 중...";
-    
+
     const currentStt = findSttById(selectedSttId);
     if (currentStt?.isLoading && !currentStt?.isTemp) {
-        if (currentStt.status === "ENCODING") return "인코딩중..";
-        if (currentStt.status === "ENCODED") return "로딩중...";
-        if (currentStt.status === "PROCESSING") return `변환중.. ${currentStt.progress ?? 0}%`;
-        if (currentStt.status === "SUMMARIZING") return `요약중.. ${currentStt.progress ?? 0}%`;
+      if (currentStt.status === "ENCODING") return "인코딩중..";
+      if (currentStt.status === "ENCODED") return "로딩중...";
+      if (currentStt.status === "PROCESSING")
+        return `변환중.. ${currentStt.progress ?? 0}%`;
+      if (currentStt.status === "SUMMARIZING")
+        return `요약중.. ${currentStt.progress ?? 0}%`;
     }
     return undefined;
   };
@@ -740,13 +749,24 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
           const currentStt = findSttById(selectedSttId);
           if (!currentStt)
             return (
-              <Box sx={{ minWidth: 10, minHeight: 10, textAlign: "center", color: "text.disabled", my: 2 }}>
+              <Box
+                sx={{
+                  minWidth: 10,
+                  minHeight: 10,
+                  textAlign: "center",
+                  color: "text.disabled",
+                  my: 2,
+                }}
+              >
                 등록된 회의 내용이 없습니다.
               </Box>
             );
 
           const sessionState = getSessionState(currentStt.id);
-          const currentRecordingStatus = sessionState?.recordingStatus ?? currentStt.recordingStatus ?? "idle";
+          const currentRecordingStatus =
+            sessionState?.recordingStatus ??
+            currentStt.recordingStatus ??
+            "idle";
 
           if (
             currentRecordingStatus === "recording" ||
@@ -798,7 +818,10 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                 </Box>
               </Box>
             );
-          } else if (currentStt.status === "RECORDING" && currentStt.memberId !== member?.memberId) {
+          } else if (
+            currentStt.status === "RECORDING" &&
+            currentStt.memberId !== member?.memberId
+          ) {
             return (
               <Box
                 sx={{
@@ -815,7 +838,7 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                   녹음 중인 회의가 있습니다.
                 </Typography>
               </Box>
-            )
+            );
           } else if (
             currentStt.status === "RECORDING" ||
             currentStt.status === "ENCODING" ||
@@ -855,17 +878,24 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                       />
                     </audio>
                   ) : (
-                    <Box sx={{
-                      width: '100%',
-                      height: '30px', 
-                      backgroundColor: 'grey.200', 
-                      borderRadius: '15px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      px: 2,
-                    }}>
-                       <div className="w-4 h-4 border-2 border-gray-400 border-t-gray-600 rounded-full animate-spin"></div>
-                       <Typography variant="caption" sx={{ml: 1, color: 'grey.600'}}>오디오 최적화 중...</Typography>
+                    <Box
+                      sx={{
+                        width: "100%",
+                        height: "30px",
+                        backgroundColor: "grey.200",
+                        borderRadius: "15px",
+                        display: "flex",
+                        alignItems: "center",
+                        px: 2,
+                      }}
+                    >
+                      <div className="w-4 h-4 border-2 border-gray-400 border-t-gray-600 rounded-full animate-spin"></div>
+                      <Typography
+                        variant="caption"
+                        sx={{ ml: 1, color: "grey.600" }}
+                      >
+                        오디오 최적화 중...
+                      </Typography>
                     </Box>
                   )}
                 </Box>
@@ -880,7 +910,11 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                   <Button
                     variant="contained"
                     color="primary"
-                    disabled={currentStt.isLoading || isStoppingRecording || isStartingProcessing}
+                    disabled={
+                      currentStt.isLoading ||
+                      isStoppingRecording ||
+                      isStartingProcessing
+                    }
                     onClick={() => handleConfirmUpload(selectedSttId)}
                   >
                     {isStoppingRecording ? "인코딩 요청 중..." : "음성 변환"}
@@ -1003,11 +1037,15 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                         },
                       }}
                     >
+                      {/* 등록한 음성 파일 */}
                       <Box
                         key={currentStt.file?.fileId}
                         sx={{
                           display: "grid",
-                          gridTemplateColumns: "1fr 85px 120px 35px",
+                          gridTemplateColumns: {
+                            xs: "1fr  35px", // size 컬럼 제거
+                            sm: "1fr 85px 100px 35px", // size 컬럼 포함
+                          },
                           alignItems: "center",
                         }}
                       >
@@ -1016,6 +1054,8 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                             display: "flex",
                             alignItems: "center",
                             gap: 1.5,
+                            width: "100%",
+                            minWidth: 0,
                           }}
                         >
                           <Box
@@ -1040,18 +1080,32 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                             component="a"
                             href={`${BASE_URL}${currentStt.file?.path}?v=${currentStt.file?.updatedAt}`}
                             download={currentStt.file?.originalName}
+                            sx={{
+                              flex: 1,
+                              minWidth: 0,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                              display: "block",
+                            }}
                           >
                             {currentStt.file?.originalName}
                           </Typography>
                         </Box>
                         <Typography
-                          sx={{ color: "text.secondary" }}
+                          sx={{
+                            color: "text.secondary",
+                            display: { xs: "none", sm: "block" },
+                          }}
                           fontSize="0.9rem"
                         >
                           {currentStt.file?.size}
                         </Typography>
                         <Typography
-                          sx={{ color: "text.secondary" }}
+                          sx={{
+                            color: "text.secondary",
+                            display: { xs: "none", sm: "block" },
+                          }}
                           fontSize="0.9rem"
                         >
                           {currentStt.file?.createdAt}
@@ -1065,9 +1119,24 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                           <GridDownloadIcon fontSize="small" />
                         </IconButton>
                       </Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 1 }}>
-                        <audio key={currentStt.id} className='w-full' preload="metadata" controls>
-                          <source src={`${BASE_URL}${currentStt?.file?.path}?v=${currentStt?.file?.updatedAt}`} type="audio/mpeg" />
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 2,
+                          py: 1,
+                        }}
+                      >
+                        <audio
+                          key={currentStt.id}
+                          className="w-full"
+                          preload="metadata"
+                          controls
+                        >
+                          <source
+                            src={`${BASE_URL}${currentStt?.file?.path}?v=${currentStt?.file?.updatedAt}`}
+                            type="audio/mpeg"
+                          />
                         </audio>
                       </Box>
                     </Box>

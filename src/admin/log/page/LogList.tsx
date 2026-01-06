@@ -203,9 +203,10 @@ export default function LogList() {
                 borderRadius: "12px",
                 p: 0.5,
                 "& .MuiToggleButton-root": {
+                  minWidth: 80,
                   border: "none",
                   borderRadius: "8px !important",
-                  px: 4,
+                  px: 3,
                   py: 1,
                   fontWeight: 600,
                   color: "#64748b",
