@@ -171,6 +171,7 @@ export default function Sidebar({
                         primary: {
                           sx: {
                             fontWeight: child.id === selectedId ? 700 : 500,
+                            pl: 2,
                           },
                         },
                       }}
