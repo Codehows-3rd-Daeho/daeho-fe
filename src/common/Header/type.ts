@@ -3,4 +3,6 @@ export type HeaderProps = {
   jobPosition: string;
   profileUrl: string;
   notifications: string[];
+  collapsed: boolean;
+  onMenuClick?: () => void;
 };

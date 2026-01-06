@@ -6,9 +6,6 @@ import { useAuthStore } from "./store/useAuthStore";
 import { usePushNotification } from "./webpush/usePushNotification";
 import Breadcrumb from "./common/PageHeader/Breadcrumb";
 import useRecordingStore from "./store/useRecordingStore";
-import MenuIcon from "@mui/icons-material/Menu";
-import { IconButton } from "@mui/material";
-
 type AppLayoutProps = {
   children: ReactNode;
 };
@@ -107,7 +104,7 @@ function useBlockNavigation(
 export default function AppLayout({ children }: AppLayoutProps) {
   const { member } = useAuthStore();
   const [collapsed, setCollapsed] = useState(false);
-  const [mobileHidden, setMobileHidden] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const { isAnyRecordingActive, handleLastChunk, clear } = useRecordingStore();
   const isCurrentlyRecording = isAnyRecordingActive();
   const confirmationMessage =
@@ -132,56 +129,39 @@ export default function AppLayout({ children }: AppLayoutProps) {
     clear
   );
 
-  const handleToggleSidebar = () => setCollapsed((prev) => !prev);
-
   usePushNotification(member?.memberId ? String(member.memberId) : "");
 
   return (
-    <div className="flex h-screen ">
-      {/* 데스크탑 */}
-      <div className="hidden md:block">
-        <Sidebar
-          items={sidebarItems}
-          selectedId="dashboard"
-          collapsed={collapsed}
-          onToggle={handleToggleSidebar}
-          width={300} // 접힐 때 72px 사용
-        />
-      </div>
+    <div className="flex h-screen overflow-hidden">
+      {/* 1. 사이드바 배치 변경: 
+          Sidebar 내부에서 이미 Permanent/Temporary를 구분하므로 div로 감싸지 않습니다. */}
+      <Sidebar
+        items={sidebarItems}
+        collapsed={collapsed}
+        onToggle={() => setCollapsed(!collapsed)}
+        openMobile={mobileOpen}
+        onCloseMobile={() => setMobileOpen(false)}
+        width={300}
+      />
 
-      {/* 모바일 */}
-      <div className="md:hidden">
-        {mobileHidden || (
-          <Sidebar
-            items={sidebarItems}
-            collapsed={false} // 모바일에서는 항상 펼친 상태
-            onToggle={() => setMobileHidden(true)}
-          />
-        )}
-        <IconButton
-          onClick={() => setMobileHidden((prev) => !prev)}
-          style={{ position: "fixed", top: "10px", left: "10px", zIndex: 9999 }}
-        >
-          <MenuIcon />
-        </IconButton>
-      </div>
-
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <header className="h-[60px] shrink-0 ">
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        {/* 2. 헤더에 onMenuClick 전달 */}
+        <header className="h-[60px] shrink-0">
           <Header
             name={member?.name ?? ""}
             jobPosition={member?.jobPosition ?? ""}
             profileUrl={member?.profileUrl ?? ""}
             notifications={[]}
+            collapsed={collapsed}
+            onMenuClick={() => setMobileOpen(true)}
           />
         </header>
 
-        <main className="flex-1 overflow-auto  p-6 flex-col">
-          {/* 브레드크럼 */}
+        <main className="flex-1 overflow-auto p-6 flex-col bg-gray-50">
           <div className="w-full max-w-[1500px] mx-auto mb-4">
             <Breadcrumb />
           </div>
-          <div className="w-full max-w-[1500px]  mx-auto">{children}</div>
+          <div className="w-full max-w-[1500px] mx-auto">{children}</div>
         </main>
       </div>
     </div>
