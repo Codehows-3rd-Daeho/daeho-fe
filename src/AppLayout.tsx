@@ -8,6 +8,7 @@ import Breadcrumb from "./common/PageHeader/Breadcrumb";
 import useRecordingStore from "./store/useRecordingStore";
 import MenuIcon from "@mui/icons-material/Menu";
 import { IconButton } from "@mui/material";
+import { useLocation } from "react-router-dom";
 
 type AppLayoutProps = {
   children: ReactNode;
@@ -134,12 +135,26 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
   const handleToggleSidebar = () => setCollapsed((prev) => !prev);
 
+  // 모바일에서 커졌을때 사이드바 닫기
+  useEffect(() => {
+    const handleResize = () => {
+      // md 기준
+      if (window.innerWidth >= 600) {
+        setMobileHidden(true); // 모바일 사이드바 닫기
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   usePushNotification(member?.memberId ? String(member.memberId) : "");
+  const location = useLocation();
 
   return (
     <div className="flex h-screen ">
       {/* 데스크탑 */}
-      <div className="hidden md:block">
+      <div className="hidden sm:block">
         <Sidebar
           items={sidebarItems}
           selectedId="dashboard"
@@ -150,14 +165,15 @@ export default function AppLayout({ children }: AppLayoutProps) {
       </div>
 
       {/* 모바일 */}
-      <div className="md:hidden">
-        {mobileHidden || (
-          <Sidebar
-            items={sidebarItems}
-            collapsed={false} // 모바일에서는 항상 펼친 상태
-            onToggle={() => setMobileHidden(true)}
-          />
-        )}
+      <div className="sm:hidden">
+        <Sidebar
+          items={sidebarItems}
+          variant="temporary" // 모바일 drawer
+          isMobileSidebarOpen={!mobileHidden}
+          onClose={() => setMobileHidden(true)}
+          collapsed={false}
+        />
+
         <IconButton
           onClick={() => setMobileHidden((prev) => !prev)}
           style={{ position: "fixed", top: "10px", left: "10px", zIndex: 9999 }}
@@ -178,9 +194,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
         <main className="flex-1 overflow-auto  p-6 flex-col">
           {/* 브레드크럼 */}
-          <div className="w-full max-w-[1500px] mx-auto mb-4">
-            <Breadcrumb />
-          </div>
+          {location.pathname !== "/pwa-guide" && (
+            <div className="w-full max-w-[1500px] mx-auto mb-4">
+              <Breadcrumb />
+            </div>
+          )}
           <div className="w-full max-w-[1500px]  mx-auto">{children}</div>
         </main>
       </div>
