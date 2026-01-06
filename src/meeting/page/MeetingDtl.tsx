@@ -197,10 +197,10 @@ export default function MeetingDtl() {
     <Box
       sx={{
         display: "flex",
-        gap: 3,
-        p: 3,
-        bgcolor: "#f5f5f5",
-        minWidth: 300,
+        gap: { md: 3 },
+        p: { md: 3 },
+        bgcolor: { xs: "white", md: "#f5f5f5" },
+        minWidth: { xs: "100%", md: 300 },
         flexDirection: { xs: "column", md: "row" }, // 모바일: 세로(1, 2), 데스크탑: 가로(1,2)
       }}
     >
@@ -209,21 +209,27 @@ export default function MeetingDtl() {
         sx={{
           flex: 1,
           bgcolor: "white",
-          borderRadius: 2,
-          p: 3,
-          boxShadow: 1,
-          minWidth: 200,
+          borderRadius: { md: 2 },
+          p: { md: 3 },
+          boxShadow: { md: 1 },
         }}
       >
         {/* 제목 */}
-        <Typography variant="h5" sx={{ fontWeight: 700, mb: 3 }}>
+        <Typography
+          variant="h5"
+          sx={{
+            fontWeight: 700,
+            mb: { xs: 2, md: 3 },
+            fontSize: { xs: "1.25rem", md: "1.5rem" },
+          }}
+        >
           {meeting.title}
         </Typography>
 
         {/* 본문 */}
         <Box
           sx={{
-            p: 2,
+            p: { xs: 1.5, md: 2 },
             bgcolor: "#fafafa",
             borderRadius: 2,
             mb: 3,
@@ -237,15 +243,19 @@ export default function MeetingDtl() {
           {meeting.content}
         </Box>
 
-        {/* 첨부 파일 */}
+        {/* 첨부 파일 섹션 */}
         <Box sx={{ mb: 4 }}>
-          <Typography sx={{ fontWeight: 600 }}>첨부 파일</Typography>
+          <Typography sx={{ fontWeight: 600, mb: 1 }}>첨부 파일</Typography>
 
-          {/* 헤더 */}
+          {/* 헤더: 모바일(xs) 2컬럼, 데스크탑(md) 4컬럼 */}
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: "1fr 120px 150px 50px",
+              gridTemplateColumns: {
+                xs: "1fr 50px",
+                sm: "1fr 80px 40px",
+                md: "1fr 120px 150px 50px",
+              },
               px: 1,
               py: 1.5,
               borderRadius: 1,
@@ -256,84 +266,129 @@ export default function MeetingDtl() {
             }}
           >
             <Typography>이름</Typography>
-            <Typography>크기</Typography>
-            <Typography>추가된 날짜</Typography>
-            <Typography></Typography>
+            {/* md 이상일 때만 표시 */}
+            <Typography sx={{ display: { xs: "none", md: "block" } }}>
+              크기
+            </Typography>
+            <Typography sx={{ display: { xs: "none", md: "block" } }}>
+              추가된 날짜
+            </Typography>
+            <Typography sx={{ textAlign: "center" }}>다운</Typography>
           </Box>
 
           {/* 파일 리스트 */}
-          {meeting.fileList.length == 0 && (
+          {meeting.fileList.length === 0 && (
             <Box sx={{ textAlign: "center", color: "text.disabled", my: 2 }}>
               등록된 파일이 없습니다.
             </Box>
           )}
-          {meeting.fileList.map((file) => {
-            const { label, color } = getFileInfo(file.originalName);
+          <Box
+            sx={{
+              maxHeight: meeting.fileList.length > 4 ? 260 : "auto",
+              overflowY: meeting.fileList.length > 4 ? "auto" : "visible",
+              pr: meeting.fileList.length > 4 ? 1 : 0,
+            }}
+          >
+            {meeting.fileList.map((file) => {
+              const { label, color } = getFileInfo(file.originalName);
 
-            return (
-              <Box
-                key={file.fileId}
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 120px 150px 50px",
-                  alignItems: "center",
-                  px: 2,
-                  py: 1.5,
-                  bgcolor: "#fafafa",
-                  borderRadius: 1.5,
-                  mb: 1,
-                }}
-              >
-                {/* 파일 이름 + 아이콘 */}
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              return (
+                <Box
+                  key={file.fileId}
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: {
+                      xs: "1fr 50px",
+                      sm: "1fr 80px 40px",
+                      md: "1fr 120px 150px 50px",
+                    },
+                    alignItems: "center",
+                    px: { xs: 1, md: 2 },
+                    py: 1.5,
+                    bgcolor: "#fafafa",
+                    borderRadius: 1.5,
+                    mb: 1,
+                    gap: 1,
+                  }}
+                >
+                  {/* 파일 이름 + 아이콘 (말줄임 처리 추가) */}
                   <Box
                     sx={{
-                      width: 32,
-                      height: 32,
-                      bgcolor: color,
-                      borderRadius: 1,
                       display: "flex",
-                      justifyContent: "center",
                       alignItems: "center",
-                      color: "#fff",
-                      fontSize: "0.7rem",
-                      fontWeight: 700,
-                      flexShrink: 0,
+                      gap: 1.5,
+                      minWidth: 0,
                     }}
                   >
-                    {label}
+                    <Box
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        bgcolor: color,
+                        borderRadius: 1,
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        color: "#fff",
+                        fontSize: "0.7rem",
+                        fontWeight: 700,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {label}
+                    </Box>
+                    <Typography
+                      component="a"
+                      href={`${BASE_URL}${file.path}`}
+                      download={file.originalName}
+                      sx={{
+                        textDecoration: "none",
+                        color: "inherit",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        fontSize: { xs: "0.9rem", md: "1rem" },
+                      }}
+                    >
+                      {file.originalName}
+                    </Typography>
                   </Box>
+
+                  {/* 크기 (md 이상만) */}
                   <Typography
-                    component="a"
-                    href={`${BASE_URL}${file.path}`}
-                    download={file.originalName}
+                    sx={{
+                      color: "text.secondary",
+                      display: { xs: "none", md: "block" },
+                    }}
                   >
-                    {file.originalName}
+                    {file.size}
                   </Typography>
+
+                  {/* 생성 날짜 (md 이상만) */}
+                  <Typography
+                    sx={{
+                      color: "text.secondary",
+                      display: { xs: "none", md: "block" },
+                    }}
+                  >
+                    {file.createdAt}
+                  </Typography>
+
+                  {/* 다운로드 버튼 */}
+                  <Box sx={{ display: "flex", justifyContent: "center" }}>
+                    <IconButton
+                      size="small"
+                      component="a"
+                      href={`${BASE_URL}${file.path}`}
+                      download={file.originalName}
+                    >
+                      <DownloadIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
                 </Box>
-
-                {/* 크기 */}
-                <Typography sx={{ color: "text.secondary" }}>
-                  {file.size}
-                </Typography>
-
-                {/* 생성 날짜 */}
-                <Typography sx={{ color: "text.secondary" }}>
-                  {file.createdAt}
-                </Typography>
-
-                {/* 다운로드 버튼 */}
-                <IconButton
-                  size="small"
-                  component="a"
-                  href={`${BASE_URL}${file.path}`}
-                  download={file.originalName}
-                >
-                  <DownloadIcon fontSize="small" />
-                </IconButton>
-              </Box>
-            );
-          })}
+              );
+            })}
+          </Box>
         </Box>
 
         {/* 댓글 섹션 */}
@@ -367,21 +422,22 @@ export default function MeetingDtl() {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          justifyContent: "center",
+          // justifyContent: "center",
         }}
       >
         <Box
           sx={{
-            height: 800,
+            width: "100%",
             display: "flex",
             flexDirection: "column",
             gap: 2,
-            p: 3,
+            p: { xs: 2, md: 3 },
+            mt: { xs: 5, md: 0 },
             bgcolor: "white",
-            borderRadius: 2,
-            boxShadow: 1,
-            minWidth: 150,
-            maxWidth: 360,
+            borderRadius: { md: 2 },
+            boxShadow: { md: 1 },
+            minWidth: { xs: 0, md: 400 },
+            maxWidth: 450,
           }}
         >
           {/* 상태 */}
@@ -468,7 +524,13 @@ export default function MeetingDtl() {
                   fontSize="small"
                   sx={{ color: "#616161" }}
                 />
-                <Typography sx={{ fontWeight: 500 }}>
+                <Typography
+                  sx={{
+                    fontWeight: 500,
+                    // fontSize: "0.9rem",
+                    whiteSpace: "nowrap",
+                  }}
+                >
                   {meeting.startDate}
                 </Typography>
               </Box>
@@ -505,7 +567,13 @@ export default function MeetingDtl() {
                   fontSize="small"
                   sx={{ color: "#616161" }}
                 />
-                <Typography sx={{ fontWeight: 500 }}>
+                <Typography
+                  sx={{
+                    fontWeight: 500,
+                    // fontSize: "0.9rem",
+                    whiteSpace: "nowrap",
+                  }}
+                >
                   {meeting.endDate}
                 </Typography>
               </Box>
@@ -656,6 +724,7 @@ export default function MeetingDtl() {
                 justifyContent: "flex-end",
                 width: "100%",
                 gap: 1,
+                p: { xs: 2, md: 0 },
               }}
             >
               {" "}
@@ -726,6 +795,8 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
       <Typography
         sx={{
           fontWeight: 500,
+          width: "90px",
+          flexShrink: 0,
         }}
       >
         {label}
