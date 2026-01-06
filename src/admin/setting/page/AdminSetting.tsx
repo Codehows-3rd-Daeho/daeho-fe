@@ -142,20 +142,22 @@ export default function AdminSetting() {
               onChange={(e) => setEditingValue(e.target.value)}
               onKeyDown={async (e) => {
                 if (e.key === "Enter" && editingValue.trim()) {
-                  const updated = await updateApiFunction(tag.id, {
-                    name: editingValue.trim(),
-                  });
+                  try {
+                    const updated = await updateApiFunction(tag.id, {
+                      name: editingValue.trim(),
+                    });
 
-                  setList((prev) =>
-                    prev.map((t) =>
-                      t.id === tag.id ? { ...t, label: updated.name } : t
-                    )
-                  );
-                  setEditingId(null);
-                }
-
-                if (e.key === "Escape") {
-                  setEditingId(null);
+                    setList((prev) =>
+                      prev.map((t) =>
+                        t.id === tag.id ? { ...t, label: updated.name } : t
+                      )
+                    );
+                    setEditingId(null);
+                  } catch (error) {
+                    console.error("수정 실패:", error);
+                    const apiError = error as ApiError;
+                    alert(apiError.response?.data ?? "수정 실패");
+                  }
                 }
               }}
               onBlur={() => setEditingId(null)}

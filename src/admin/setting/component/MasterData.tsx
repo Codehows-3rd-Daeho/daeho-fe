@@ -65,11 +65,12 @@ export default function MasterData({
         // 입력 필드 초기화
         setInput("");
       } catch (error) {
-        const apiError = error as ApiError;
-        const response = apiError.response?.data?.message;
-
-        alert(response ?? "등록 중 오류가 발생했습니다.");
         console.error("등록 실패:", error);
+        const apiError = error as ApiError;
+        const response = apiError.response?.data;
+
+        console.error(response);
+        alert(response ?? "등록 중 오류가 발생했습니다.");
       }
     })();
   };
