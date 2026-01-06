@@ -46,17 +46,17 @@ export default function Dashboard() {
       field: "title",
       headerName: "제목",
       flex: isMobile ? 1 : 2,
-      minWidth: isMobile ? 300 : 600, 
+      minWidth: isMobile ? 300 : 600,
       headerAlign: "center",
       align: "left",
       renderCell: (params) => (
         <div
-          style={{ 
-            width: "100%", 
+          style={{
+            width: "100%",
             cursor: "pointer",
             overflow: "hidden",
             textOverflow: "ellipsis",
-            whiteSpace: "nowrap" 
+            whiteSpace: "nowrap",
           }}
           onClick={() => navigate(`/meeting/${params.id}`)}
         >
@@ -106,12 +106,10 @@ export default function Dashboard() {
       align: "center",
     },
   ];
-  const displayColumns = useMemo(() => {
-  if (isMobile) {
-    return allColumns.filter((col) => col.field === "title");
-  }
-  return allColumns;
-}, [isMobile, allColumns]);
+
+  const displayColumns = isMobile
+    ? allColumns.filter((col) => col.field === "title")
+    : allColumns;
 
   //회의 캘린더====================================================================================
 
