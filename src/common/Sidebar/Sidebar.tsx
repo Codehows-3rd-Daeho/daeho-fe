@@ -39,7 +39,6 @@ export default function Sidebar({
   const { member, logout } = useAuthStore();
   const { clear, isAnyRecordingActive, handleLastChunk } = useRecordingStore();
   const role = member?.role;
-  const isMobile = variant === "temporary";
 
   const handleLogout = async () => {
     if (isAnyRecordingActive()) {
@@ -65,7 +64,7 @@ export default function Sidebar({
   });
 
   const handleToggle = (id: string) => {
-    setMenuOpen((prev) => ({ ...prev, [id]: !prev[id] }));
+    setOpen((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   const selectedId = (() => {
@@ -267,8 +266,7 @@ export default function Sidebar({
       </Box>
 
       <Divider />
-      <Box p={2} display="flex" alignItems="center" gap={1}>
-        {/* Logout */}
+      <Box p={2}>
         <Button
           variant="text"
           startIcon={<LogoutIcon />}
@@ -278,20 +276,6 @@ export default function Sidebar({
         >
           {!(collapsed && !openMobile) && "Logout"}
         </Button>
-
-        {/* PWA Guide */}
-        <Tooltip title="앱 설치 가이드">
-          <IconButton
-            size="small"
-            onClick={() => navigate("/pwa-guide")}
-            sx={{
-              color: "#555",
-              "&:hover": { backgroundColor: "#eee" },
-            }}
-          >
-            <HelpOutlineIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
       </Box>
     </Box>
   );
