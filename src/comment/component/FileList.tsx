@@ -34,10 +34,14 @@ export default function FileList({ files, onRemoveFile }: Props) {
             key={file.fileId}
             sx={{
               display: "grid",
-              // onRemoveFile이 있으면 삭제 버튼 공간을 위해 gridTemplateColumns 변경
-              gridTemplateColumns: isRemovable
-                ? "1fr 120px 50px 50px"
-                : "1fr 120px 150px 50px",
+              // 모바일에서는 이름과 다운로드 아이콘만 배치
+              gridTemplateColumns: {
+                xs: "1fr 50px",
+                sm: "1fr 80px 40px",
+                md: isRemovable
+                  ? "1fr 120px 50px 50px"
+                  : "1fr 120px 150px 50px",
+              },
               alignItems: "center",
               px: 2,
               py: 1.5,
@@ -84,6 +88,7 @@ export default function FileList({ files, onRemoveFile }: Props) {
                 p: 0.5,
                 justifySelf: "end",
                 color: "text.secondary",
+                display: { xs: "none", md: "block" },
               }}
             >
               {file.size}
@@ -101,18 +106,20 @@ export default function FileList({ files, onRemoveFile }: Props) {
             )}
 
             {/* 다운로드 버튼 */}
-            <IconButton
-              size="small"
-              component="a"
-              href={`${BASE_URL}${file.path}`}
-              sx={{
-                p: 0.5,
-                justifySelf: "end",
-              }}
-              download={file.originalName}
-            >
-              <DownloadIcon fontSize="small" />
-            </IconButton>
+            {!isRemovable && (
+              <IconButton
+                size="small"
+                component="a"
+                href={`${BASE_URL}${file.path}`}
+                sx={{
+                  p: 0.5,
+                  justifySelf: "end",
+                }}
+                download={file.originalName}
+              >
+                <DownloadIcon fontSize="small" />
+              </IconButton>
+            )}
           </Box>
         );
       })}

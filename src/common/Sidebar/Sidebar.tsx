@@ -211,7 +211,7 @@ export default function Sidebar({
         <Toolbar
           sx={{
             px: 2,
-            py: 3,
+            py: 3.7,
             display: "flex",
             justifyContent:
               collapsed && !openMobile ? "center" : "space-between",
@@ -228,7 +228,7 @@ export default function Sidebar({
               <img
                 src="/daehologo.gif"
                 alt="로고"
-                style={{ width: 150, height: "auto" }}
+                style={{ width: 200, height: 45 }}
               />
             </Box>
           )}
@@ -273,7 +273,7 @@ export default function Sidebar({
           variant="text"
           startIcon={<LogoutIcon />}
           fullWidth
-          sx={{ justifyContent: "flex-start", color: "#d32f2f" }}
+          sx={{ justifyContent: "flex-start", color: "#1a1a1adb" }}
           onClick={handleLogout}
         >
           {!(collapsed && !openMobile) && "Logout"}
