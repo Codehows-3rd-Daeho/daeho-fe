@@ -11,6 +11,8 @@ interface MobileScheduleProps {
   month: number;
   monthDays: Date[];
   meetingsByDay: Map<number, MeetingListItem[]>;
+  expandedDays: Set<number>;
+  toggleExpand: (day: number) => void;
   isTodayDate: (date: Date) => boolean;
   getDayColor: (date: Date) => string;
   formatDate: (date: Date) => string;
@@ -22,6 +24,8 @@ export default function MobileMeetingSchedule({
   month,
   monthDays,
   meetingsByDay,
+  expandedDays,
+  toggleExpand,
   isTodayDate,
   getDayColor,
   formatDate,
@@ -84,7 +88,10 @@ export default function MobileMeetingSchedule({
           const dayMeetings = meetingsByDay.get(day) || [];
           const today = isTodayDate(date);
           const dayColor = getDayColor(date);
-
+          const isExpanded = expandedDays.has(day);
+          const visibleMeetings = isExpanded
+            ? dayMeetings
+            : dayMeetings.slice(0, 3);
           return (
             <Box
               key={index}
@@ -94,14 +101,17 @@ export default function MobileMeetingSchedule({
                 p: 2,
                 border: today ? "2px solid #2563eb" : "1px solid #e5e7eb",
                 boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                display: "flex",
+                gap: 2,
               }}
             >
               <Box
                 sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  mb: dayMeetings.length > 0 ? 1 : 0,
+                  minWidth: 90,
+                  textAlign: "center",
+                  color: dayColor,
+                  fontWeight: 600,
+                  flexShrink: 0,
                 }}
               >
                 <Typography
@@ -112,58 +122,78 @@ export default function MobileMeetingSchedule({
                   {formatDate(date)}
                 </Typography>
               </Box>
-
-              {dayMeetings.length > 0 ? (
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  {dayMeetings.map((meeting) => (
-                    <Box
-                      key={meeting.id}
-                      sx={{
-                        boxSizing: "border-box",
-                        px: 1,
-                        py: 1,
-                        cursor: "pointer",
-                        backgroundColor: "#4b6485",
-                        borderRadius: 1,
-                        "&:hover": {
-                          backgroundColor: "#1a3260",
-                        },
-                      }}
-                      onClick={() => navigate(`/meeting/${meeting.id}`)}
-                    >
-                      {/* 일시 , 카테고리 */}
+              <Box sx={{ flex: 1 }}>
+                {dayMeetings.length > 0 ? (
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 1 }}
+                  >
+                    {visibleMeetings.map((meeting) => (
                       <Box
+                        key={meeting.id}
                         sx={{
-                          display: "flex",
-                          justifyContent: "space-between", // 좌우로 벌리기
-                          gridTemplateColumns: "auto 1fr",
-                          gap: 1,
+                          p: 1,
                           mb: 1,
-                          width: "100%",
+                          borderRadius: 1,
+                          borderLeft: "4px solid #4b6485", // 앞부분
+                          boxShadow: "0 1px 4px rgba(0, 0, 0, 0.06)",
+                          color: "#fff",
+                          cursor: "pointer",
                         }}
+                        onClick={() => navigate(`/meeting/${meeting.id}`)}
                       >
-                        <Box sx={{ fontSize: 12, color: "white" }}>
-                          {meeting.startDate?.split(" ")[1]}
-                        </Box>
+                        {/* 회의 card*/}
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "space-between", // 좌우로 벌리기
+                            gridTemplateColumns: "auto 1fr",
+                            gap: 1,
+                            mb: 1,
+                            width: "100%",
+                          }}
+                        >
+                          <Typography
+                            fontSize={14}
+                            sx={{
+                              color: "black",
+                              minWidth: 0,
+                              maxWidth: "80%",
+                              overflow: "auto",
+                            }}
+                          >
+                            {meeting.title}
+                          </Typography>
 
-                        <Typography fontSize={12} sx={{ color: "white" }}>
-                          {meeting.categoryName}
-                        </Typography>
+                          <Typography fontSize={12} sx={{ color: "black" }}>
+                            {meeting.categoryName}
+                          </Typography>
+                        </Box>
                       </Box>
-                      <Typography fontSize={14} sx={{ color: "white" }}>
-                        {meeting.title}
-                      </Typography>
-                    </Box>
-                  ))}
-                </Box>
-              ) : (
-                <Typography
-                  fontSize={14}
-                  sx={{ color: "#9ca3af", fontStyle: "italic" }}
-                >
-                  일정 없음
-                </Typography>
-              )}
+                    ))}
+                    {/* 더보기 / 접기 버튼 */}
+                    {meetingsByDay.get(day) &&
+                      meetingsByDay.get(day)!.length > 3 && (
+                        <Typography
+                          fontSize={12}
+                          color="text.secondary"
+                          sx={{ mt: 0.5, cursor: "pointer" }}
+                          onClick={() => toggleExpand(day)}
+                        >
+                          {expandedDays.has(day)
+                            ? "접기"
+                            : `+${meetingsByDay.get(day)!.length - 3} more`}
+                        </Typography>
+                      )}
+                  </Box>
+                ) : (
+                  <Typography
+                    fontSize={14}
+                    sx={{ color: "#9ca3af", fontStyle: "italic" }}
+                  >
+                    일정 없음
+                  </Typography>
+                )}
+              </Box>
             </Box>
           );
         })}

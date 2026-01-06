@@ -144,6 +144,8 @@ export default function MeetingScheduler() {
       month={month}
       monthDays={monthDays}
       meetingsByDay={meetingsByDay}
+      expandedDays={expandedDays}
+      toggleExpand={toggleExpand}
       isTodayDate={isTodayDate}
       getDayColor={getDayColor}
       formatDate={formatDate}
