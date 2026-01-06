@@ -49,6 +49,7 @@ export default function Sidebar({
       clear();
     }
     logout();
+    if (openMobile) onCloseMobile?.(); // 로그아웃 시 모바일 사이드바 닫기
     navigate("/login");
   };
 
@@ -151,7 +152,6 @@ export default function Sidebar({
           {hasChildren && (
             <Collapse in={open[item.id]} timeout="auto" unmountOnExit>
               <List component="div" disablePadding>
-                {/* child에도 SidebarItem 타입 적용 */}
                 {children.map((child: SidebarItem) => (
                   <ListItemButton
                     key={child.id}
@@ -165,14 +165,25 @@ export default function Sidebar({
                       }
                     }}
                   >
+                    {/* 자식 아이콘 추가 영역 */}
+                    {child.icon && (
+                      <ListItemIcon sx={{ minWidth: 40 }}>
+                        {child.icon}
+                      </ListItemIcon>
+                    )}
+
                     <ListItemText
                       primary={child.label}
-                      sx={{ opacity: collapsed && !openMobile ? 0 : 1 }}
+                      sx={{
+                        opacity: collapsed && !openMobile ? 0 : 1,
+
+                        pr: 1,
+                      }}
                       slotProps={{
                         primary: {
                           sx: {
                             fontWeight: child.id === selectedId ? 700 : 500,
-                            pl: 2,
+                            display: "block",
                           },
                         },
                       }}
@@ -211,9 +222,7 @@ export default function Sidebar({
               sx={{ cursor: "pointer" }}
               onClick={() => {
                 navigate("/");
-                if (openMobile) {
-                  onCloseMobile?.();
-                }
+                if (openMobile) onCloseMobile?.(); // 로고 클릭 시 모바일 사이드바 닫기
               }}
             >
               <img
@@ -258,8 +267,7 @@ export default function Sidebar({
       </Box>
 
       <Divider />
-      <Box p={2} display="flex" alignItems="center" gap={1}>
-        {/* Logout */}
+      <Box p={2}>
         <Button
           variant="text"
           startIcon={<LogoutIcon />}
@@ -269,20 +277,6 @@ export default function Sidebar({
         >
           {!(collapsed && !openMobile) && "Logout"}
         </Button>
-
-        {/* PWA Guide */}
-        <Tooltip title="앱 설치 가이드">
-          <IconButton
-            size="small"
-            onClick={() => navigate("/pwa-guide")}
-            sx={{
-              color: "#555",
-              "&:hover": { backgroundColor: "#eee" },
-            }}
-          >
-            <HelpOutlineIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
       </Box>
     </Box>
   );

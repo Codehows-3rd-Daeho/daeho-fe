@@ -6,7 +6,6 @@ import { useAuthStore } from "./store/useAuthStore";
 import { usePushNotification } from "./webpush/usePushNotification";
 import Breadcrumb from "./common/PageHeader/Breadcrumb";
 import useRecordingStore from "./store/useRecordingStore";
-import { useLocation } from "react-router-dom";
 
 type AppLayoutProps = {
   children: ReactNode;
@@ -132,7 +131,6 @@ export default function AppLayout({ children }: AppLayoutProps) {
   );
 
   usePushNotification(member?.memberId ? String(member.memberId) : "");
-  const location = useLocation();
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -160,14 +158,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
           />
         </header>
 
-        <main className="flex-1 overflow-auto  p-6 flex-col">
-          {/* 브레드크럼 */}
-          {location.pathname !== "/pwa-guide" && (
-            <div className="w-full max-w-[1500px] mx-auto mb-4">
-              <Breadcrumb />
-            </div>
-          )}
-          <div className="w-full max-w-[1500px]  mx-auto">{children}</div>
+        <main className="flex-1 overflow-auto p-6 flex-col bg-gray-50">
+          <div className="w-full max-w-[1500px] mx-auto mb-4">
+            <Breadcrumb />
+          </div>
+          <div className="w-full max-w-[1500px] mx-auto">{children}</div>
         </main>
       </div>
     </div>
