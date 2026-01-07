@@ -7,6 +7,8 @@ import {
   MenuItem,
   FormControl,
   IconButton,
+  FormControlLabel,
+  Checkbox,
 } from "@mui/material";
 import { DateRange } from "react-date-range";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
@@ -667,6 +669,19 @@ export default function IssueForm({
                 mode={mode}
               />
             </Box>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={formData.isPrivate || false}
+                  onChange={(e) =>
+                    onChangeFormData("isPrivate", e.target.checked)
+                  }
+                  color="primary"
+                />
+              }
+              label="비밀글로 설정 (참여자만 볼 수 있습니다)"
+              sx={{ mt: 2, display: "block" }}
+            />
           </Box>
 
           {/* 등록 버튼 */}

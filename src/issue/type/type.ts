@@ -10,6 +10,8 @@ export type IssueListItem = {
   hostName: string; // 주관자
   hostJPName: string;
   isDel?: boolean; // 삭제상태
+  members: IssueMemberDto[];
+  isPrivate?: boolean;
 };
 
 //
@@ -30,6 +32,7 @@ export interface IssueFormValues {
   department: string[]; // 관련 부서 (다중)
   members: IssueMemberDto[]; // 관련 멤버 (다중)
   isDel?: boolean;
+  isPrivate?: boolean;
 }
 
 // 회원 리스트(참여자, 참석자 추가)

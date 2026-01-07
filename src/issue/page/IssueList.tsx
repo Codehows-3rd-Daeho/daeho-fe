@@ -16,9 +16,13 @@ import type { ApiError } from "../../config/httpClient";
 import Filter from "../../common/PageHeader/Filter";
 import DateFilter from "../../common/PageHeader/DateFilter";
 import type { FilterDto } from "../../common/PageHeader/type";
+import { useAuthStore } from "../../store/useAuthStore";
+import LockIcon from "@mui/icons-material/Lock";
 
 export default function IssueList() {
   const navigate = useNavigate();
+
+  const { member } = useAuthStore();
 
   const theme = useTheme();
 
@@ -42,7 +46,12 @@ export default function IssueList() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await getIssueListSrc(page - 1, 10, filter);
+        const data = await getIssueListSrc(
+          page - 1,
+          10,
+          filter,
+          member?.memberId
+        );
         const list = (data.content ?? data).map((item: IssueListItem) => ({
           ...item,
           status: getStatusLabel(item.status),
@@ -60,7 +69,7 @@ export default function IssueList() {
     };
 
     fetchData();
-  }, [page, filter]);
+  }, [page, filter, member?.memberId]);
 
   // 리스트 컬럼
   const allColumns: GridColDef[] = [
@@ -79,9 +88,11 @@ export default function IssueList() {
       minWidth: isMobile ? 300 : 600,
       headerAlign: "center",
       align: "left",
-      renderCell: (params) => (
+      renderCell: (params: GridRenderCellParams<IssueListItem>) => (
         <div
           style={{
+            display: "flex",
+            alignItems: "center",
             width: "100%",
             cursor: "pointer",
             overflow: "hidden",
@@ -90,6 +101,17 @@ export default function IssueList() {
           }}
           onClick={() => navigate(`/issue/${params.id}`)}
         >
+          {/* 비밀글일 때만 제목 앞에 자물쇠 표시 */}
+          {params.row.isPrivate && (
+            <LockIcon
+              sx={{
+                fontSize: 18,
+                mr: 0.5,
+                color: "text.secondary",
+                flexShrink: 0,
+              }}
+            />
+          )}
           {params.value}
         </div>
       ),
