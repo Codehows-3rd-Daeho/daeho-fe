@@ -200,6 +200,12 @@ export default function PWAInstallGuide() {
                 desc: "로그인 후 알림 팝업이 나오면 반드시 허용을 눌러주세요.",
                 img: "/pwa-guide/android-notification-popup.png",
               },
+              {
+                title: "Android 앱 내부 알림 설정",
+                desc: `  Android 앱 내 알림 설정에 따라 Issue Manage 아이콘 설치 후에도 알림이 수신되지 않을 수 있습니다. 
+                        설정 > 애플리케이션 > Issue Manager > 알림 이용에서 알림 허용 여부를 확인해주세요. `,
+                img: "/pwa-guide/android-app-setting.png",
+              },
             ].map((s, i) => (
               <div
                 key={i}
@@ -259,12 +265,18 @@ export default function PWAInstallGuide() {
               {
                 title: "설치 완료",
                 desc: "홈 화면에 앱 아이콘이 생성됩니다.",
-                img: "/pwa-guide/android-home-icon.png",
+                img: "/pwa-guide/ios-home-icon.png",
               },
               {
                 title: "알림 설정 (필수)",
                 desc: "로그인 후 알림 팝업이 나오면 반드시 허용을 눌러주세요.",
                 img: "/pwa-guide/ios-notification-popup.png",
+              },
+              {
+                title: "iO 앱 내부 알림 설정",
+                desc: `  iOS 앱 내 알림 설정에 따라 Issue Manage 아이콘 설치 후에도 알림이 수신되지 않을 수 있습니다. 
+                        설정 > 앱 > Issue Manager > 알림에서 알림 허용 여부를 확인해주세요. `,
+                img: "/pwa-guide/ios-app-setting.png",
               },
             ].map((s, i) => (
               <div
