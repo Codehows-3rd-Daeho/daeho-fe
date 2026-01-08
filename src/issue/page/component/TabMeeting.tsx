@@ -2,12 +2,13 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import type { MeetingListItem } from "../../../meeting/type/type";
 import { getStatusLabel } from "../../../common/commonFunction";
-import type { GridColDef } from "@mui/x-data-grid";
+import type { GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import { ListDataGrid } from "../../../common/List/ListDataGrid";
 import { CommonPagination } from "../../../common/Pagination/Pagination";
 import { getMeetingRelatedIssue } from "../../api/issueApi";
 import type { ApiError } from "../../../config/httpClient";
 import { useMediaQuery, useTheme } from "@mui/material";
+import LockIcon from "@mui/icons-material/Lock";
 
 export default function TabMeeting() {
   const navigate = useNavigate();
@@ -54,17 +55,30 @@ export default function TabMeeting() {
       minWidth: isMobile ? 150 : 180,
       headerAlign: "center",
       align: "left",
-      renderCell: (params) => (
+      renderCell: (params: GridRenderCellParams<MeetingListItem>) => (
         <div
           style={{
+            display: "flex",
+            alignItems: "center",
             width: "100%",
             cursor: "pointer",
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
           }}
-          onClick={() => navigate(`/meeting/${params.id}`)}
+          onClick={() => navigate(`/issue/${params.id}`)}
         >
+          {/* 비밀글일 때만 제목 앞에 자물쇠 표시 */}
+          {params.row.isPrivate && (
+            <LockIcon
+              sx={{
+                fontSize: 18,
+                mr: 0.5,
+                color: "text.secondary",
+                flexShrink: 0,
+              }}
+            />
+          )}
           {params.value}
         </div>
       ),
