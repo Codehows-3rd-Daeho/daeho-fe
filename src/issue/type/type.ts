@@ -10,7 +10,6 @@ export type IssueListItem = {
   hostName: string; // 주관자
   hostJPName: string;
   isDel?: boolean; // 삭제상태
-  members: IssueMemberDto[];
   isPrivate?: boolean;
 };
 
@@ -75,6 +74,7 @@ export interface IssueDto {
   createdAt: string;
   updatedAt: string;
   isDel: boolean;
+  isPrivate: boolean;
   isEditPermitted: boolean; // 수정/삭제 권한 여부
   participantList: IssueMemberDto[]; // 참여자 리스트
 }

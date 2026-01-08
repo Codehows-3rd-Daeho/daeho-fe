@@ -39,6 +39,7 @@ export default function MeetingCreate() {
     departmentIds: [],
     members: [],
     isDel: false,
+    isPrivate: false,
   });
 
   // issue, 카테고리, 부서 상태
@@ -197,6 +198,7 @@ export default function MeetingCreate() {
       departmentIds: formData.departmentIds.map(Number),
       members: meetingMembers, //PartMember에서 전달받은 객체
       isDel: false,
+      isPrivate: formData.isPrivate,
     };
 
     // 2. meetingDto를 JSON 문자열로 변환하여 "data" 파트에 추가

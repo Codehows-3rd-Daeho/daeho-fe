@@ -32,6 +32,7 @@ export interface MeetingFormValues {
   departmentIds: string[]; // 관련 부서 (다중)
   members: MeetingMemberDto[]; // 관련 멤버 (다중)
   isDel: boolean;
+  isPrivate?: boolean;
 }
 
 //회의 멤버 등록
@@ -75,6 +76,7 @@ export interface MeetingDto {
   createdAt: string;
   updatedAt: string;
   isDel: boolean;
+  isPrivate: boolean;
 
   isEditPermitted: boolean; // 수정/삭제 권한 여부
   participantList: MeetingMemberDto[];
