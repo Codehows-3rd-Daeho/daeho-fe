@@ -9,12 +9,14 @@ import { getMeetingRelatedIssue } from "../../api/issueApi";
 import type { ApiError } from "../../../config/httpClient";
 import { useMediaQuery, useTheme } from "@mui/material";
 import LockIcon from "@mui/icons-material/Lock";
+import { useAuthStore } from "../../../store/useAuthStore";
 
 export default function TabMeeting() {
   const navigate = useNavigate();
   const { issueId } = useParams();
 
   const theme = useTheme();
+  const { member } = useAuthStore();
 
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
@@ -23,7 +25,7 @@ export default function TabMeeting() {
   const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
-    getMeetingRelatedIssue(issueId as string, page - 1, 5)
+    getMeetingRelatedIssue(issueId as string, page - 1, 5, member?.memberId)
       .then((data) => {
         const list = (data.content ?? data).map((item: MeetingListItem) => ({
           ...item,
@@ -37,7 +39,7 @@ export default function TabMeeting() {
         const response = apiError.response?.data?.message;
         alert(response ?? "오류가 발생했습니다.");
       });
-  }, [issueId, page]);
+  }, [issueId, page, member?.memberId]);
 
   const allColumns: GridColDef[] = [
     {
