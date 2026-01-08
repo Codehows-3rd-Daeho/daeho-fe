@@ -45,6 +45,7 @@ export function useCommentController({
         setPage(lastPage);
       } catch (error) {
         const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
         const response = apiError.response?.data?.message;
 
         alert(response ?? "오류가 발생했습니다.");
@@ -92,6 +93,7 @@ export function useCommentController({
       setPage(lastPage);
     } catch (error) {
       const apiError = error as ApiError;
+      if (apiError.response?.status === 401) return;
       const response = apiError.response?.data?.message;
 
       alert(response ?? "댓글 등록 중 오류가 발생했습니다.");
@@ -109,6 +111,7 @@ export function useCommentController({
       setPage(nextPage);
     } catch (error) {
       const apiError = error as ApiError;
+      if (apiError.response?.status === 401) return;
       const response = apiError.response?.data?.message;
 
       alert(response ?? "오류가 발생했습니다.");
@@ -153,6 +156,7 @@ export function useCommentController({
       setTotalCount(data.totalElements);
     } catch (error) {
       const apiError = error as ApiError;
+      if (apiError.response?.status === 401) return;
       const response = apiError.response?.data?.message;
 
       alert(response ?? "오류가 발생했습니다.");
@@ -177,6 +181,7 @@ export function useCommentController({
       setPage(lastPage);
     } catch (error) {
       const apiError = error as ApiError;
+      if (apiError.response?.status === 401) return;
       const response = apiError.response?.data?.message;
 
       alert(response ?? "오류가 발생했습니다.");

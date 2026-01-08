@@ -57,6 +57,7 @@ export default function IssueKanban() {
         });
       } catch (error) {
         const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
         const response = apiError.response?.data?.message;
 
         console.error("칸반 이슈 조회 실패", error);

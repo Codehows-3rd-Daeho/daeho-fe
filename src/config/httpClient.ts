@@ -21,7 +21,7 @@ import axios, { AxiosError } from "axios";
   **필수. try-catch 백엔드 error message 사용** => 401: httpClient가 처리 
      catch (error) {
       const apiError = error as ApiError;
-      const response = apiError.response?.data?.message;
+  if (apiError.response?.status === 401) return;      const response = apiError.response?.data?.message;
 
       alert(response ?? " ~ 중 오류가 발생했습니다.");
     }
@@ -53,40 +53,42 @@ httpClient.interceptors.request.use(
 
 // 응답 인터셉터: 401 Unauthorized 에러 발생 시 로그인 페이지로 이동.
 // 네트워크, 인증 에러만 전역으로 처리 나머지는 catch에서 alert로 처리해야합니다.
-let alreadyAlerted = false;
 let networkAlerted = false;
+let authFinalized = false; //401 error, 세션 만료 확인 => alert 중복 방지
 
 httpClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // 네트워크 오류 (서버 응답 없음)
+    //1. 네트워크 오류 확인 (서버 응답 없음 axios error)
     if (!axios.isAxiosError(error) || !error.response) {
       if (!networkAlerted) {
-        // alert가 연속으로 뜨는 걸 방지(중복방지)
         networkAlerted = true;
-        alert("네트워크 오류가 발생했습니다.");
-        // 1초 후 다음 네트워크 오류 때는 다시 alert 가능
-        setTimeout(() => (networkAlerted = false), 1000);
+        alert("네트워크 오류가 발생했습니다."); // alert가 연속으로 뜨는 걸 방지(중복방지)
+        setTimeout(() => (networkAlerted = false), 1000); // 1초 후 다음 네트워크 오류 때는 다시 alert 가능
       }
       return Promise.reject(error);
     }
 
+    // 2. 서버에서 error가 내려오는 경우
     const { status, data } = error.response;
-    //서버의 에러 메세지 추출
-    const message =
-      (data as { message?: string })?.message ?? "오류가 발생했습니다.";
+    const message = data?.message ?? "오류가 발생했습니다."; //서버의 에러 메세지 추출
 
-    // 인증 에러
+    console.log("data?.errorCode: ", data?.errorCode);
+
     if (status === 401) {
-      if (!alreadyAlerted) {
-        alreadyAlerted = true;
-        localStorage.removeItem("jwt");
-        alert(message);
-        window.location.href = "/login";
+      if (authFinalized) {
+        return Promise.reject(error);
       }
+
+      authFinalized = true;
+      localStorage.removeItem("jwt");
+
+      alert(message); // 서버 메시지 그대로 사용
+      window.location.replace("/login");
+      return Promise.reject(error);
     }
 
-    //다른 alert에서 message를 받아서 사용 가능
+    //3. 기타 error => 다른 alert에서 message를 받아서 사용 가능
     return Promise.reject({
       ...error,
       uiMessage: message,

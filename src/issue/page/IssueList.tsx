@@ -52,6 +52,7 @@ export default function IssueList() {
         setTotalCount(data.totalElements);
       } catch (error) {
         const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
         const response = apiError.response?.data?.message;
 
         alert(response ?? "오류가 발생했습니다.");

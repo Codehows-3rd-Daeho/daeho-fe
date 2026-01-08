@@ -93,6 +93,7 @@ export default function IssueCreate() {
         }
       } catch (error) {
         const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
         const response = apiError.response?.data?.message;
 
         alert(response ?? "데이터를 불러오는 중 오류가 발생했습니다.");
@@ -188,6 +189,7 @@ export default function IssueCreate() {
       navigator(`/issue/list`);
     } catch (error) {
       const apiError = error as ApiError;
+      if (apiError.response?.status === 401) return;
       const response = apiError.response?.data?.message;
 
       alert(response ?? "이슈 등록 중 오류가 발생했습니다.");

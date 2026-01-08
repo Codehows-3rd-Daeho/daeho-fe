@@ -92,6 +92,7 @@ export default function CommentSection({
         setAllowedExtensions(extensionConfig.map((e) => e.name.toLowerCase()));
       } catch (error) {
         const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
         const response = apiError.response?.data?.message;
 
         alert(response ?? "파일 설정을 불러오는 중 오류가 발생했습니다.");

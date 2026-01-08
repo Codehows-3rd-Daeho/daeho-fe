@@ -75,6 +75,7 @@ export default function MasterData({
       } catch (error) {
         console.error("등록 실패:", error);
         const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
         const response = apiError.response?.data;
 
         console.error(response);

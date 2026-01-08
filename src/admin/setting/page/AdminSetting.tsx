@@ -96,6 +96,7 @@ export default function AdminSetting() {
         setIsLoading(false);
       } catch (error) {
         const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
         const response = apiError.response?.data?.message;
 
         alert(response ?? "기준 정보 로드에 실패했습니다.");
@@ -156,6 +157,7 @@ export default function AdminSetting() {
                   } catch (error) {
                     console.error("수정 실패:", error);
                     const apiError = error as ApiError;
+                    if (apiError.response?.status === 401) return;
                     alert(apiError.response?.data ?? "수정 실패");
                   }
                 }
@@ -188,6 +190,7 @@ export default function AdminSetting() {
       alert("삭제되었습니다.");
     } catch (error) {
       const apiError = error as ApiError;
+      if (apiError.response?.status === 401) return;
       const status = apiError.response?.status ?? 0;
       const response = apiError.response?.data?.message;
 
@@ -259,6 +262,7 @@ export default function AdminSetting() {
       alert("알림 설정 저장 완료");
     } catch (error) {
       const apiError = error as ApiError;
+      if (apiError.response?.status === 401) return;
       const response = apiError.response?.data?.message;
 
       alert(response ?? "저장 실패");

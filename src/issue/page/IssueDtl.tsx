@@ -8,6 +8,7 @@ import {
   Tabs,
   Tab,
   CircularProgress,
+  Tooltip,
 } from "@mui/material";
 
 import DownloadIcon from "@mui/icons-material/Download";
@@ -26,12 +27,14 @@ import type { IssueDto } from "../type/type";
 import { BASE_URL, type ApiError } from "../../config/httpClient";
 import { useAuthStore } from "../../store/useAuthStore";
 import { getFileInfo, getStatusLabel } from "../../common/commonFunction";
+import IosShareIcon from "@mui/icons-material/IosShare";
 
 export default function IssueDtl() {
   const { issueId } = useParams();
   const [issue, setIssue] = useState<IssueDto | null>(null);
   const [tabValue, setTabValue] = useState(0);
   const [showParticipantModal, setShowParticipantModal] = useState(false);
+  const [showTip, setShowTip] = useState(false);
   const navigate = useNavigate();
 
   const { member } = useAuthStore();
@@ -44,6 +47,7 @@ export default function IssueDtl() {
       .then((data) => setIssue(data))
       .catch((error) => {
         const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
         const response = apiError.response?.data?.message;
         alert(response ?? "오류가 발생했습니다.");
       });
@@ -87,6 +91,7 @@ export default function IssueDtl() {
         })
         .catch((error) => {
           const apiError = error as ApiError;
+          if (apiError.response?.status === 401) return;
           const response = apiError.response?.data?.message;
           alert(response ?? "오류가 발생했습니다.");
         });
@@ -155,12 +160,29 @@ export default function IssueDtl() {
         navigate("/issue/list");
       } catch (error) {
         const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
         const response = apiError.response?.data?.message;
 
         alert(response ?? "이슈 삭제 중 오류가 발생했습니다.");
       }
     }
   };
+
+  //공유하기 버튼
+  const handleCopy = () => {
+    const pageUrl = window.location.href;
+    navigator.clipboard
+      .writeText(pageUrl)
+      .then(() => {
+        setShowTip(true); // 툴팁 표시
+        setTimeout(() => setShowTip(false), 1500); // 1.5초 후 자동 숨김
+      })
+      .catch(() => {
+        setShowTip(true);
+        setTimeout(() => setShowTip(false), 1500);
+      });
+  };
+
   return (
     <Box
       sx={{
@@ -417,6 +439,7 @@ export default function IssueDtl() {
             boxShadow: { md: 1 },
             minWidth: { xs: 0, md: 250 },
             maxWidth: 400,
+            position: "relative",
           }}
         >
           {/* 상태 */}
@@ -578,6 +601,33 @@ export default function IssueDtl() {
 
           {/* 수정일 */}
           <InfoRow label="수정일" value={issue.updatedAt} />
+
+          {/* 링크 공유 */}
+          <Box
+            sx={{
+              position: "absolute",
+              bottom: 24,
+              right: 24,
+            }}
+          >
+            <Tooltip
+              title="링크가 복사되었습니다!"
+              open={showTip} // 상태로 표시 여부 제어
+              arrow
+              placement="top"
+            >
+              <IconButton
+                color="primary"
+                onClick={handleCopy}
+                sx={{
+                  bgcolor: "white",
+                  "&:hover": { bgcolor: "grey.100" },
+                }}
+              >
+                <IosShareIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
         </Box>
 
         {/* 버튼 */}
