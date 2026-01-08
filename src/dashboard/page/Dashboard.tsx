@@ -1,6 +1,6 @@
 import { Box, Button, Card, Typography } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
-import { getKanbanIssues } from "../../issue/api/issueApi";
+import { getKanbanIssuesMT } from "../../issue/api/issueApi";
 import type { KanbanData } from "../../mytask/page/MTIssueKanban";
 import KanbanBoard from "../../common/Kanban/KanbanBoard";
 import { useNavigate } from "react-router-dom";
@@ -12,9 +12,11 @@ import { getStatusLabel } from "../../common/commonFunction";
 import type { MeetingListItem } from "../../meeting/type/type";
 import { ListDataGrid } from "../../common/List/ListDataGrid";
 import { useAuthStore } from "../../store/useAuthStore";
-import type { GridColDef } from "@mui/x-data-grid";
+import type { GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import type { ApiError } from "../../config/httpClient";
 import { useTheme, useMediaQuery } from "@mui/material";
+import LockIcon from "@mui/icons-material/Lock";
+import type { FilterDto } from "../../issue/type/type";
 
 const days = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -24,6 +26,18 @@ export default function Dashboard() {
     done: [],
     delay: [],
   });
+
+  const [filter] = useState<FilterDto>({
+    keyword: "",
+    departmentIds: [],
+    categoryIds: [],
+    hostIds: [],
+    participantIds: [],
+    statuses: [],
+    startDate: "",
+    endDate: "",
+  });
+
   //회의
   const [meetingData, setMeetingData] = useState<MeetingListItem[]>([]);
   //캘린더 회의 조회용
@@ -49,9 +63,11 @@ export default function Dashboard() {
       minWidth: isThemeSmall ? 300 : 600,
       headerAlign: "center",
       align: "left",
-      renderCell: (params) => (
+      renderCell: (params: GridRenderCellParams<MeetingListItem>) => (
         <div
           style={{
+            display: "flex",
+            alignItems: "center",
             width: "100%",
             cursor: "pointer",
             overflow: "hidden",
@@ -60,6 +76,17 @@ export default function Dashboard() {
           }}
           onClick={() => navigate(`/meeting/${params.id}`)}
         >
+          {/* 비밀글일 때만 제목 앞에 자물쇠 표시 */}
+          {params.row.isPrivate && (
+            <LockIcon
+              sx={{
+                fontSize: 18,
+                mr: 0.5,
+                color: "text.secondary",
+                flexShrink: 0,
+              }}
+            />
+          )}
           {params.value}
         </div>
       ),
@@ -209,7 +236,8 @@ export default function Dashboard() {
     const fetchData = async () => {
       try {
         // 1. 이슈 데이터==============================================================
-        const issueRes = await getKanbanIssues();
+
+        const issueRes = await getKanbanIssuesMT(member.memberId, filter);
         const delayIds = new Set(issueRes.delayed.map((item) => item.id));
         const filteredPending = issueRes.inProgress.filter(
           (item) => !delayIds.has(item.id)
@@ -435,6 +463,16 @@ export default function Dashboard() {
                                 overflow: "auto",
                               }}
                             >
+                              {meeting.isPrivate && (
+                                <LockIcon
+                                  sx={{
+                                    fontSize: 25,
+                                    color: "#808080",
+                                    flexShrink: 0,
+                                    pr: 1,
+                                  }}
+                                />
+                              )}
                               {meeting.title}
                             </Typography>
 
@@ -630,6 +668,16 @@ export default function Dashboard() {
                                       width: "100%", // 카드 폭에 맞춤
                                     }}
                                   >
+                                    {meeting.isPrivate && (
+                                      <LockIcon
+                                        sx={{
+                                          fontSize: 25,
+                                          color: "#eee",
+                                          flexShrink: 0,
+                                          pr: 1,
+                                        }}
+                                      />
+                                    )}
                                     {meeting.title}
                                   </Box>
                                 </Card>

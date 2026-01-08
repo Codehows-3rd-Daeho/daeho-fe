@@ -84,14 +84,14 @@ export default function MeetingList() {
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
           }}
-          onClick={() => navigate(`/issue/${params.id}`)}
+          onClick={() => navigate(`/meeting/${params.id}`)}
         >
           {/* 비밀글일 때만 자물쇠 아이콘 표시 */}
           {params.row.isPrivate && (
             <LockIcon
               sx={{
                 fontSize: 18,
-                mr: 0.5,
+                mr: 1,
                 color: "text.secondary",
                 flexShrink: 0,
               }}

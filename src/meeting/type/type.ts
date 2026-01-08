@@ -11,7 +11,7 @@ export type MeetingListItem = {
   departmentName: string[]; // 부서
   hostName: string; // 주관자
   isDel?: boolean; // 삭제상태
-  isPrivate: boolean; // 비밀글 여부
+  isPrivate?: boolean; // 비밀글 여부
 };
 
 export interface MeetingListResponse {

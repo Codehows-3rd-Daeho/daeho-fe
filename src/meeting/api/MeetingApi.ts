@@ -66,6 +66,7 @@ export const getMeetingListMT = async (
     : {
         page,
         size,
+        memberId: id,
       };
   const { data } = await httpClient.get(`/meeting/mytask/${id}`, {
     params,
@@ -76,10 +77,11 @@ export const getMeetingListMT = async (
 //회의 캘린더 조회
 export const getMeetingMonth = async (
   year: number,
-  month: number
+  month: number,
+  memberId?: number
 ): Promise<MeetingListItem[]> => {
   const response = await httpClient.get(`/meeting/scheduler`, {
-    params: { year, month },
+    params: { year, month, memberId: memberId || null },
   });
   return response.data;
 };

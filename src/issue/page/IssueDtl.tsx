@@ -44,8 +44,25 @@ export default function IssueDtl() {
       .then((data) => setIssue(data))
       .catch((error) => {
         const apiError = error as ApiError;
-        const response = apiError.response?.data?.message;
-        alert(response ?? "오류가 발생했습니다.");
+
+        const errorData =
+          apiError.response?.data?.message || apiError.response?.data;
+
+        const errorString =
+          typeof errorData === "string"
+            ? errorData
+            : JSON.stringify(errorData || "");
+
+        if (
+          errorString.includes("권한") ||
+          [400, 403].includes(apiError.response?.status ?? 0)
+        ) {
+          alert("해당 게시글에 대한 접근 권한이 없습니다.");
+          navigate("/", { replace: true });
+        } else {
+          alert("데이터를 불러오는 중 오류가 발생했습니다.");
+          navigate(-1);
+        }
       });
   };
 
