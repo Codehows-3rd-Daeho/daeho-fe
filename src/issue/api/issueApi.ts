@@ -150,10 +150,11 @@ export const updateReadStatus = async (issueId: string): Promise<void> => {
 export const getMeetingRelatedIssue = async (
   issueId: string,
   page: number,
-  size: number = 5
+  size: number = 5,
+  memberId?: number
 ): Promise<MeetingListResponse> => {
   const response = await httpClient.get(`/issue/${issueId}/meeting`, {
-    params: { page, size },
+    params: { page, size, memberId: memberId || null },
   });
   return response.data;
 };
