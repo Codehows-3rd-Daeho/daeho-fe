@@ -53,6 +53,7 @@ export interface IssueInMeeting {
   categoryId: string; // 카테고리
   departmentIds: string[]; // 관련 부서 (다중)
   members: MeetingMemberDto[]; // 관련 멤버 (다중)
+  isPrivate?: boolean;
 }
 
 export interface MeetingDto {
