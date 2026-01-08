@@ -71,8 +71,9 @@ export default function MeetingCreate() {
   useEffect(() => {
     async function fetchData() {
       try {
+        setIsLoading(true);
         //=================이슈, 카테고리, 부서 목록 조회=================
-        const iss = await getIssueInMeeting();
+        const iss = await getIssueInMeeting(memberId);
         const cat = await getCategory();
         const dep = await getDepartment();
 

@@ -85,8 +85,10 @@ export const issueCreate = async (formData: FormData) => {
 };
 
 //이슈 리스트
-export const getIssueInMeeting = async (): Promise<IssueIdTitle[]> => {
-  const response = await httpClient.get(`/issue/related`);
+export const getIssueInMeeting = async (memberId?: number): Promise<IssueIdTitle[]> => {
+  const response = await httpClient.get(`/issue/related`, {
+    params: { memberId: memberId || null },
+  });
   return response.data;
 };
 
