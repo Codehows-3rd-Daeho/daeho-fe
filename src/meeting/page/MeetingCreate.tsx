@@ -74,10 +74,12 @@ export default function MeetingCreate() {
         setIsLoading(true);
         //=================이슈, 카테고리, 부서 목록 조회=================
         const iss = await getIssueInMeeting(memberId);
-        const filteredIssues = iss.filter((issue: any) => {
-        if (!issue.isPrivate) return true; 
-        return issue.members?.some((m: any) => m.id === memberId); 
-      });
+        const filteredIssues = iss.filter((issue: IssueIdTitle) => {
+          if (!issue.isPrivate) return true;
+          return issue.members?.some(
+            (m: MeetingMemberDto) => m.id === memberId
+          );
+        });
         const cat = await getCategory();
         const dep = await getDepartment();
 

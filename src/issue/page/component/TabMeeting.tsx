@@ -68,7 +68,7 @@ export default function TabMeeting() {
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
           }}
-          onClick={() => navigate(`/issue/${params.id}`)}
+          onClick={() => navigate(`/meeting/${params.id}`)}
         >
           {/* 비밀글일 때만 제목 앞에 자물쇠 표시 */}
           {params.row.isPrivate && (

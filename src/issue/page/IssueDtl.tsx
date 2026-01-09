@@ -26,6 +26,7 @@ import type { IssueDto } from "../type/type";
 import { BASE_URL, type ApiError } from "../../config/httpClient";
 import { useAuthStore } from "../../store/useAuthStore";
 import { getFileInfo, getStatusLabel } from "../../common/commonFunction";
+import LockIcon from "@mui/icons-material/Lock";
 
 export default function IssueDtl() {
   const { issueId } = useParams();
@@ -595,6 +596,21 @@ export default function IssueDtl() {
 
           {/* 수정일 */}
           <InfoRow label="수정일" value={issue.updatedAt} />
+
+          {/* 비밀글 여부: 비밀글(isPrivate이 true)일 때만 표시 */}
+          {issue.isPrivate && (
+            <Box>
+              <LockIcon
+                sx={{
+                  fontSize: 18,
+                  mr: 0.5,
+                  color: "text.secondary",
+                  flexShrink: 0,
+                }}
+              />
+              비밀글 입니다
+            </Box>
+          )}
         </Box>
 
         {/* 버튼 */}

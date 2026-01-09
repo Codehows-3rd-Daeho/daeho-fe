@@ -9,6 +9,7 @@ import {
   IconButton,
   FormControlLabel,
   Checkbox,
+  Tooltip,
 } from "@mui/material";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -21,6 +22,7 @@ import type { FileDto, IssueIdTitle } from "../../issue/type/type";
 import React, { useEffect, useRef, useState } from "react";
 import { formatFileSize, getFileInfo } from "../../common/commonFunction";
 import { useNavigate } from "react-router-dom";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
 interface MeetingFormProps {
   formData: MeetingFormValues;
@@ -741,8 +743,27 @@ export default function MeetingForm({
                   color="primary"
                 />
               }
-              label="비밀글로 설정 (참여자만 볼 수 있습니다)"
-              sx={{ mt: 2, display: "block" }}
+              label={
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <span style={{ fontSize: "0.95rem" }}>비밀글 설정</span>
+
+                  {/* 마우스 오버 시 설명을 보여줄 툴팁과 아이콘 */}
+                  <Tooltip
+                    title="참여자만 볼 수 있습니다"
+                    arrow
+                    placement="top"
+                  >
+                    <InfoOutlinedIcon
+                      sx={{
+                        ml: 0.5,
+                        fontSize: "1rem",
+                        color: "gray",
+                      }}
+                    />
+                  </Tooltip>
+                </Box>
+              }
+              sx={{ mt: 2 }}
             />
           </Box>
 

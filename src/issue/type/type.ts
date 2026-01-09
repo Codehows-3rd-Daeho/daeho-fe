@@ -1,3 +1,5 @@
+import type { MeetingMemberDto } from "../../meeting/type/type";
+
 // 이슈 리스트 조회 타입
 export type IssueListItem = {
   id: number;
@@ -55,6 +57,8 @@ export interface IssueMemberDto {
 export interface IssueIdTitle {
   id?: string;
   title: string;
+  isPrivate?: boolean;
+  members?: MeetingMemberDto[];
 }
 
 export interface IssueDto {
