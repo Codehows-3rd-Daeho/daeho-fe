@@ -39,6 +39,7 @@ export default function MeetingCreate() {
     departmentIds: [],
     members: [],
     isDel: false,
+    isPrivate: false,
   });
 
   // issue, 카테고리, 부서 상태
@@ -70,12 +71,19 @@ export default function MeetingCreate() {
   useEffect(() => {
     async function fetchData() {
       try {
+        setIsLoading(true);
         //=================이슈, 카테고리, 부서 목록 조회=================
-        const iss = await getIssueInMeeting();
+        const iss = await getIssueInMeeting(memberId);
+        const filteredIssues = iss.filter((issue: IssueIdTitle) => {
+          if (!issue.isPrivate) return true;
+          return issue.members?.some(
+            (m: MeetingMemberDto) => m.id === memberId
+          );
+        });
         const cat = await getCategory();
         const dep = await getDepartment();
 
-        setIssues(iss);
+        setIssues(filteredIssues);
         setCategories(cat); // 카테고리 데이터 저장
         setDepartments(dep); // 부서 데이터 저장
 
@@ -197,6 +205,7 @@ export default function MeetingCreate() {
       departmentIds: formData.departmentIds.map(Number),
       members: meetingMembers, //PartMember에서 전달받은 객체
       isDel: false,
+      isPrivate: formData.isPrivate,
     };
 
     // 2. meetingDto를 JSON 문자열로 변환하여 "data" 파트에 추가

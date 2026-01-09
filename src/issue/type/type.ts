@@ -1,3 +1,5 @@
+import type { MeetingMemberDto } from "../../meeting/type/type";
+
 // 이슈 리스트 조회 타입
 export type IssueListItem = {
   id: number;
@@ -10,6 +12,7 @@ export type IssueListItem = {
   hostName: string; // 주관자
   hostJPName: string;
   isDel?: boolean; // 삭제상태
+  isPrivate?: boolean;
 };
 
 //
@@ -30,6 +33,7 @@ export interface IssueFormValues {
   department: string[]; // 관련 부서 (다중)
   members: IssueMemberDto[]; // 관련 멤버 (다중)
   isDel?: boolean;
+  isPrivate?: boolean;
 }
 
 // 회원 리스트(참여자, 참석자 추가)
@@ -53,6 +57,8 @@ export interface IssueMemberDto {
 export interface IssueIdTitle {
   id?: string;
   title: string;
+  isPrivate?: boolean;
+  members?: MeetingMemberDto[];
 }
 
 export interface IssueDto {
@@ -72,6 +78,7 @@ export interface IssueDto {
   createdAt: string;
   updatedAt: string;
   isDel: boolean;
+  isPrivate: boolean;
   isEditPermitted: boolean; // 수정/삭제 권한 여부
   participantList: IssueMemberDto[]; // 참여자 리스트
 }

@@ -11,6 +11,7 @@ export type MeetingListItem = {
   departmentName: string[]; // 부서
   hostName: string; // 주관자
   isDel?: boolean; // 삭제상태
+  isPrivate?: boolean; // 비밀글 여부
 };
 
 export interface MeetingListResponse {
@@ -31,6 +32,7 @@ export interface MeetingFormValues {
   departmentIds: string[]; // 관련 부서 (다중)
   members: MeetingMemberDto[]; // 관련 멤버 (다중)
   isDel: boolean;
+  isPrivate?: boolean;
 }
 
 //회의 멤버 등록
@@ -51,6 +53,7 @@ export interface IssueInMeeting {
   categoryId: string; // 카테고리
   departmentIds: string[]; // 관련 부서 (다중)
   members: MeetingMemberDto[]; // 관련 멤버 (다중)
+  isPrivate?: boolean;
 }
 
 export interface MeetingDto {
@@ -74,6 +77,7 @@ export interface MeetingDto {
   createdAt: string;
   updatedAt: string;
   isDel: boolean;
+  isPrivate: boolean;
 
   isEditPermitted: boolean; // 수정/삭제 권한 여부
   participantList: MeetingMemberDto[];

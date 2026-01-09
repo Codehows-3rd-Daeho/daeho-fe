@@ -28,11 +28,13 @@ const toParam = <T>(arr?: T[]) => (arr && arr.length > 0 ? arr : null);
 export const getIssueListSrc = async (
   page: number,
   size: number,
-  filter: FilterDto
+  filter: FilterDto,
+  memberId?: number
 ) => {
   const params = {
     page,
     size,
+    memberId: memberId || null,
     keyword: filter.keyword || null,
     startDate: filter.startDate || null,
     endDate: filter.endDate || null,
@@ -83,8 +85,10 @@ export const issueCreate = async (formData: FormData) => {
 };
 
 //이슈 리스트
-export const getIssueInMeeting = async (): Promise<IssueIdTitle[]> => {
-  const response = await httpClient.get(`/issue/related`);
+export const getIssueInMeeting = async (memberId?: number): Promise<IssueIdTitle[]> => {
+  const response = await httpClient.get(`/issue/related`, {
+    params: { memberId: memberId || null },
+  });
   return response.data;
 };
 
@@ -109,9 +113,12 @@ export const getKanbanIssues = async (): Promise<temp> => {
 };
 
 // 칸반 전체 + 검색 추가
-export const getKanbanIssuesSrc = async (filter: FilterDto): Promise<temp> => {
+export const getKanbanIssuesSrc = async (
+  filter: FilterDto,
+  memberId?: number
+): Promise<temp> => {
   const response = await httpClient.get(`/issue/kanban`, {
-    params: { ...filter },
+    params: { ...filter, memberId: memberId || null },
   });
   console.log(filter);
   return response.data;
@@ -143,10 +150,11 @@ export const updateReadStatus = async (issueId: string): Promise<void> => {
 export const getMeetingRelatedIssue = async (
   issueId: string,
   page: number,
-  size: number = 5
+  size: number = 5,
+  memberId?: number
 ): Promise<MeetingListResponse> => {
   const response = await httpClient.get(`/issue/${issueId}/meeting`, {
-    params: { page, size },
+    params: { page, size, memberId: memberId || null },
   });
   return response.data;
 };

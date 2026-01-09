@@ -9,10 +9,11 @@ import type { FilterDto } from "../../common/PageHeader/type";
 // 회의 목록 조회(페이징)
 export const getMeetingList = async (
   page: number,
-  size: number = 10
+  size: number = 10,
+  memberId?: number
 ): Promise<MeetingListResponse> => {
   const response = await httpClient.get(`/meeting/list`, {
-    params: { page, size },
+    params: { page, size, memberId: memberId || null },
   });
   return response.data;
 };
@@ -22,11 +23,13 @@ const toParam = <T>(arr?: T[]) => (arr && arr.length > 0 ? arr : null);
 export const getMeetingListSrc = async (
   page: number,
   size: number = 10,
-  filter: FilterDto
+  filter: FilterDto,
+  memberId?: number
 ): Promise<MeetingListResponse> => {
   const params = {
     page,
     size,
+    memberId: memberId || null,
     keyword: filter.keyword || null,
     startDate: filter.startDate || null,
     endDate: filter.endDate || null,
@@ -63,6 +66,7 @@ export const getMeetingListMT = async (
     : {
         page,
         size,
+        memberId: id,
       };
   const { data } = await httpClient.get(`/meeting/mytask/${id}`, {
     params,
@@ -73,10 +77,11 @@ export const getMeetingListMT = async (
 //회의 캘린더 조회
 export const getMeetingMonth = async (
   year: number,
-  month: number
+  month: number,
+  memberId?: number
 ): Promise<MeetingListItem[]> => {
   const response = await httpClient.get(`/meeting/scheduler`, {
-    params: { year, month },
+    params: { year, month, memberId: memberId || null },
   });
   return response.data;
 };

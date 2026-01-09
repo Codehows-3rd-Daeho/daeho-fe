@@ -5,6 +5,7 @@ import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { PageHeader } from "../../common/PageHeader/PageHeader";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
+import LockIcon from "@mui/icons-material/Lock";
 
 interface MobileScheduleProps {
   year: number;
@@ -161,6 +162,16 @@ export default function MobileMeetingSchedule({
                               overflow: "auto",
                             }}
                           >
+                            {meeting.isPrivate && (
+                              <LockIcon
+                                sx={{
+                                  fontSize: 25,
+                                  color: "#6b7280", // 회색 톤
+                                  flexShrink: 0,
+                                  pr: 1,
+                                }}
+                              />
+                            )}
                             {meeting.title}
                           </Typography>
 
