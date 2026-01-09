@@ -1,4 +1,4 @@
-import { type GridColDef } from "@mui/x-data-grid";
+import { type GridColDef, type GridRenderCellParams } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
 import { ListDataGrid } from "../../common/List/ListDataGrid";
 import { CommonPagination } from "../../common/Pagination/Pagination";
@@ -15,6 +15,7 @@ import { SearchBar } from "../../common/SearchBar/SearchBar";
 import DateFilter from "../../common/PageHeader/DateFilter";
 import Filter from "../../common/PageHeader/Filter";
 import type { FilterDto } from "../../common/PageHeader/type";
+import LockIcon from "@mui/icons-material/Lock";
 
 export default function MeetingList() {
   const navigate = useNavigate();
@@ -73,9 +74,11 @@ export default function MeetingList() {
       minWidth: isMobile ? 300 : 600,
       headerAlign: "center",
       align: "left",
-      renderCell: (params) => (
+      renderCell: (params: GridRenderCellParams<MeetingListItem>) => (
         <div
           style={{
+            display: "flex",
+            alignItems: "center",
             width: "100%",
             cursor: "pointer",
             overflow: "hidden",
@@ -84,6 +87,17 @@ export default function MeetingList() {
           }}
           onClick={() => navigate(`/meeting/${params.id}`)}
         >
+          {/* 비밀글일 때만 자물쇠 아이콘 표시 */}
+          {params.row.isPrivate && (
+            <LockIcon
+              sx={{
+                fontSize: 18,
+                mr: 1,
+                color: "text.secondary",
+                flexShrink: 0,
+              }}
+            />
+          )}
           {params.value}
         </div>
       ),

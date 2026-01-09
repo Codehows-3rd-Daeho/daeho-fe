@@ -38,6 +38,7 @@ export default function IssueCreate() {
     department: [],
     members: [],
     isDel: false,
+    isPrivate: false,
   });
 
   // 카테고리와 부서 상태
@@ -166,6 +167,7 @@ export default function IssueCreate() {
       departmentIds: formData.department.map(Number),
       members: issueMembers, //PartMember에서 전달받은 객체
       isDel: false,
+      isPrivate: formData.isPrivate,
     };
 
     // 2. issueDto를 JSON 문자열로 변환하여 "data" 파트에 추가

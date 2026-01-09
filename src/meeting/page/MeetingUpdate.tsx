@@ -37,6 +37,7 @@ export default function MeetingUpdate() {
     departmentIds: [],
     members: [],
     isDel: false,
+    isPrivate: false,
   });
 
   const [issues, setIssues] = useState<IssueIdTitle[]>([]);
@@ -101,6 +102,7 @@ export default function MeetingUpdate() {
           issue: String(meeting.issueId),
           members: meeting.participantList,
           isDel: false,
+          isPrivate: meeting.isPrivate,
         });
 
         setMeetingFiles(meeting.fileList || []);
@@ -318,6 +320,7 @@ export default function MeetingUpdate() {
       departmentIds: formData.departmentIds.map(Number),
       members: meetingMembers,
       isDel: false,
+      isPrivate: formData.isPrivate,
     };
 
     formDataObj.append(

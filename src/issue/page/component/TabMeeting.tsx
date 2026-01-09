@@ -2,18 +2,21 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import type { MeetingListItem } from "../../../meeting/type/type";
 import { getStatusLabel } from "../../../common/commonFunction";
-import type { GridColDef } from "@mui/x-data-grid";
+import type { GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
 import { ListDataGrid } from "../../../common/List/ListDataGrid";
 import { CommonPagination } from "../../../common/Pagination/Pagination";
 import { getMeetingRelatedIssue } from "../../api/issueApi";
 import type { ApiError } from "../../../config/httpClient";
 import { useMediaQuery, useTheme } from "@mui/material";
+import LockIcon from "@mui/icons-material/Lock";
+import { useAuthStore } from "../../../store/useAuthStore";
 
 export default function TabMeeting() {
   const navigate = useNavigate();
   const { issueId } = useParams();
 
   const theme = useTheme();
+  const { member } = useAuthStore();
 
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
@@ -22,7 +25,7 @@ export default function TabMeeting() {
   const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
-    getMeetingRelatedIssue(issueId as string, page - 1, 5)
+    getMeetingRelatedIssue(issueId as string, page - 1, 5, member?.memberId)
       .then((data) => {
         const list = (data.content ?? data).map((item: MeetingListItem) => ({
           ...item,
@@ -37,7 +40,7 @@ export default function TabMeeting() {
         const response = apiError.response?.data?.message;
         alert(response ?? "오류가 발생했습니다.");
       });
-  }, [issueId, page]);
+  }, [issueId, page, member?.memberId]);
 
   const allColumns: GridColDef[] = [
     {
@@ -55,9 +58,11 @@ export default function TabMeeting() {
       minWidth: isMobile ? 150 : 180,
       headerAlign: "center",
       align: "left",
-      renderCell: (params) => (
+      renderCell: (params: GridRenderCellParams<MeetingListItem>) => (
         <div
           style={{
+            display: "flex",
+            alignItems: "center",
             width: "100%",
             cursor: "pointer",
             overflow: "hidden",
@@ -66,6 +71,17 @@ export default function TabMeeting() {
           }}
           onClick={() => navigate(`/meeting/${params.id}`)}
         >
+          {/* 비밀글일 때만 제목 앞에 자물쇠 표시 */}
+          {params.row.isPrivate && (
+            <LockIcon
+              sx={{
+                fontSize: 18,
+                mr: 0.5,
+                color: "text.secondary",
+                flexShrink: 0,
+              }}
+            />
+          )}
           {params.value}
         </div>
       ),

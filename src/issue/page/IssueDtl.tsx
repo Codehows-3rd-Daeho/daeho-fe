@@ -28,6 +28,7 @@ import { BASE_URL, type ApiError } from "../../config/httpClient";
 import { useAuthStore } from "../../store/useAuthStore";
 import { getFileInfo, getStatusLabel } from "../../common/commonFunction";
 import IosShareIcon from "@mui/icons-material/IosShare";
+import LockIcon from "@mui/icons-material/Lock";
 
 export default function IssueDtl() {
   const { issueId } = useParams();
@@ -47,9 +48,25 @@ export default function IssueDtl() {
       .then((data) => setIssue(data))
       .catch((error) => {
         const apiError = error as ApiError;
-        if (apiError.response?.status === 401) return;
-        const response = apiError.response?.data?.message;
-        alert(response ?? "오류가 발생했습니다.");
+
+        const errorData =
+          apiError.response?.data?.message || apiError.response?.data;
+
+        const errorString =
+          typeof errorData === "string"
+            ? errorData
+            : JSON.stringify(errorData || "");
+
+        if (
+          errorString.includes("권한") ||
+          [400, 403].includes(apiError.response?.status ?? 0)
+        ) {
+          alert("해당 게시글에 대한 접근 권한이 없습니다.");
+          navigate("/", { replace: true });
+        } else {
+          alert("데이터를 불러오는 중 오류가 발생했습니다.");
+          navigate(-1);
+        }
       });
   };
 
@@ -602,6 +619,21 @@ export default function IssueDtl() {
           {/* 수정일 */}
           <InfoRow label="수정일" value={issue.updatedAt} />
 
+          {/* 비밀글 여부: 비밀글(isPrivate이 true)일 때만 표시 */}
+          {issue.isPrivate && (
+            <Box>
+              <LockIcon
+                sx={{
+                  fontSize: 18,
+                  mr: 0.5,
+                  color: "text.secondary",
+                  flexShrink: 0,
+                }}
+              />
+              비밀글 입니다
+            </Box>
+          )}
+          
           {/* 링크 공유 */}
           <Box
             sx={{

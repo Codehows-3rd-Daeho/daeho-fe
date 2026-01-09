@@ -32,6 +32,7 @@ export default function IssueUpdate() {
     department: [],
     members: [],
     isDel: false,
+    isPrivate: false,
   });
 
   const [categories, setCategories] = useState<MasterDataType[]>([]);
@@ -86,6 +87,7 @@ export default function IssueUpdate() {
           department: departmentIds,
           members: issue.participantList,
           isDel: false,
+          isPrivate: issue.isPrivate,
         });
 
         setIssueFiles(issue.fileList || []);
@@ -198,6 +200,7 @@ export default function IssueUpdate() {
       departmentIds: formData.department.map(Number),
       members: issueMembers,
       isDel: false,
+      isPrivate: formData.isPrivate,
     };
 
     // issueDto data에 추가

@@ -1,5 +1,6 @@
 import type { IssueListItem } from "../../issue/type/type";
 import { calculateDDay } from "./KanbanDDay";
+import LockIcon from "@mui/icons-material/Lock";
 
 // // D-Day 및 마감 임박 여부를 계산하는 함수
 // const calculateDDay = (endDate: string) => {
@@ -95,7 +96,18 @@ export default function KanbanCard({
       </div>
 
       {/* 중간 섹션: 이슈 제목 */}
-      <h3 className="font-medium text-gray-900 mb-3">{issue.title}</h3>
+      <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-1">
+        {issue.isPrivate && (
+          <LockIcon
+            sx={{
+              fontSize: 16,
+              color: "gray",
+              flexShrink: 0,
+            }}
+          />
+        )}
+        <span className="truncate">{issue.title}</span>
+      </h3>
 
       {/* 하단 섹션: Department, 날짜 범위, Host */}
       <div className="space-y-2">

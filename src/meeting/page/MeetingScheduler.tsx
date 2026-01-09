@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import type { ApiError } from "../../config/httpClient";
 import MobileMeetingSchedule from "./MobileMeetingSchedule";
 import DesktopMeetingSchedule from "./DesktopMeetingSchedule";
+import { useAuthStore } from "../../store/useAuthStore";
 
 function getMonthMatrix(year: number, month: number) {
   const firstDay = new Date(year, month, 1).getDay();
@@ -41,6 +42,8 @@ function getMonthDays(year: number, month: number) {
 
 export default function MeetingScheduler() {
   const navigate = useNavigate();
+
+  const { member } = useAuthStore();
 
   const today = new Date();
   const [current, setCurrent] = useState(new Date());
@@ -92,7 +95,11 @@ export default function MeetingScheduler() {
   useEffect(() => {
     const fetchMeetings = async () => {
       try {
-        const response = await getMeetingMonth(year, month + 1);
+        const response = await getMeetingMonth(
+          year,
+          month + 1,
+          member?.memberId
+        );
         setMeetings(response);
       } catch (error) {
         const apiError = error as ApiError;
@@ -103,7 +110,7 @@ export default function MeetingScheduler() {
     };
 
     fetchMeetings();
-  }, [year, month]); // year나 month가 바뀌면 실행
+  }, [year, month, member?.memberId]); // year나 month가 바뀌면 실행
 
   //날짜별로 회의 묶음
   const meetingsByDay = useMemo(() => {

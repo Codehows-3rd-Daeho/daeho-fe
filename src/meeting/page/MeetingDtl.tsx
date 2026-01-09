@@ -35,6 +35,7 @@ import TabComment from "./component/TabComment";
 import TabLog from "./component/TabLog";
 import TotalSummaryModal from "./component/TotalSummaryModal";
 import IosShareIcon from "@mui/icons-material/IosShare";
+import LockIcon from "@mui/icons-material/Lock";
 
 export default function MeetingDtl() {
   const { meetingId } = useParams();
@@ -735,6 +736,22 @@ export default function MeetingDtl() {
               </Button>
             }
           />
+          
+          {/* 비밀글 여부: 비밀글(isPrivate이 true)일 때만 표시 */}
+          {meeting.isPrivate && (
+            <Box>
+              <LockIcon
+                sx={{
+                  fontSize: 18,
+                  mr: 0.5,
+                  color: "text.secondary",
+                  flexShrink: 0,
+                }}
+              />
+              비밀글 입니다
+            </Box>
+          )}
+          
           {/* 링크 공유 */}
           <Box
             sx={{
