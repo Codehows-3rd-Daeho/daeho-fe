@@ -97,6 +97,7 @@ export default function Breadcrumb() {
         .catch((error) => {
           setDynamicNameMap((prev) => ({ ...prev, [info.id]: `#${info.id}` }));
           const apiError = error as ApiError;
+          if (apiError.response?.status === 401) return;
           const response = apiError.response?.data?.message;
           alert(response ?? "오류가 발생했습니다.");
         });
@@ -111,6 +112,7 @@ export default function Breadcrumb() {
         .catch((error) => {
           setDynamicNameMap((prev) => ({ ...prev, [info.id]: `#${info.id}` }));
           const apiError = error as ApiError;
+          if (apiError.response?.status === 401) return;
           const response = apiError.response?.data?.message;
           alert(response ?? "오류가 발생했습니다.");
         });

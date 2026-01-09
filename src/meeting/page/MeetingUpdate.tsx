@@ -37,6 +37,7 @@ export default function MeetingUpdate() {
     departmentIds: [],
     members: [],
     isDel: false,
+    isPrivate: false,
   });
 
   const [issues, setIssues] = useState<IssueIdTitle[]>([]);
@@ -101,6 +102,7 @@ export default function MeetingUpdate() {
           issue: String(meeting.issueId),
           members: meeting.participantList,
           isDel: false,
+          isPrivate: meeting.isPrivate,
         });
 
         setMeetingFiles(meeting.fileList || []);
@@ -109,6 +111,7 @@ export default function MeetingUpdate() {
         setMeetingMembers(meeting.participantList);
       } catch (error) {
         const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
         const response = apiError.response?.data?.message;
 
         alert(response ?? "회의 데이터 로딩 중 오류가 발생했습니다.");
@@ -131,6 +134,7 @@ export default function MeetingUpdate() {
         setAllowedExtensions(extensionConfig.map((e) => e.name.toLowerCase()));
       } catch (error) {
         const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
         const response = apiError.response?.data?.message;
         alert(response ?? "파일 설정 로딩 오류가 발생했습니다.");
         console.error("파일 설정 로딩 오류:", error);
@@ -252,6 +256,7 @@ export default function MeetingUpdate() {
       alert("이슈의 카테고리, 부서, 참여자 정보를 불러왔습니다.");
     } catch (error) {
       const apiError = error as ApiError;
+      if (apiError.response?.status === 401) return;
       const response = apiError.response?.data?.message;
       alert(response ?? "이슈 정보를 불러오지 못했습니다.");
       console.error("이슈 상세 조회 실패:", error);
@@ -315,6 +320,7 @@ export default function MeetingUpdate() {
       departmentIds: formData.departmentIds.map(Number),
       members: meetingMembers,
       isDel: false,
+      isPrivate: formData.isPrivate,
     };
 
     formDataObj.append(
@@ -339,6 +345,7 @@ export default function MeetingUpdate() {
       navigate(`/meeting/${meetingId}`);
     } catch (error) {
       const apiError = error as ApiError;
+      if (apiError.response?.status === 401) return;
       const response = apiError.response?.data?.message;
       alert(response ?? "회의 수정 중 오류가 발생했습니다.");
       console.error("회의 수정 실패:", error);

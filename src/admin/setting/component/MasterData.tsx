@@ -1,4 +1,11 @@
-import { Box, Typography, TextField, Divider } from "@mui/material";
+import {
+  Box,
+  Typography,
+  TextField,
+  Divider,
+  Tooltip,
+  IconButton,
+} from "@mui/material";
 import React, { useState } from "react";
 import type { SetTagList, TagItem } from "../page/AdminSetting";
 import {
@@ -8,6 +15,7 @@ import {
 } from "../api/MasterDataApi";
 import type { MasterDataType } from "../type/SettingType";
 import type { ApiError } from "../../../config/httpClient";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 
 interface MasterDataProps {
   departments: TagItem[];
@@ -65,11 +73,13 @@ export default function MasterData({
         // 입력 필드 초기화
         setInput("");
       } catch (error) {
-        const apiError = error as ApiError;
-        const response = apiError.response?.data?.message;
-
-        alert(response ?? "등록 중 오류가 발생했습니다.");
         console.error("등록 실패:", error);
+        const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
+        const response = apiError.response?.data;
+
+        console.error(response);
+        alert(response ?? "등록 중 오류가 발생했습니다.");
       }
     })();
   };
@@ -89,7 +99,16 @@ export default function MasterData({
       <Box sx={{ mb: 3 }}>
         <Typography variant="subtitle1" sx={{ textAlign: "left", mb: 1 }}>
           부서
+          <Tooltip
+            title="등록된 부서를 클릭하여 수정할 수 있습니다."
+            placement="right"
+          >
+            <IconButton sx={{ p: 0.5 }}>
+              <InfoOutlinedIcon sx={{ fontSize: 20 }} />
+            </IconButton>
+          </Tooltip>
         </Typography>
+
         <TextField
           placeholder="Enter로 등록"
           variant="outlined"
@@ -115,6 +134,14 @@ export default function MasterData({
       <Box sx={{ mb: 3 }}>
         <Typography variant="subtitle1" sx={{ textAlign: "left", mb: 1 }}>
           직급
+          <Tooltip
+            title="등록된 직급을 클릭하여 수정할 수 있습니다."
+            placement="right"
+          >
+            <IconButton sx={{ p: 0.5 }}>
+              <InfoOutlinedIcon sx={{ fontSize: 20 }} />
+            </IconButton>
+          </Tooltip>
         </Typography>
         <TextField
           placeholder="Enter로 등록"
@@ -141,6 +168,14 @@ export default function MasterData({
       <Box>
         <Typography variant="subtitle1" sx={{ textAlign: "left", mb: 1 }}>
           카테고리
+          <Tooltip
+            title="등록된 카테고리를 클릭하여 수정할 수 있습니다."
+            placement="right"
+          >
+            <IconButton sx={{ p: 0.5 }}>
+              <InfoOutlinedIcon sx={{ fontSize: 20 }} />
+            </IconButton>
+          </Tooltip>
         </Typography>
         <TextField
           placeholder="Enter로 등록"

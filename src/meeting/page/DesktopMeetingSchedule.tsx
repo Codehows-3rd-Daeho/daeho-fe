@@ -5,6 +5,7 @@ import type { MeetingListItem } from "../type/type";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "../../common/PageHeader/PageHeader";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
+import LockIcon from "@mui/icons-material/Lock";
 
 interface DesktopScheduleProps {
   year: number;
@@ -224,6 +225,16 @@ export default function DesktopMeetingSchedule({
                                   width: "100%", // 카드 폭에 맞춤
                                 }}
                               >
+                                {meeting.isPrivate && (
+                                  <LockIcon
+                                    sx={{
+                                      fontSize: 25,
+                                      color: "#eee",
+                                      flexShrink: 0,
+                                      pr: 1,
+                                    }}
+                                  />
+                                )}
                                 {meeting.title}
                               </Box>
                             </Card>

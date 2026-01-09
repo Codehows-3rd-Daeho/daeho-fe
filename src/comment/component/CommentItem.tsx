@@ -79,6 +79,7 @@ export const CommentItem = ({
       await onDeleteComment?.(comment.id);
     } catch (error) {
       const apiError = error as ApiError;
+      if (apiError.response?.status === 401) return;
       const response = apiError.response?.data?.message;
 
       alert(response ?? "삭제 실패");
@@ -110,6 +111,7 @@ export const CommentItem = ({
       setIsEditing(false);
     } catch (error) {
       const apiError = error as ApiError;
+      if (apiError.response?.status === 401) return;
       const response = apiError.response?.data?.message;
 
       alert(response ?? "댓글 수정 중 오류가 발생했습니다.");
@@ -159,7 +161,7 @@ export const CommentItem = ({
           <AccountCircleIcon fontSize="large" />
         </Avatar>
 
-        <Box sx={{ flex: 1 ,backgroundColor: "#fff", borderRadius: 1}}>
+        <Box sx={{ flex: 1, backgroundColor: "#fff", borderRadius: 1 }}>
           <Typography fontWeight={600}>
             {comment.writerName} {comment.writerJPName}
           </Typography>

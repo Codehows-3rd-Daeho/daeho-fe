@@ -38,6 +38,7 @@ export default function IssueCreate() {
     department: [],
     members: [],
     isDel: false,
+    isPrivate: false,
   });
 
   // 카테고리와 부서 상태
@@ -93,6 +94,7 @@ export default function IssueCreate() {
         }
       } catch (error) {
         const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
         const response = apiError.response?.data?.message;
 
         alert(response ?? "데이터를 불러오는 중 오류가 발생했습니다.");
@@ -165,6 +167,7 @@ export default function IssueCreate() {
       departmentIds: formData.department.map(Number),
       members: issueMembers, //PartMember에서 전달받은 객체
       isDel: false,
+      isPrivate: formData.isPrivate,
     };
 
     // 2. issueDto를 JSON 문자열로 변환하여 "data" 파트에 추가
@@ -188,6 +191,7 @@ export default function IssueCreate() {
       navigator(`/issue/list`);
     } catch (error) {
       const apiError = error as ApiError;
+      if (apiError.response?.status === 401) return;
       const response = apiError.response?.data?.message;
 
       alert(response ?? "이슈 등록 중 오류가 발생했습니다.");

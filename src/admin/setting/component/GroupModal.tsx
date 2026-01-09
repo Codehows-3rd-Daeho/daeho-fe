@@ -62,6 +62,7 @@ export default function GroupModal({
         setMembers(memberList);
       } catch (error) {
         const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
         const response = apiError.response?.data?.message;
 
         alert(response ?? "회원/부서 목록을 불러오지 못했습니다.");
@@ -119,6 +120,7 @@ export default function GroupModal({
       onClose();
     } catch (error) {
       const apiError = error as ApiError;
+      if (apiError.response?.status === 401) return;
       const response = apiError.response?.data?.message;
 
       alert(response ?? "그룹 생성에 실패했습니다.");

@@ -10,3 +10,9 @@ export interface LogList {
   memberName: string;
   no?: number;
 }
+
+export interface GetLogListParams {
+  page: number;
+  size: number;
+  targetType?: string;
+}

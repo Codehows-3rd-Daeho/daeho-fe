@@ -33,8 +33,8 @@ export default function FileSetting({
         setFileSizeInput(mbValue.toString());
       } catch (error) {
         const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
         const response = apiError.response?.data?.message;
-
         alert(response ?? "파일 설정 불러오기에 실패 하였습니다.");
       }
     };
@@ -69,8 +69,8 @@ export default function FileSetting({
       alert("저장되었습니다.");
     } catch (error) {
       const apiError = error as ApiError;
+      if (apiError.response?.status === 401) return;
       const response = apiError.response?.data?.message;
-
       alert(response ?? "파일 최대 용량 설정에 실패하였습니다.");
     } finally {
       setIsSaving(false);
@@ -99,6 +99,7 @@ export default function FileSetting({
       setFileExtensions((prev) => [...prev, newTag]);
     } catch (error) {
       const apiError = error as ApiError;
+      if (apiError.response?.status === 401) return;
       const response = apiError.response?.data?.message;
 
       alert(response ?? "등록 중 오류가 발생했습니다.");

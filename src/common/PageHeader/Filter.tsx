@@ -113,6 +113,7 @@ export default function Filter({
         setOptions(mappedData);
       } catch (error) {
         const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
         alert(
           apiError.response?.data?.message ?? "조회 중 오류가 발생했습니다."
         );

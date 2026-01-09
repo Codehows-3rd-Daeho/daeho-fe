@@ -122,6 +122,7 @@ export default function Header({
         setUnreadCount(count);
       } catch (error) {
         const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
         const response = apiError.response?.data?.message;
         console.error(response ?? "알림 조회 중 오류가 발생했습니다.");
       }

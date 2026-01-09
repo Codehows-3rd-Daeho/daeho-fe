@@ -137,6 +137,7 @@ export default function PartMember({
         handleSave(mapped);
       } catch (error) {
         const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
         const response = apiError.response?.data?.message;
         alert(response ?? "로딩 오류가 발생했습니다.");
         console.error("로딩 실패:", error);

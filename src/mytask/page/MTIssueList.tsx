@@ -16,7 +16,7 @@ import { SearchBar } from "../../common/SearchBar/SearchBar";
 import DateFilter from "../../common/PageHeader/DateFilter";
 import Filter from "../../common/PageHeader/Filter";
 import type { FilterDto } from "../../common/PageHeader/type";
-
+import LockIcon from "@mui/icons-material/Lock";
 export default function MTIssueList() {
   const navigate = useNavigate();
   const { member } = useAuthStore();
@@ -56,6 +56,7 @@ export default function MTIssueList() {
       })
       .catch((error) => {
         const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
         const response = apiError.response?.data?.message;
         alert(response ?? "오류가 발생했습니다.");
       });
@@ -78,9 +79,11 @@ export default function MTIssueList() {
       minWidth: isMobile ? 300 : 600,
       headerAlign: "center",
       align: "left",
-      renderCell: (params) => (
+      renderCell: (params: GridRenderCellParams<IssueListItem>) => (
         <div
           style={{
+            display: "flex",
+            alignItems: "center",
             width: "100%",
             cursor: "pointer",
             overflow: "hidden",
@@ -89,6 +92,17 @@ export default function MTIssueList() {
           }}
           onClick={() => navigate(`/issue/${params.id}`)}
         >
+          {/* 비밀글일 때만 자물쇠 아이콘 표시 */}
+          {params.row.isPrivate && (
+            <LockIcon
+              sx={{
+                fontSize: 18,
+                mr: 0.5,
+                color: "text.secondary",
+                flexShrink: 0,
+              }}
+            />
+          )}
           {params.value}
         </div>
       ),

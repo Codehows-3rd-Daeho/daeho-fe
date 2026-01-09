@@ -1,4 +1,4 @@
-import { type GridColDef } from "@mui/x-data-grid";
+import { type GridColDef, type GridRenderCellParams } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
 import type { MeetingListItem } from "../type/type";
 import { ListDataGrid } from "../../common/List/ListDataGrid";
@@ -14,9 +14,13 @@ import { SearchBar } from "../../common/SearchBar/SearchBar";
 import Filter from "../../common/PageHeader/Filter";
 import DateFilter from "../../common/PageHeader/DateFilter";
 import type { FilterDto } from "../../common/PageHeader/type";
+import LockIcon from "@mui/icons-material/Lock";
+import { useAuthStore } from "../../store/useAuthStore";
 
 export default function MeetingList() {
   const navigate = useNavigate();
+
+  const { member } = useAuthStore();
 
   const theme = useTheme();
 
@@ -40,7 +44,12 @@ export default function MeetingList() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await getMeetingListSrc(page - 1, 10, filter);
+        const data = await getMeetingListSrc(
+          page - 1,
+          10,
+          filter,
+          member?.memberId
+        );
         const list = (data.content ?? data).map((item: MeetingListItem) => ({
           ...item,
           status: getStatusLabel(item.status),
@@ -49,12 +58,13 @@ export default function MeetingList() {
         setTotalCount(data.totalElements);
       } catch (error) {
         const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
         const response = apiError.response?.data?.message;
         alert(response ?? "오류가 발생했습니다.");
       }
     };
     fetchData();
-  }, [page, filter]);
+  }, [page, filter, member?.memberId]);
 
   const allColumns: GridColDef[] = [
     {
@@ -72,9 +82,11 @@ export default function MeetingList() {
       minWidth: isMobile ? 300 : 600,
       headerAlign: "center",
       align: "left",
-      renderCell: (params) => (
+      renderCell: (params: GridRenderCellParams<MeetingListItem>) => (
         <div
           style={{
+            display: "flex",
+            alignItems: "center",
             width: "100%",
             cursor: "pointer",
             overflow: "hidden",
@@ -83,6 +95,17 @@ export default function MeetingList() {
           }}
           onClick={() => navigate(`/meeting/${params.id}`)}
         >
+          {/* 비밀글일 때만 제목 앞에 자물쇠 표시 */}
+          {params.row.isPrivate && (
+            <LockIcon
+              sx={{
+                fontSize: 18,
+                mr: 0.5,
+                color: "text.secondary",
+                flexShrink: 0,
+              }}
+            />
+          )}
           {params.value}
         </div>
       ),

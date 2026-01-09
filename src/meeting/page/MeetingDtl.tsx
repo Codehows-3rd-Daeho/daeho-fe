@@ -8,6 +8,7 @@ import {
   Tabs,
   Tab,
   CircularProgress,
+  Tooltip,
 } from "@mui/material";
 
 import DownloadIcon from "@mui/icons-material/Download";
@@ -33,6 +34,8 @@ import TabSTT from "../../stt/page/TabSTT";
 import TabComment from "./component/TabComment";
 import TabLog from "./component/TabLog";
 import TotalSummaryModal from "./component/TotalSummaryModal";
+import IosShareIcon from "@mui/icons-material/IosShare";
+import LockIcon from "@mui/icons-material/Lock";
 
 export default function MeetingDtl() {
   const { meetingId } = useParams();
@@ -41,6 +44,7 @@ export default function MeetingDtl() {
   const [showParticipantModal, setShowParticipantModal] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [showTip, setShowTip] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -61,6 +65,7 @@ export default function MeetingDtl() {
       .then((data) => setMeeting(data))
       .catch((error) => {
         const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
         const response = apiError.response?.data?.message;
         alert(response ?? "오류가 발생했습니다.");
       });
@@ -101,6 +106,7 @@ export default function MeetingDtl() {
         })
         .catch((error) => {
           const apiError = error as ApiError;
+          if (apiError.response?.status === 401) return;
           const response = apiError.response?.data?.message;
           alert(response ?? "오류가 발생했습니다.");
         });
@@ -169,6 +175,7 @@ export default function MeetingDtl() {
         navigate("/meeting/list");
       } catch (error) {
         const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
         const response = apiError.response?.data?.message;
 
         alert(response ?? "회의 삭제 중 오류가 발생했습니다.");
@@ -187,10 +194,26 @@ export default function MeetingDtl() {
       fetchMeetingDetail(meetingId as string);
     } catch (error) {
       const apiError = error as ApiError;
+      if (apiError.response?.status === 401) return;
       const response = apiError.response?.data?.message;
 
       alert(response ?? "회의록 삭제 중 오류가 발생했습니다.");
     }
+  };
+
+  //공유하기 버튼
+  const handleCopy = () => {
+    const pageUrl = window.location.href;
+    navigator.clipboard
+      .writeText(pageUrl)
+      .then(() => {
+        setShowTip(true); // 툴팁 표시
+        setTimeout(() => setShowTip(false), 1500); // 1.5초 후 자동 숨김
+      })
+      .catch(() => {
+        setShowTip(true);
+        setTimeout(() => setShowTip(false), 1500);
+      });
   };
 
   return (
@@ -200,7 +223,7 @@ export default function MeetingDtl() {
         gap: { md: 3 },
         p: { md: 3 },
         bgcolor: { xs: "white", md: "#f5f5f5" },
-        minWidth: { xs: "100%", md: 300 },
+        minWidth: { xs: "100%", md: 1000 },
         flexDirection: { xs: "column", md: "row" }, // 모바일: 세로(1, 2), 데스크탑: 가로(1,2)
       }}
     >
@@ -438,6 +461,7 @@ export default function MeetingDtl() {
             boxShadow: { md: 1 },
             minWidth: { xs: 0, md: 400 },
             maxWidth: 450,
+            position: "relative",
           }}
         >
           {/* 상태 */}
@@ -712,6 +736,48 @@ export default function MeetingDtl() {
               </Button>
             }
           />
+          
+          {/* 비밀글 여부: 비밀글(isPrivate이 true)일 때만 표시 */}
+          {meeting.isPrivate && (
+            <Box>
+              <LockIcon
+                sx={{
+                  fontSize: 18,
+                  mr: 0.5,
+                  color: "text.secondary",
+                  flexShrink: 0,
+                }}
+              />
+              비밀글 입니다
+            </Box>
+          )}
+          
+          {/* 링크 공유 */}
+          <Box
+            sx={{
+              position: "absolute",
+              bottom: 24,
+              right: 24,
+            }}
+          >
+            <Tooltip
+              title="링크가 복사되었습니다!"
+              open={showTip} // 상태로 표시 여부 제어
+              arrow
+              placement="top"
+            >
+              <IconButton
+                color="primary"
+                onClick={handleCopy}
+                sx={{
+                  bgcolor: "white",
+                  "&:hover": { bgcolor: "grey.100" },
+                }}
+              >
+                <IosShareIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
         </Box>
 
         {/* 버튼 */}

@@ -32,6 +32,7 @@ export default function IssueUpdate() {
     department: [],
     members: [],
     isDel: false,
+    isPrivate: false,
   });
 
   const [categories, setCategories] = useState<MasterDataType[]>([]);
@@ -86,6 +87,7 @@ export default function IssueUpdate() {
           department: departmentIds,
           members: issue.participantList,
           isDel: false,
+          isPrivate: issue.isPrivate,
         });
 
         setIssueFiles(issue.fileList || []);
@@ -104,6 +106,7 @@ export default function IssueUpdate() {
         setIssueMembers(issue.participantList);
       } catch (error) {
         const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
         const response = apiError.response?.data?.message;
 
         alert(response ?? "오류가 발생했습니다.");
@@ -125,6 +128,7 @@ export default function IssueUpdate() {
         setAllowedExtensions(extensionConfig.map((e) => e.name.toLowerCase()));
       } catch (error) {
         const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
         const response = apiError.response?.data?.message;
 
         alert(response ?? "파일 설정 로딩 오류가 발생했습니다.");
@@ -196,6 +200,7 @@ export default function IssueUpdate() {
       departmentIds: formData.department.map(Number),
       members: issueMembers,
       isDel: false,
+      isPrivate: formData.isPrivate,
     };
 
     // issueDto data에 추가
@@ -222,6 +227,7 @@ export default function IssueUpdate() {
       navigate(`/issue/${issueId}`);
     } catch (error) {
       const apiError = error as ApiError;
+      if (apiError.response?.status === 401) return;
       const response = apiError.response?.data?.message;
 
       alert(response ?? "이슈 수정 중 오류가 발생했습니다.");

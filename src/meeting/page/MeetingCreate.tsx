@@ -39,6 +39,7 @@ export default function MeetingCreate() {
     departmentIds: [],
     members: [],
     isDel: false,
+    isPrivate: false,
   });
 
   // issue, 카테고리, 부서 상태
@@ -70,12 +71,19 @@ export default function MeetingCreate() {
   useEffect(() => {
     async function fetchData() {
       try {
+        setIsLoading(true);
         //=================이슈, 카테고리, 부서 목록 조회=================
-        const iss = await getIssueInMeeting();
+        const iss = await getIssueInMeeting(memberId);
+        const filteredIssues = iss.filter((issue: IssueIdTitle) => {
+          if (!issue.isPrivate) return true;
+          return issue.members?.some(
+            (m: MeetingMemberDto) => m.id === memberId
+          );
+        });
         const cat = await getCategory();
         const dep = await getDepartment();
 
-        setIssues(iss);
+        setIssues(filteredIssues);
         setCategories(cat); // 카테고리 데이터 저장
         setDepartments(dep); // 부서 데이터 저장
 
@@ -105,6 +113,7 @@ export default function MeetingCreate() {
         }
       } catch (error) {
         const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
         const response = apiError.response?.data?.message;
 
         alert(response ?? "데이터를 불러오는 중 오류가 발생했습니다.");
@@ -134,6 +143,7 @@ export default function MeetingCreate() {
         setMeetingMembers(issue.members);
       } catch (error) {
         const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
         const response = apiError.response?.data?.message;
 
         alert(response ?? "오류가 발생했습니다.");
@@ -197,6 +207,7 @@ export default function MeetingCreate() {
       departmentIds: formData.departmentIds.map(Number),
       members: meetingMembers, //PartMember에서 전달받은 객체
       isDel: false,
+      isPrivate: formData.isPrivate,
     };
 
     // 2. meetingDto를 JSON 문자열로 변환하여 "data" 파트에 추가
@@ -219,6 +230,7 @@ export default function MeetingCreate() {
       navigator(`/meeting/list`);
     } catch (error) {
       const apiError = error as ApiError;
+      if (apiError.response?.status === 401) return;
       const response = apiError.response?.data?.message;
 
       alert(response ?? "회의 등록 중 오류가 발생했습니다.");
@@ -344,6 +356,7 @@ export default function MeetingCreate() {
       alert("이슈의 카테고리, 부서, 참여자 정보를 불러왔습니다.");
     } catch (error) {
       const apiError = error as ApiError;
+      if (apiError.response?.status === 401) return;
       const response = apiError.response?.data?.message;
 
       alert(response ?? "이슈 정보를 불러오지 못했습니다.");

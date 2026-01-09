@@ -13,11 +13,14 @@ import { SearchBar } from "../../common/SearchBar/SearchBar";
 import Filter from "../../common/PageHeader/Filter";
 import DateFilter from "../../common/PageHeader/DateFilter";
 import type { FilterDto } from "../../common/PageHeader/type";
+import { useAuthStore } from "../../store/useAuthStore";
 
 export type KanbanData = Record<string, KanbanIssue[]>;
 
 export default function IssueKanban() {
   const navigate = useNavigate();
+
+  const { member } = useAuthStore();
 
   const [data, setData] = useState<KanbanData>({
     pending: [],
@@ -43,7 +46,7 @@ export default function IssueKanban() {
           inProgress: IssueListItem[];
           completed: IssueListItem[];
           delayed: IssueListItem[];
-        } = await getKanbanIssuesSrc(filter);
+        } = await getKanbanIssuesSrc(filter, member?.memberId);
 
         const delayIds = new Set(res.delayed.map((item) => item.id));
         const filteredPending = res.inProgress.filter(
@@ -57,6 +60,7 @@ export default function IssueKanban() {
         });
       } catch (error) {
         const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
         const response = apiError.response?.data?.message;
 
         console.error("칸반 이슈 조회 실패", error);
@@ -65,7 +69,7 @@ export default function IssueKanban() {
     };
 
     fetchIssues();
-  }, [filter]);
+  }, [filter, member?.memberId]);
 
   // 검색바 전용 핸들러
   const handleSearch = (query: string) => {

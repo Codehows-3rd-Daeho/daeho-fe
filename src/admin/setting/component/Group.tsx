@@ -32,6 +32,7 @@ export default function Group() {
         setGroups(list);
       } catch (error) {
         const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
         const response = apiError.response?.data?.message;
 
         alert(response ?? "오류가 발생했습니다.");
@@ -53,6 +54,7 @@ export default function Group() {
       setGroups(list);
     } catch (error) {
       const apiError = error as ApiError;
+      if (apiError.response?.status === 401) return;
       const response = apiError.response?.data?.message;
 
       alert(response ?? "그룹 목록 갱신에 실패하였습니다.");
@@ -68,6 +70,7 @@ export default function Group() {
         alert("삭제되었습니다.");
       } catch (error) {
         const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
         const response = apiError.response?.data?.message;
 
         alert(response ?? "삭제를 실패하였습니다.");
