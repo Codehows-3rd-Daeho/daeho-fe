@@ -76,8 +76,8 @@ export default function UpdateMemberModal({
           );
         } catch (error) {
           const apiError = error as ApiError;
+          if (apiError.response?.status === 401) return;
           const response = apiError.response?.data?.message;
-
           alert(response ?? "데이터를 불러오는 중 오류가 발생했습니다.");
         }
       }
@@ -148,6 +148,8 @@ export default function UpdateMemberModal({
       setIsChecked(true);
     } catch (error) {
       const apiError = error as ApiError;
+      if (apiError.response?.status === 401) return;
+
       const response = apiError.response?.data?.message;
 
       alert(response ?? "아이디 중복 확인 중 오류가 발생했습니다.");
@@ -165,6 +167,8 @@ export default function UpdateMemberModal({
       alert(`임시 비밀번호가 생성되었습니다.\n새 비밀번호: ${newPwd}`);
     } catch (error) {
       const apiError = error as ApiError;
+      if (apiError.response?.status === 401) return;
+
       const response = apiError.response?.data?.message;
 
       alert(response ?? "임시 비밀번호 생성에 실패했습니다.");
@@ -254,6 +258,8 @@ export default function UpdateMemberModal({
       handleClose();
     } catch (error) {
       const apiError = error as ApiError;
+      if (apiError.response?.status === 401) return;
+
       const response = apiError.response?.data?.message;
 
       alert(response ?? "회원 수정 중 오류가 발생했습니다.");

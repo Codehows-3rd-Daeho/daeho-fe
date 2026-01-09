@@ -41,8 +41,9 @@ export default function MemberList() {
       setTotalCount(data.totalElements);
     } catch (error) {
       const apiError = error as ApiError;
-      const response = apiError.response?.data?.message;
+      if (apiError.response?.status === 401) return;
 
+      const response = apiError.response?.data?.message;
       alert(response ?? "회원 정보 조회 중 오류가 발생했습니다.");
     }
   }, [page, pageSize, searchQuery]);

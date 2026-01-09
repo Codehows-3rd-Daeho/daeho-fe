@@ -288,6 +288,7 @@ export default function Dashboard() {
         setMeetings(calendarMeetings);
       } catch (error) {
         const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
         const message =
           apiError.response?.data?.message ??
           `대시보드 데이터 조회 중 오류가 발생했습니다.\n잠시후 다시 시도해주세요.`;

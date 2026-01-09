@@ -55,6 +55,7 @@ export default function FileUploadModal({
         setMaxFileSizeBytes(Number(sizeRes.name));
       } catch (error) {
         const apiError = error as ApiError;
+        if (apiError.response?.status === 401) return;
         const response = apiError.response?.data?.message;
         alert(response ?? "파일 설정 로딩을 실패하였슺니다.");
       }
@@ -118,6 +119,7 @@ export default function FileUploadModal({
       onClose();
     } catch (error) {
       const apiError = error as ApiError;
+      if (apiError.response?.status === 401) return;
       const response = apiError.response?.data?.message;
       alert(response ?? "회의록 등록 중 오류가 발생했습니다.");
     }

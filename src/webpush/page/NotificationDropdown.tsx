@@ -46,6 +46,7 @@ export default function NotificationDropdown({
       setHasNext(!res.last);
     } catch (error) {
       const apiError = error as ApiError;
+      if (apiError.response?.status === 401) return;
       const response = apiError.response?.data?.message;
       alert(response ?? "알림 조회 중 오류가 발생했습니다.");
     }
@@ -58,6 +59,7 @@ export default function NotificationDropdown({
       setPage(0);
     } catch (error) {
       const apiError = error as ApiError;
+      if (apiError.response?.status === 401) return;
       const response = apiError.response?.data?.message;
       alert(response ?? "알림 불러오기 중 오류가 발생했습니다.");
     }
@@ -174,6 +176,7 @@ export default function NotificationDropdown({
                         onReadNotification();
                       } catch (error) {
                         const apiError = error as ApiError;
+                        if (apiError.response?.status === 401) return;
                         const response = apiError.response?.data?.message;
                         alert(response ?? "알림 읽기 중 오류가 발생했습니다.");
                         return;

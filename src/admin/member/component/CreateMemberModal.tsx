@@ -56,6 +56,8 @@ export default function CreateMemberModal({
           setJobPosition(await getJobPosition()); // 직급
         } catch (error) {
           const apiError = error as ApiError;
+          if (apiError.response?.status === 401) return;
+
           const response = apiError.response?.data?.message;
           alert(response ?? "부서, 직습 데이터 호출 중 오류가 발생했습니다.");
         }
@@ -128,6 +130,8 @@ export default function CreateMemberModal({
       setIsChecked(true);
     } catch (error) {
       const apiError = error as ApiError;
+      if (apiError.response?.status === 401) return;
+
       const response = apiError.response?.data?.message;
 
       alert(response ?? "아이디 확인 중 오류가 발생했습니다.");
@@ -201,6 +205,8 @@ export default function CreateMemberModal({
       handleClose();
     } catch (error) {
       const apiError = error as ApiError;
+      if (apiError.response?.status === 401) return;
+
       const response = apiError.response?.data?.message;
 
       alert(response ?? "회원 등록 중 오류가 발생했습니다.");

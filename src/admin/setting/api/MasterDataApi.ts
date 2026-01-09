@@ -86,3 +86,28 @@ export const deleteCategory = async (id: number): Promise<void> => {
 export const deleteGroup = async (id: number): Promise<void> => {
   await httpClient.delete(`/admin/group/${id}`);
 };
+
+//UPDATE(부서,직업, 카테고리)
+export const updateDepartment = async (
+  id: number,
+  data: MasterDataType
+): Promise<MasterDataType> => {
+  const response = await httpClient.patch(`/admin/department/${id}`, data);
+  return response.data;
+};
+
+export const updateJobPosition = async (
+  id: number,
+  data: MasterDataType
+): Promise<MasterDataType> => {
+  const response = await httpClient.patch(`/admin/jobPosition/${id}`, data);
+  return response.data;
+};
+
+export const updateCategory = async (
+  id: number,
+  data: MasterDataType
+): Promise<MasterDataType> => {
+  const response = await httpClient.patch(`/admin/category/${id}`, data);
+  return response.data;
+};
