@@ -138,6 +138,7 @@ export default function AdminSetting() {
             <TextField
               key={tag.id}
               size="small"
+              sx={{ width: 120 }}
               value={editingValue}
               autoFocus
               onChange={(e) => setEditingValue(e.target.value)}
