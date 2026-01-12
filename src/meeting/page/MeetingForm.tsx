@@ -23,6 +23,10 @@ import React, { useEffect, useRef, useState } from "react";
 import { formatFileSize, getFileInfo } from "../../common/commonFunction";
 import { useNavigate } from "react-router-dom";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import { Editor } from "@toast-ui/react-editor";
+import httpClient from "../../config/httpClient";
+import type { ImageUploadRes } from "../../issue/page/IssueForm";
+import "@toast-ui/editor/dist/toastui-editor.css";
 
 interface MeetingFormProps {
   formData: MeetingFormValues;
@@ -76,6 +80,7 @@ export default function MeetingForm({
 
   // 파일 개수 변화를 감지해 새로 추가된 파일만 강조하고, 파일 목록은 항상 최신 항목이 보이도록 자동 스크롤 처리
   const listRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<Editor>(null);
   const fileLength = formData.file?.length ?? 0;
   const prevLengthRef = useRef<number>(fileLength);
 
@@ -153,6 +158,12 @@ export default function MeetingForm({
     });
   };
 
+  const handleEditorChange = () => {
+    const editorInstance = editorRef.current?.getInstance();
+    const content = editorInstance?.getMarkdown() || ""; // 마크다운 형식으로 내용 가져오기
+    onChangeFormData("content", content); // 상태 업데이트
+  };
+
   return (
     <Box>
       <Box
@@ -198,7 +209,7 @@ export default function MeetingForm({
             <Typography sx={{ fontWeight: 600, fontSize: "0.875rem", mb: 1 }}>
               본문
             </Typography>
-            <TextField
+            {/* <TextField
               multiline
               rows={10}
               placeholder="내용을 입력해주세요"
@@ -208,6 +219,70 @@ export default function MeetingForm({
                 width: "100%",
                 "& .MuiOutlinedInput-root": { borderRadius: 1.5 },
               }}
+            /> */}
+            <Editor
+              ref={editorRef}
+              initialValue=""
+              previewStyle="vertical"
+              height="400px"
+              initialEditType="wysiwyg"
+              useCommandShortcut={true}
+              onChange={handleEditorChange}
+              hooks={{
+                addImageBlobHook: async (blob: string | Blob, callback: (arg0: string, arg1: string) => void) => {
+                  // 이미지를 서버에 업로드
+                  const formData = new FormData();
+                  formData.append("image", blob);
+                  try {
+                    const response = await httpClient.post<ImageUploadRes>(
+                      "/upload-image", 
+                      formData,
+                     {
+                      headers: {
+                        "Content-Type": "multipart/form-data"  // 절대 이렇게 하지 마세요!
+                      }
+                    });
+                    // 업로드된 이미지의 URL을 에디터에 삽입
+                    callback(`/api${response.data.imageUrl}`, "alt text");
+                  } catch (error) {
+                    console.error("이미지 업로드 실패:", error);
+                  }
+                },
+              }}
+              toolbarItems={[
+                ["heading", "bold", "italic", "strike"],
+                ["hr", "quote"],
+                ["ul", "ol", "task", "indent", "outdent"],
+                ["table", "image", "code", "codeblock"],
+                [
+                  {
+                    name: "undo",
+                    tooltip: "되돌리기",
+                    el: (() => {
+                      const button = document.createElement("button");
+                      button.innerHTML = "<i class='fas fa-undo'></i>";
+                      // eslint-disable-next-line react-hooks/refs
+                      button.addEventListener("click", () => {
+                        editorRef.current?.getInstance().exec("undo");
+                      });
+                      return button;
+                    })(),
+                  },
+                  {
+                    name: "redo",
+                    tooltip: "다시하기",
+                    el: (() => {
+                      const button = document.createElement("button");
+                      button.innerHTML = "<i class='fas fa-redo'></i>";
+                      // eslint-disable-next-line react-hooks/refs
+                      button.addEventListener("click", () => {
+                        editorRef.current?.getInstance().exec("redo");
+                      });
+                      return button;
+                    })(),
+                  },
+                ],
+              ]}
             />
           </Box>
 

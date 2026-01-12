@@ -36,6 +36,7 @@ import TabLog from "./component/TabLog";
 import TotalSummaryModal from "./component/TotalSummaryModal";
 import IosShareIcon from "@mui/icons-material/IosShare";
 import LockIcon from "@mui/icons-material/Lock";
+import { Viewer } from "@toast-ui/react-editor";
 
 export default function MeetingDtl() {
   const { meetingId } = useParams();
@@ -263,7 +264,7 @@ export default function MeetingDtl() {
             whiteSpace: "pre-line",
           }}
         >
-          {meeting.content}
+          <Viewer initialValue={meeting.content} />
         </Box>
 
         {/* 첨부 파일 섹션 */}

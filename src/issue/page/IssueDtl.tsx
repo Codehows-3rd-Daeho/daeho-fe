@@ -29,6 +29,7 @@ import { useAuthStore } from "../../store/useAuthStore";
 import { getFileInfo, getStatusLabel } from "../../common/commonFunction";
 import IosShareIcon from "@mui/icons-material/IosShare";
 import LockIcon from "@mui/icons-material/Lock";
+import { Viewer } from "@toast-ui/react-editor";
 
 export default function IssueDtl() {
   const { issueId } = useParams();
@@ -242,13 +243,11 @@ export default function IssueDtl() {
             borderRadius: 2,
             mb: 3,
             minHeight: 200,
-            lineHeight: 1.7,
             border: "1px solid",
             borderColor: "divider",
-            whiteSpace: "pre-line",
           }}
         >
-          {issue.content}
+          <Viewer initialValue={issue.content} />
         </Box>
 
         {/* 첨부 파일 섹션 */}
