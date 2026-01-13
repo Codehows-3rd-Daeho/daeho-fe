@@ -64,7 +64,7 @@ export default function MobileMeetingSchedule({
     event: React.TouchEvent<HTMLDivElement>,
     meetingId: number
   ) => {
-    event.preventDefault();
+    // event.preventDefault();
     setIsLongPressing(false);
 
     longPressTimer.current = setTimeout(() => {
@@ -241,10 +241,15 @@ export default function MobileMeetingSchedule({
                           // Long press 중일 때 시각적 피드백
                           opacity: isLongPressing ? 0.7 : 1,
                           transition: "opacity 0.2s",
+                          touchAction: "none",
+                          userSelect: "none",
+                          WebkitUserSelect: "none",
+                          WebkitTouchCallout: "none",
                         }}
                         onTouchStart={(e) => handleTouchStart(e, meeting.id)}
                         onTouchEnd={() => handleTouchEnd(meeting.id)}
                         onTouchMove={handleTouchMove}
+                        onContextMenu={(e) => e.preventDefault()}
                       >
                         {/* 회의 card*/}
                         <Box
