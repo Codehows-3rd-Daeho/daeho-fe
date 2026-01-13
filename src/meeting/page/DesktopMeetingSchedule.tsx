@@ -85,10 +85,11 @@ export default function DesktopMeetingSchedule({
           break;
         }
       }
-      
-    } catch (error) {
+    } catch (error: any) {
       console.error("색상 변경 오류:", error);
-      alert("색상 변경에 실패했습니다.");
+      // Axios 에러 응답에서 메시지 추출
+      const errorMessage = error.response?.data || "색상 변경에 실패했습니다.";
+      alert(errorMessage);
     } finally {
       setContextMenu(null);
     }
