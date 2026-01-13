@@ -12,6 +12,7 @@ export type MeetingListItem = {
   hostName: string; // 주관자
   isDel?: boolean; // 삭제상태
   isPrivate?: boolean; // 비밀글 여부
+  color?: string;
 };
 
 export interface MeetingListResponse {
@@ -31,6 +32,7 @@ export interface MeetingFormValues {
   categoryId: string; // 카테고리
   departmentIds: string[]; // 관련 부서 (다중)
   members: MeetingMemberDto[]; // 관련 멤버 (다중)
+  remarks: string;
   isDel: boolean;
   isPrivate?: boolean;
 }
@@ -74,6 +76,7 @@ export interface MeetingDto {
   departmentName: string[];
   meetingMinutes: FileDto; // 회의록
   totalSummary: string;
+  remarks: string;
   createdAt: string;
   updatedAt: string;
   isDel: boolean;

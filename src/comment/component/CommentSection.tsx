@@ -288,7 +288,7 @@ export default function CommentSection({
                   onChangeText?.("");
                 }}
               >
-                저장
+                댓글 등록
               </Button>
             </Box>
           </Box>

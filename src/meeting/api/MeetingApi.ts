@@ -74,6 +74,16 @@ export const getMeetingListMT = async (
   return data;
 };
 
+export const updateMeetingColor = async (
+  meetingId: number,
+  color: string,
+): Promise<MeetingListItem[]> => {
+  const response = await httpClient.patch(`/meeting/${meetingId}/color`, {
+    color
+  });
+  return response.data;
+};
+
 //회의 캘린더 조회
 export const getMeetingMonth = async (
   year: number,

@@ -36,6 +36,7 @@ export default function MeetingUpdate() {
     categoryId: "",
     departmentIds: [],
     members: [],
+    remarks: "",
     isDel: false,
     isPrivate: false,
   });
@@ -101,6 +102,7 @@ export default function MeetingUpdate() {
           departmentIds: departmentIds,
           issue: String(meeting.issueId),
           members: meeting.participantList,
+          remarks: meeting.remarks,
           isDel: false,
           isPrivate: meeting.isPrivate,
         });
@@ -319,6 +321,7 @@ export default function MeetingUpdate() {
       categoryId: Number(formData.categoryId),
       departmentIds: formData.departmentIds.map(Number),
       members: meetingMembers,
+      remarks: formData.remarks,
       isDel: false,
       isPrivate: formData.isPrivate,
     };
