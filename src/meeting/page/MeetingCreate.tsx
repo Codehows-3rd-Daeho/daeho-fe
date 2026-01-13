@@ -38,6 +38,7 @@ export default function MeetingCreate() {
     categoryId: "",
     departmentIds: [],
     members: [],
+    remarks: "",
     isDel: false,
     isPrivate: false,
   });
@@ -206,6 +207,7 @@ export default function MeetingCreate() {
       categoryId: Number(formData.categoryId),
       departmentIds: formData.departmentIds.map(Number),
       members: meetingMembers, //PartMember에서 전달받은 객체
+      remarks: formData.remarks,
       isDel: false,
       isPrivate: formData.isPrivate,
     };

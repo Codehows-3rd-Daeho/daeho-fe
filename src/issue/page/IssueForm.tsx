@@ -750,6 +750,7 @@ export default function IssueForm({
                 mode={mode}
               />
             </Box>
+            
             <FormControlLabel
               control={
                 <Checkbox

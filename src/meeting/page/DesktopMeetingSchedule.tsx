@@ -1,4 +1,4 @@
-import { Box, Typography, IconButton, Card } from "@mui/material";
+import { Box, Typography, IconButton, Card, Popover } from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import type { MeetingListItem } from "../type/type";
@@ -6,6 +6,8 @@ import { useNavigate } from "react-router-dom";
 import { PageHeader } from "../../common/PageHeader/PageHeader";
 import { AddButton } from "../../common/PageHeader/AddButton/Addbutton";
 import LockIcon from "@mui/icons-material/Lock";
+import { useState } from "react";
+import { updateMeetingColor } from "../api/MeetingApi";
 
 interface DesktopScheduleProps {
   year: number;
@@ -19,6 +21,19 @@ interface DesktopScheduleProps {
   isToday: (day: number) => boolean;
 }
 
+// 색상 파레트
+const COLOR_PALETTE = [
+  { name: "기본", color: "#4b6485" },
+  { name: "빨강", color: "#ef4444" },
+  { name: "주황", color: "#f97316" },
+  { name: "노랑", color: "#eab308" },
+  { name: "초록", color: "#22c55e" },
+  { name: "파랑", color: "#3b82f6" },
+  { name: "남색", color: "#6366f1" },
+  { name: "보라", color: "#a855f7" },
+  { name: "분홍", color: "#ec4899" },
+];
+
 export default function DesktopMeetingSchedule({
   year,
   month,
@@ -31,6 +46,57 @@ export default function DesktopMeetingSchedule({
   isToday,
 }: DesktopScheduleProps) {
   const days = ["일", "월", "화", "수", "목", "금", "토"];
+
+  const [contextMenu, setContextMenu] = useState<{
+  mouseX: number;
+  mouseY: number;
+  meetingId: number;
+  } | null>(null);
+
+  const handleContextMenu = (
+    event: React.MouseEvent,
+    meetingId: number
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    setContextMenu(
+      contextMenu === null
+        ? {
+            mouseX: event.clientX,
+            mouseY: event.clientY,
+            meetingId,
+          }
+        : null
+    );
+  };
+
+  const handleColorSelect = async (color: string) => {
+    if (!contextMenu) return;
+
+    try {
+      // 백엔드 API 호출
+      await updateMeetingColor(contextMenu.meetingId, color);
+
+      for (const [, meetings] of meetingsByDay.entries()) {
+        const meeting = meetings.find(m => m.id === contextMenu.meetingId);
+        if (meeting) {
+          meeting.color = color;
+          break;
+        }
+      }
+      
+    } catch (error) {
+      console.error("색상 변경 오류:", error);
+      alert("색상 변경에 실패했습니다.");
+    } finally {
+      setContextMenu(null);
+    }
+  };
+
+  const handleClose = () => {
+    setContextMenu(null);
+  };
 
   return (
     <>
@@ -175,15 +241,14 @@ export default function DesktopMeetingSchedule({
                                 py: 1,
                                 cursor: "pointer",
                                 // border: "2px solid #bb91ff",
-                                backgroundColor: "#4b6485",
+                                backgroundColor: meeting.color || "#4b6485", // 저장된 색상 사용
                                 width: 180,
-
                                 "&:hover": {
-                                  backgroundColor: "#1a3260",
-                                  // borderColor: "#2563eb",
+                                  filter: "brightness(0.8)",
                                 },
                               }}
                               onClick={() => navigate(`/meeting/${meeting.id}`)}
+                              onContextMenu={(e) => handleContextMenu(e, meeting.id)}
                             >
                               {/* 일시 , 카테고리 */}
                               <Box
@@ -266,6 +331,59 @@ export default function DesktopMeetingSchedule({
           </Box>
         </Box>
       </Box>
+      
+      {/* 색상 선택 팝오버 */}
+      <Popover
+        open={contextMenu !== null}
+        onClose={handleClose}
+        anchorReference="anchorPosition"
+        anchorPosition={
+          contextMenu !== null
+            ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
+            : undefined
+        }
+        PaperProps={{
+          sx: {
+            p: 1.5,
+            borderRadius: 2,
+          },
+        }}
+      >
+        <Typography
+          variant="subtitle2"
+          sx={{ mb: 1, fontWeight: 600, color: "#374151" }}
+        >
+          색상 선택
+        </Typography>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: 1,
+          }}
+        >
+          {COLOR_PALETTE.map((item) => (
+            <Box
+              key={item.color}
+              onClick={() => handleColorSelect(item.color)}
+              sx={{
+                width: 40,
+                height: 40,
+                backgroundColor: item.color,
+                borderRadius: 1,
+                cursor: "pointer",
+                border: "2px solid transparent",
+                "&:hover": {
+                  border: "2px solid #000",
+                  transform: "scale(1.1)",
+                },
+                transition: "all 0.2s",
+              }}
+              title={item.name}
+            />
+          ))}
+        </Box>
+      </Popover>
     </>
   );
 }

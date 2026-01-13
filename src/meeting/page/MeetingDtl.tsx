@@ -297,7 +297,6 @@ export default function MeetingDtl() {
             <Typography sx={{ display: { xs: "none", md: "block" } }}>
               추가된 날짜
             </Typography>
-            <Typography sx={{ textAlign: "center" }}>다운</Typography>
           </Box>
 
           {/* 파일 리스트 */}
@@ -649,6 +648,35 @@ export default function MeetingDtl() {
             }
           />
 
+          {/* 비고 - 새로 추가 */}
+          <InfoRow
+            label="비고"
+            value={
+              meeting.remarks ? (
+                <Box sx={{ maxWidth: "290px" }}>
+                  <Typography
+                    sx={{
+                      fontWeight: 500,
+                      lineHeight: 1.5,
+                      wordBreak: "break-word",
+                      display: "-webkit-box",
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }}
+                    title={meeting.remarks}
+                  >
+                    {meeting.remarks}
+                  </Typography>
+                </Box>
+              ) : (
+                <Typography sx={{ color: "text.secondary", fontSize: "0.875rem" }}>
+                  비고 사항 없음
+                </Typography>
+              )
+            }
+          />
+
           <InfoRow label="작성일" value={meeting.createdAt} />
           <InfoRow label="수정일" value={meeting.updatedAt} />
 
@@ -753,32 +781,6 @@ export default function MeetingDtl() {
             </Box>
           )}
           
-          {/* 링크 공유 */}
-          <Box
-            sx={{
-              position: "absolute",
-              bottom: 24,
-              right: 24,
-            }}
-          >
-            <Tooltip
-              title="링크가 복사되었습니다!"
-              open={showTip} // 상태로 표시 여부 제어
-              arrow
-              placement="top"
-            >
-              <IconButton
-                color="primary"
-                onClick={handleCopy}
-                sx={{
-                  bgcolor: "white",
-                  "&:hover": { bgcolor: "grey.100" },
-                }}
-              >
-                <IosShareIcon />
-              </IconButton>
-            </Tooltip>
-          </Box>
         </Box>
 
         {/* 버튼 */}
@@ -788,13 +790,33 @@ export default function MeetingDtl() {
             <Box
               sx={{
                 display: "flex",
-                justifyContent: "flex-end",
+                justifyContent: "center",
                 width: "100%",
                 gap: 1,
                 p: { xs: 2, md: 0 },
               }}
             >
-              {" "}
+              <Tooltip
+                title="링크가 복사되었습니다!"
+                open={showTip} // 상태로 표시 여부 제어
+                arrow
+                placement="top"
+              >
+                <Button
+                  variant="contained"
+                  startIcon={<IosShareIcon />}
+                  sx={{
+                    mt: 3,
+                    width: 100,
+                    fontWeight: 600,
+                    borderRadius: 1.5,
+                    "&:hover": { boxShadow: 3 },
+                  }}
+                  onClick={handleCopy}
+                >
+                  공유
+                </Button>
+              </Tooltip>
               <Button
                 variant="contained"
                 startIcon={<EditIcon />}

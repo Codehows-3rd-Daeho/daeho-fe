@@ -808,6 +808,45 @@ export default function MeetingForm({
                 mode={mode}
               />
             </Box>
+            
+            {/* 비고 - 새로 추가 */}
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                gap: 2,
+                borderRadius: 2,
+                px: 2,
+              }}
+            >
+              <Typography
+                sx={{ 
+                  fontWeight: 600, 
+                  fontSize: "0.875rem", 
+                  width: "80px",
+                  mt: 1,
+                }}
+              >
+                비고
+              </Typography>
+              <TextField
+                size="small"
+                multiline
+                rows={3}
+                maxRows={5}
+                placeholder="비고 사항을 입력하세요"
+                value={formData.remarks ?? ""}
+                onChange={(e) => onChangeFormData("remarks", e.target.value)}
+                sx={{
+                  width: "100%",
+                  "& .MuiOutlinedInput-root": { 
+                    borderRadius: 1.5,
+                    alignItems: "flex-start",
+                  },
+                }}
+              />
+            </Box>
             <FormControlLabel
               control={
                 <Checkbox
