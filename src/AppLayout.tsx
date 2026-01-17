@@ -15,8 +15,6 @@ type AppLayoutProps = {
 function usePreventPageLeave(
   shouldPrevent: boolean,
   message: string,
-  handleLastChunk: () => void,
-  clear: () => void
 ) {
   useEffect(() => {
     if (!shouldPrevent) return;
@@ -26,8 +24,6 @@ function usePreventPageLeave(
     }) => {
       e.preventDefault();
       e.returnValue = message;
-      handleLastChunk();
-      clear();
       return message;
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
@@ -40,8 +36,6 @@ function usePreventPageLeave(
 function useBlockRouterNavigation(
   shouldBlock: boolean,
   message: string,
-  handleLastChunk: () => void,
-  clear: () => void
 ) {
   const isBlockingRef = useRef(false);
   useEffect(() => {
@@ -58,8 +52,6 @@ function useBlockRouterNavigation(
           e.preventDefault();
           e.stopPropagation();
           if (window.confirm(message)) {
-            handleLastChunk();
-            clear();
             isBlockingRef.current = false;
             link.click();
           }
@@ -77,8 +69,6 @@ function useBlockRouterNavigation(
 function useBlockNavigation(
   shouldBlock: boolean,
   message: string,
-  handleLastChunk: () => void,
-  clear: () => void
 ) {
   useEffect(() => {
     if (!shouldBlock) return;
@@ -90,9 +80,6 @@ function useBlockNavigation(
         isNavigating = true;
         window.history.pushState(null, "", window.location.href);
         isNavigating = false;
-      } else {
-        handleLastChunk();
-        clear();
       }
     };
     window.history.pushState(null, "", window.location.href);
@@ -107,7 +94,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
   const { member } = useAuthStore();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { isAnyRecordingActive, handleLastChunk, clear } = useRecordingStore();
+  const { isAnyRecordingActive} = useRecordingStore();
   const isCurrentlyRecording = isAnyRecordingActive();
   const confirmationMessage =
     "페이지를 벗어나면 녹음이 중단됩니다. 계속하시겠습니까?";
@@ -115,20 +102,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
   usePreventPageLeave(
     isCurrentlyRecording,
     confirmationMessage,
-    handleLastChunk,
-    clear
   );
   useBlockRouterNavigation(
     isCurrentlyRecording,
     confirmationMessage,
-    handleLastChunk,
-    clear
   );
   useBlockNavigation(
     isCurrentlyRecording,
     confirmationMessage,
-    handleLastChunk,
-    clear
   );
 
   usePushNotification(member?.memberId ? String(member.memberId) : "");

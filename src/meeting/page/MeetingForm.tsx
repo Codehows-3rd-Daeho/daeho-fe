@@ -222,7 +222,7 @@ export default function MeetingForm({
             /> */}
             <Editor
               ref={editorRef}
-              initialValue=""
+              initialValue={formData.content}
               previewStyle="vertical"
               height="400px"
               initialEditType="wysiwyg"
