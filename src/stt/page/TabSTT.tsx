@@ -39,6 +39,7 @@ import MarkdownText from "../component/MarkdownText";
 import RecordingTimer from "../component/RecordingTimer";
 import Spinner from "../component/Spinner";
 import axios from "axios";
+import useWebSocketStore from "../../store/useWebSocketStore";
 
 export interface STTWithRecording extends STT {
   recordingStatus?: RecordingStatus;
@@ -99,8 +100,6 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
 
   const [stts, setStts] = useState<STTWithRecording[]>([]);
   const [selectedSttId, setSelectedSttId] = useState<number | null>(null);
-  const sttPollingIntervalRef = useRef<Map<number, number>>(new Map());
-  const encodingPollingIntervalRef = useRef<Map<number, number>>(new Map());
   const deletingIds = useRef<Set<number>>(new Set());
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -143,83 +142,8 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
     );
   };
 
-  {
-    /* STT */
-  }
-  const startSttPolling = (sttId: number, pollingRate: number) => {
-    if (!meetingId) return;
-    sttPollingIntervalRef.current.set(
-      sttId,
-      window.setInterval(async () => {
-        try {
-          const res = await getSTT(sttId);
-          updateSttState(sttId, {
-            content: res.content,
-            summary: res.summary,
-            status: res.status,
-            progress: res.progress,
-          });
-          if (res.status === "COMPLETED") {
-            stopSttPolling(sttId);
-            console.log("stt Interval cleared");
-            updateSttState(sttId, {
-              content: res.content,
-              summary: res.summary,
-              status: res.status,
-              progress: res.progress,
-              isLoading: false,
-            });
-          }
-        } catch (error) {
-          handleError(error, "회의 내용을 불러오는데 실패했습니다.");
-          stopSttPolling(sttId);
-        }
-      }, pollingRate)
-    );
-  };
-
-  const stopSttPolling = (sttId: number) => {
-    const intervalId = sttPollingIntervalRef.current.get(sttId);
-    if (intervalId) {
-      clearInterval(intervalId);
-      sttPollingIntervalRef.current.delete(sttId);
-    }
-  };
-
-  const startEncodingPolling = (sttId: number, pollingRate: number) => {
-    if (!meetingId) return;
-    encodingPollingIntervalRef.current.set(
-      sttId,
-      window.setInterval(async () => {
-        try {
-          const res = await getSTT(sttId);
-          if (res.status === "ENCODED") {
-            stopEncodingPolling(sttId);
-            console.log("Encoding Interval cleared. Validating audio...");
-            updateSttState(sttId, { ...res, isLoading: false });
-            validateAndPlayAudio(res);
-          } else if (res.status !== "ENCODING") {
-            stopEncodingPolling(sttId);
-            updateSttState(sttId, { ...res, isLoading: false });
-          }
-        } catch (error) {
-          handleError(error, "인코딩 상태 확인에 실패했습니다.");
-          stopEncodingPolling(sttId);
-        }
-      }, pollingRate)
-    );
-  };
-
-  const stopEncodingPolling = (sttId: number) => {
-    const intervalId = encodingPollingIntervalRef.current.get(sttId);
-    if (intervalId) {
-      clearInterval(intervalId);
-      encodingPollingIntervalRef.current.delete(sttId);
-    }
-  };
-
-  const findSttById = (sttId: number | null): STTWithRecording | null =>
-    stts.find((s) => s.id === sttId) ?? null;
+  const findSttById = useCallback((sttId: number | null): STTWithRecording | null =>
+    stts.find((s) => s.id === sttId) ?? null, [stts]);
 
   const updateSttState = (
     sttId: number | null,
@@ -240,33 +164,43 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
 
   useEffect(() => {
     if (!meetingId) return;
-    const fetch = async () => {
+
+    let subscriptionId: string | null = null;
+    const { connect, subscribe, unsubscribe, disconnect } = useWebSocketStore.getState();
+
+    connect().then(() => {
+      subscriptionId = subscribe<STT>(
+        `/topic/stt/updates/${meetingId}`,
+        (message) => {
+          updateSttState(message.id, {
+            ...message,
+            isLoading: message.status !== "ENCODED",
+            isTemp: false
+          });
+          if (message.status === "ENCODED") {
+            validateAndPlayAudio(message);
+          }
+        }
+      );
+    });
+
+    const fetchInitialStts = async () => {
       setIsFetchingStts(true);
       try {
         const response = await getSTTs(meetingId);
-        let firstTabSttId = null;
-        if (response.length !== 0) {
-          firstTabSttId = response[response.length - 1].id;
-        }
-        firstTabSttId = response[response.length - 1]?.id ?? null;
+        const firstTabSttId = response[response.length - 1]?.id ?? null;
         const firstTabStt = response.find((stt) => stt.id === firstTabSttId);
-        console.log(firstTabStt);
-        if (firstTabStt) validateAndPlayAudio(firstTabStt);
+
+        if (firstTabStt) {
+          validateAndPlayAudio(firstTabStt);
+        }
+
         setStts(
-          response.map((stt) => {
-            if (stt.status === "ENCODING") {
-              startEncodingPolling(stt.id, 2000);
-              return { ...stt, isLoading: true };
-            }
-            if (stt.status === "PROCESSING" || stt.status === "SUMMARIZING") {
-              startSttPolling(stt.id, 2000);
-              return {
-                ...stt,
-                isLoading: true,
-              };
-            }
-            return { ...stt };
-          })
+          response.map((stt) => ({
+            ...stt,
+            isLoading:
+              stt.status === "PROCESSING" || stt.status === "SUMMARIZING" || stt.status === "ENCODING",
+          }))
         );
         setSelectedSttId(firstTabSttId);
       } catch (error) {
@@ -275,17 +209,14 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
         setIsFetchingStts(false);
       }
     };
-    fetch();
+
+    fetchInitialStts();
 
     return () => {
-      sttPollingIntervalRef.current.forEach((intervalId) =>
-        clearInterval(intervalId)
-      );
-      sttPollingIntervalRef.current.clear();
-      encodingPollingIntervalRef.current.forEach((intervalId) =>
-        clearInterval(intervalId)
-      );
-      encodingPollingIntervalRef.current.clear();
+      if (subscriptionId) {
+        unsubscribe(subscriptionId);
+      }
+      disconnect();
     };
   }, [meetingId]);
 
@@ -312,8 +243,6 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
       }
 
       deletingIds.current.add(sttId);
-      stopSttPolling(sttId);
-      stopEncodingPolling(sttId);
 
       setStts((prev) => {
         const current = prev.filter((stt) => stt.id !== sttId);
@@ -344,14 +273,7 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
         deletingIds.current.delete(sttId);
       }
     },
-    [
-      meetingId,
-      getSessionState,
-      cancelRecording,
-      stts,
-      fetchMeetingDetail,
-      findSttById,
-    ]
+    [meetingId, getSessionState, cancelRecording, fetchMeetingDetail, findSttById]
   );
 
   {
@@ -388,17 +310,10 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
   const finishRecording = async (sttId: number) => {
     setIsStoppingRecording(true);
     try {
-      const newStt = await stopRecording(sttId);
-      updateSttState(sttId, {
-        ...newStt,
-        isEditable: false,
-        isLoading: newStt?.status === "ENCODING",
-        isTemp: false,
-        recordingStatus: "finished",
-      });
-      if (newStt?.status === "ENCODING") {
-        startEncodingPolling(sttId, 2000);
-      }
+      await stopRecording(sttId);
+      // State update will be handled by the websocket message
+    } catch (e) {
+      handleError(e, "녹음 종료에 실패했습니다.");
     } finally {
       setIsStoppingRecording(false);
     }
@@ -412,22 +327,13 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
       isTemp: false,
     });
     try {
-      const newStt = await confirmUpload(sttId);
-      if (newStt) {
-        updateSttState(sttId, {
-          ...newStt,
-          isEditable: false,
-          isLoading: true,
-          isTemp: false,
-        });
-        setSelectedSttId(newStt.id);
-        startSttPolling(newStt.id, 2000);
-      }
+      await confirmUpload(sttId);
+      // State update will be handled by the websocket message
     } catch (error) {
       handleError(error, "음성 변환에 실패했습니다.");
       updateSttState(sttId, {
         isLoading: false,
-        status: "RECORDING",
+        status: "ENCODED",
       });
     } finally {
       setIsStartingProcessing(false);
@@ -472,40 +378,16 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
     )
       return;
 
-    const tempSttId = selectedSttId;
     setIsUploading(true);
     try {
       const formData = new FormData();
       formData.append("file", file);
-
-      updateSttState(tempSttId, {
-        isLoading: true,
-        isTemp: false,
-      });
-
       const newStt = await uploadSTT(meetingId, formData);
 
-      // Replace temp stt with real stt from server
-      setStts((prev) =>
-        prev.map((s) =>
-          s.id === tempSttId
-            ? {
-                ...newStt,
-                isLoading: true,
-                isTemp: false,
-              }
-            : s
-        )
-      );
-
+      setStts((prev) => [...prev, { ...newStt, isLoading: true }]);
       setSelectedSttId(newStt.id);
-      startSttPolling(newStt.id, 2000);
     } catch (error) {
       handleError(error, "음성 파일 등록 중 오류가 발생했습니다.");
-      updateSttState(tempSttId, {
-        isLoading: false,
-        isTemp: true,
-      });
     } finally {
       setIsUploading(false);
     }
@@ -612,7 +494,6 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
     const currentStt = findSttById(selectedSttId);
     if (currentStt?.isLoading && !currentStt?.isTemp) {
       if (currentStt.status === "ENCODING") return "인코딩중..";
-      if (currentStt.status === "ENCODED") return "로딩중...";
       if (currentStt.status === "PROCESSING")
         return `변환중.. ${currentStt.progress ?? 0}%`;
       if (currentStt.status === "SUMMARIZING")
@@ -1093,19 +974,13 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
                           </Typography>
                         </Box>
                         <Typography
-                          sx={{
-                            color: "text.secondary",
-                            display: { xs: "none", sm: "block" },
-                          }}
+                          sx={{ color: "text.secondary", display: { xs: "none", sm: "block" } }}
                           fontSize="0.9rem"
                         >
                           {currentStt.file?.size}
                         </Typography>
                         <Typography
-                          sx={{
-                            color: "text.secondary",
-                            display: { xs: "none", sm: "block" },
-                          }}
+                          sx={{ color: "text.secondary", display: { xs: "none", sm: "block" } }}
                           fontSize="0.9rem"
                         >
                           {currentStt.file?.createdAt}
