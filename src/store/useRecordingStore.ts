@@ -203,20 +203,20 @@ const useRecordingStore = create<RecordingState>((set, get) => {
         return null;
       }
 
-      let newStt: STT;
-      try {
-        newStt = await apiStartRecording(meetingId);
-      } catch (error) {
-        console.error("Failed to start recording session on API:", error);
-        alert("녹음 세션을 시작하지 못했습니다.");
-        return null;
-      }
-
-      const sttId = newStt.id;
-
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         const recorder = new MediaRecorder(stream);
+
+        let newStt: STT;
+        try {
+          newStt = await apiStartRecording(meetingId);
+        } catch (error) {
+          console.error("Failed to start recording session on API:", error);
+          alert("녹음 세션을 시작하지 못했습니다.");
+          return null;
+        }
+
+        const sttId = newStt.id;
 
         // UI 상태 초기화
         set((state) => {
@@ -288,7 +288,6 @@ const useRecordingStore = create<RecordingState>((set, get) => {
       } catch (error) {
         console.error(error);
         alert("마이크 권한이 없습니다. 권한 허용 후 다시 시도해주세요. \n(모바일의 경우 앱 설정에서 브라우저 마이크 권한 설정)");
-        await cancelRecording(sttId);
         return null;
       }
     },
