@@ -166,23 +166,83 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
     if (!meetingId) return;
 
     let subscriptionId: string | null = null;
-    const { connect, subscribe, unsubscribe, disconnect } = useWebSocketStore.getState();
+    const { connect, subscribe, unsubscribe, disconnect } =
+      useWebSocketStore.getState();
 
-    connect().then(() => {
+    const handleConnect = () => {
+      if (subscriptionId) {
+        unsubscribe(subscriptionId);
+      }
       subscriptionId = subscribe<STT>(
         `/topic/stt/updates/${meetingId}`,
         (message) => {
-          updateSttState(message.id, {
-            ...message,
-            isLoading: message.status !== "ENCODED",
-            isTemp: false
+          console.log("WebSocket message received:", message);
+          
+          setStts((prevStts) => {
+            // 1. 이미 존재하는 STT인지 확인 (실제 ID로)
+            const existingIndex = prevStts.findIndex((stt) => stt.id === message.id);
+            
+            if (existingIndex !== -1) {
+              // 이미 존재하면 업데이트만
+              const updated = prevStts.map((stt, idx) =>
+                idx === existingIndex
+                  ? {
+                      ...stt,
+                      ...message,
+                      isLoading: message.status !== "ENCODED",
+                      isTemp: false,
+                    }
+                  : stt
+              );
+              return updated;
+            }
+            
+            // 2. 임시 탭이 있는지 확인하고 교체
+            const tempIndex = prevStts.findIndex(
+              (stt) => stt.isTemp && stt.meetingId === message.meetingId
+            );
+            
+            if (tempIndex !== -1) {
+              // 임시 탭을 실제 데이터로 교체
+              const tempId = prevStts[tempIndex].id;
+              const updated = prevStts.map((stt, idx) =>
+                idx === tempIndex
+                  ? {
+                      ...message,
+                      isLoading: message.status !== "ENCODED",
+                      isTemp: false,
+                    }
+                  : stt
+              );
+              
+              // selectedSttId가 임시 ID였으면 실제 ID로 업데이트
+              if (selectedSttId === tempId) {
+                setSelectedSttId(message.id);
+              }
+              
+              return updated;
+            }
+            
+            // 3. 새로운 STT면 추가
+            return [
+              ...prevStts,
+              {
+                ...message,
+                isLoading: message.status !== "ENCODED",
+                isTemp: false,
+              },
+            ];
           });
+          
+          // 오디오 검증
           if (message.status === "ENCODED") {
             validateAndPlayAudio(message);
           }
         }
       );
-    });
+    };
+
+    connect(handleConnect);
 
     const fetchInitialStts = async () => {
       setIsFetchingStts(true);
@@ -199,7 +259,9 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
           response.map((stt) => ({
             ...stt,
             isLoading:
-              stt.status === "PROCESSING" || stt.status === "SUMMARIZING" || stt.status === "ENCODING",
+              stt.status === "PROCESSING" ||
+              stt.status === "SUMMARIZING" ||
+              stt.status === "ENCODING",
           }))
         );
         setSelectedSttId(firstTabSttId);
@@ -216,7 +278,7 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
       if (subscriptionId) {
         unsubscribe(subscriptionId);
       }
-      disconnect();
+      disconnect(handleConnect);
     };
   }, [meetingId]);
 
@@ -224,47 +286,50 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
     async (sttId: number) => {
       if (!sttId || !meetingId || deletingIds.current.has(sttId)) return;
 
+      const sttToDelete = findSttById(sttId);
+      if (!sttToDelete) return;
+
       const sessionState = getSessionState(sttId);
       const isThisSttRecording =
         sessionState?.recordingStatus === "recording" ||
         sessionState?.recordingStatus === "paused";
 
+      // 임시 탭은 확인 없이 바로 삭제
+      if (sttToDelete.isTemp) {
+        setStts((prev) => {
+          const filtered = prev.filter((stt) => stt.id !== sttId);
+          setSelectedSttId(filtered[filtered.length - 1]?.id ?? null);
+          return filtered;
+        });
+        return;
+      }
+
+      // 녹음 중인 경우
       if (isThisSttRecording) {
         if (!window.confirm("녹음이 진행 중입니다. 정말로 삭제하시겠습니까?"))
           return;
         await cancelRecording(sttId);
       } else {
-        const sttToDelete = findSttById(sttId);
-        if (
-          !sttToDelete?.isTemp &&
-          !window.confirm("선택한 회의 내용을 삭제하시겠습니까?")
-        )
+        if (!window.confirm("선택한 회의 내용을 삭제하시겠습니까?"))
           return;
       }
 
       deletingIds.current.add(sttId);
 
+      // UI에서 먼저 제거
       setStts((prev) => {
-        const current = prev.filter((stt) => stt.id !== sttId);
-        setSelectedSttId(
-          current.length === 0 ? null : current[current.length - 1].id
-        );
-        return current;
+        const filtered = prev.filter((stt) => stt.id !== sttId);
+        setSelectedSttId(filtered[filtered.length - 1]?.id ?? null);
+        return filtered;
       });
-
-      const sttToDelete = findSttById(sttId);
-      if (sttToDelete?.isTemp) {
-        deletingIds.current.delete(sttId);
-        return;
-      }
 
       try {
         if (!isThisSttRecording) {
           await deleteSTT(sttId);
         }
-        alert("회의 내용이 삭제되었습니다.");
       } catch (error) {
         handleError(error, "삭제 중 오류가 발생했습니다.");
+        // 실패 시 다시 추가
         if (sttToDelete) {
           setStts((prev) => [...prev, sttToDelete]);
         }
@@ -285,24 +350,19 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
       alert("다른 녹음이 진행 중입니다.");
       return;
     }
-
-    setIsStartingRecording(true);
     try {
       const newStt = await startRecording(meetingId);
       if (newStt) {
-        const newSttEntry: STTWithRecording = {
-          ...newStt,
-          isTemp: true,
-        };
-        setStts((prev) => [
-          ...prev.filter((s) => s.id !== selectedSttId),
-          newSttEntry,
-        ]);
         setSelectedSttId(newStt.id);
       }
     } catch (error) {
       handleError(error, "녹음을 시작할 수 없습니다.");
     } finally {
+      setStts((prev) => {
+        const filtered = prev.filter((stt) => !stt.isTemp);
+        setSelectedSttId(filtered[filtered.length - 1]?.id ?? null);
+        return filtered;
+      });
       setIsStartingRecording(false);
     }
   };
@@ -322,19 +382,13 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
   const handleConfirmUpload = async (sttId: number | null) => {
     if (!sttId || !window.confirm("음성 파일을 등록하시겠습니까?")) return;
     setIsStartingProcessing(true);
-    updateSttState(sttId, {
-      isLoading: true,
-      isTemp: false,
-    });
     try {
-      await confirmUpload(sttId);
-      // State update will be handled by the websocket message
+      const newStt = await confirmUpload(sttId);
+      if (newStt) {
+        setSelectedSttId(newStt.id);
+      }
     } catch (error) {
       handleError(error, "음성 변환에 실패했습니다.");
-      updateSttState(sttId, {
-        isLoading: false,
-        status: "ENCODED",
-      });
     } finally {
       setIsStartingProcessing(false);
     }
@@ -384,7 +438,11 @@ export default function TabSTT({ meeting, fetchMeetingDetail }: TabSTTProp) {
       formData.append("file", file);
       const newStt = await uploadSTT(meetingId, formData);
 
-      setStts((prev) => [...prev, { ...newStt, isLoading: true }]);
+      // 임시 탭 제거하고 새 STT 추가
+      setStts((prev) => {
+        const filtered = prev.filter((stt) => !stt.isTemp);
+        return [...filtered];
+      });
       setSelectedSttId(newStt.id);
     } catch (error) {
       handleError(error, "음성 파일 등록 중 오류가 발생했습니다.");
