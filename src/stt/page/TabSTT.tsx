@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import {
   deleteSTT,
-  getSTT,
   getSTTs,
   updateSummary,
   uploadSTT,

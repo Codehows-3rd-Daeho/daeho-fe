@@ -9,7 +9,6 @@ interface WebSocketState {
   client: Client | null;
   isConnected: boolean;
   isConnecting: boolean;
-  connectionRefCount: number;
   onConnectCallbacks: ConnectionCallback[];
   connect: (onConnectCallback: ConnectionCallback) => Promise<void>;
   disconnect: (onConnectCallback: ConnectionCallback) => void;
@@ -25,12 +24,10 @@ const useWebSocketStore = create<WebSocketState>((set, get) => ({
   client: null,
   isConnected: false,
   isConnecting: false,
-  connectionRefCount: 0,
   onConnectCallbacks: [],
 
   connect: async (onConnectCallback) => {
     set((state) => ({
-      connectionRefCount: state.connectionRefCount + 1,
       onConnectCallbacks: [...state.onConnectCallbacks, onConnectCallback],
     }));
 
@@ -70,16 +67,12 @@ const useWebSocketStore = create<WebSocketState>((set, get) => ({
 
   disconnect: (onConnectCallback) => {
     set((state) => ({
-      connectionRefCount: Math.max(0, state.connectionRefCount - 1),
       onConnectCallbacks: state.onConnectCallbacks.filter(
         (cb) => cb !== onConnectCallback
       ),
     }));
-
-    if (get().connectionRefCount === 0 && get().client && get().isConnected) {
-      get().client?.deactivate();
-      set({ isConnected: false, client: null, onConnectCallbacks: [] });
-    }
+    get().client?.deactivate();
+    set({ isConnected: false, client: null, onConnectCallbacks: [] });
   },
 
   subscribe: (destination, callback) => {

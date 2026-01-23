@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { finishRecording, startRecording as apiStartRecording, deleteSTT, uploadAudioChunk, } from "../stt/api/sttApi";
 import type { STT } from "../stt/type/type";
-import useWebSocketStore from "./useWebSocketStore";
 
 /**
  * 녹음 상태를 나타내는 타입.
@@ -96,13 +95,6 @@ interface RecordingState {
  * 실시간 음성 녹음 상태 관리를 위한 Zustand 스토어.
  */
 const useRecordingStore = create<RecordingState>((set, get) => {
-  const useWebSocket = useWebSocketStore.getState();
-
-  // 녹음 세션에서 사용할 웹소켓 연결 콜백입니다.
-  // 현재 녹음 스토어에서는 연결 상태만 필요하므로 내용은 비어 있습니다.
-  const recordingWebSocketCallback = () => {
-    console.log("WebSocket connected for recording.");
-  };
 
   /**
    * 특정 녹음 세션의 모든 리소스(타이머, 미디어 스트림 등)를 정리하고 스토어에서 제거합니다.
@@ -209,7 +201,6 @@ const useRecordingStore = create<RecordingState>((set, get) => {
       }
 
       try {
-        await useWebSocket.connect(recordingWebSocketCallback);
         const stream = await navigator.mediaDevices.getUserMedia({
           audio: true,
         });
@@ -221,7 +212,6 @@ const useRecordingStore = create<RecordingState>((set, get) => {
         } catch (error) {
           console.error("Failed to start recording session on API:", error);
           alert("녹음 세션을 시작하지 못했습니다.");
-          useWebSocket.disconnect(recordingWebSocketCallback);
           return null;
         }
 
@@ -361,7 +351,6 @@ const useRecordingStore = create<RecordingState>((set, get) => {
       try {
         const resStt = await finishRecording(sttId);
         cleanupSession(sttId);
-        useWebSocket.disconnect(recordingWebSocketCallback); // Disconnect after confirming
         return resStt;
       } catch (e) {
         console.error("Final conversion request failed:", e);
@@ -371,7 +360,6 @@ const useRecordingStore = create<RecordingState>((set, get) => {
 
     cancelRecording: async (sttId: number) => {
       cleanupSession(sttId);
-      useWebSocket.disconnect(recordingWebSocketCallback);
       try {
         await deleteSTT(sttId);
       } catch (error) {
