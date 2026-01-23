@@ -1,7 +1,5 @@
-// 전역 인터셉터
-export const BASE_URL = import.meta.env.VITE_API_URL;
 import axios, { AxiosError } from "axios";
-
+export const BASE_URL = import.meta.env.VITE_API_URL;
 /**
  * @file httpClient.ts
  * @description Axios 인스턴스를 생성하고, JWT 인증 토큰 및 전역 에러 처리를 위한 인터셉터를 설정합니다.

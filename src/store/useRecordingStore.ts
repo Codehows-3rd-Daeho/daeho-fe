@@ -1,10 +1,5 @@
 import { create } from "zustand";
-import {
-  uploadAudioChunk,
-  finishRecording,
-  startRecording as apiStartRecording,
-  deleteSTT,
-} from "../stt/api/sttApi";
+import { finishRecording, startRecording as apiStartRecording, deleteSTT, uploadAudioChunk, } from "../stt/api/sttApi";
 import type { STT } from "../stt/type/type";
 
 /**
@@ -15,12 +10,7 @@ import type { STT } from "../stt/type/type";
  * - encoding: 녹음 종료 후 서버에서 파일 처리 중
  * - finished: 모든 과정 완료
  */
-export type RecordingStatus =
-  | "idle"
-  | "recording"
-  | "paused"
-  | "encoding"
-  | "finished";
+export type RecordingStatus = | "idle" | "recording" | "paused" | "encoding" | "finished";
 
 /**
  * 직렬화할 수 없는 브라우저 API 관련 객체들을 저장하는 인터페이스.
@@ -33,7 +23,7 @@ interface RecordingSession {
   mediaStream: MediaStream;
   audioChunks: Blob[];
   recordTimeTimer: number; // 녹음 시간 타이머 ID
-  chunkTimer: number;      // 주기적 업로드 타이머 ID
+  chunkTimer: number; // 주기적 업로드 타이머 ID
 }
 
 /**
@@ -76,7 +66,7 @@ interface RecordingState {
    */
   resumeRecording: (sttId: number) => void;
   /**
-   * 녹음을 종료하고 마지막 오디오 청크를 서버로 전송합니다.
+   * 녹음을 종료하고 마지막 오디오 청크를 서버로 전송합니다.  
    * @param sttId 종료할 STT ID
    * @returns 최종 STT 객체 또는 실패 시 null
    */
@@ -105,6 +95,7 @@ interface RecordingState {
  * 실시간 음성 녹음 상태 관리를 위한 Zustand 스토어.
  */
 const useRecordingStore = create<RecordingState>((set, get) => {
+
   /**
    * 특정 녹음 세션의 모든 리소스(타이머, 미디어 스트림 등)를 정리하고 스토어에서 제거합니다.
    * @param sttId 정리할 STT ID
@@ -114,7 +105,10 @@ const useRecordingStore = create<RecordingState>((set, get) => {
     if (session) {
       clearInterval(session.recordTimeTimer);
       clearInterval(session.chunkTimer);
-      if (session.mediaRecorder && session.mediaRecorder.state !== "inactive") {
+      if (
+        session.mediaRecorder &&
+        session.mediaRecorder.state !== "inactive"
+      ) {
         session.mediaRecorder.stop();
       }
       session.mediaStream.getTracks().forEach((track) => track.stop());
@@ -157,7 +151,10 @@ const useRecordingStore = create<RecordingState>((set, get) => {
         if (session) {
           clearInterval(session.recordTimeTimer);
           clearInterval(session.chunkTimer);
-          if (session.mediaRecorder && session.mediaRecorder.state !== "inactive") {
+          if (
+            session.mediaRecorder &&
+            session.mediaRecorder.state !== "inactive"
+          ) {
             session.mediaRecorder.stop();
           }
           session.mediaStream.getTracks().forEach((track) => track.stop());
@@ -173,7 +170,7 @@ const useRecordingStore = create<RecordingState>((set, get) => {
           return state;
         });
         console.log(`Recording resources cleaned up for STT ID: ${sttId}`);
-      })
+      });
     },
 
     isAnyRecordingActive: () => {
@@ -203,22 +200,23 @@ const useRecordingStore = create<RecordingState>((set, get) => {
         return null;
       }
 
-      let newStt: STT;
       try {
-        newStt = await apiStartRecording(meetingId);
-      } catch (error) {
-        console.error("Failed to start recording session on API:", error);
-        alert("녹음 세션을 시작하지 못했습니다.");
-        return null;
-      }
-
-      const sttId = newStt.id;
-
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+        });
         const recorder = new MediaRecorder(stream);
 
-        // UI 상태 초기화
+        let newStt: STT;
+        try {
+          newStt = await apiStartRecording(meetingId);
+        } catch (error) {
+          console.error("Failed to start recording session on API:", error);
+          alert("녹음 세션을 시작하지 못했습니다.");
+          return null;
+        }
+
+        const sttId = newStt.id;
+
         set((state) => {
           const newSessionStates = new Map(state.sessionStates);
           newSessionStates.set(sttId, {
@@ -229,20 +227,27 @@ const useRecordingStore = create<RecordingState>((set, get) => {
           return { sessionStates: newSessionStates };
         });
 
-        // 녹음 시간 업데이트 타이머
         const recordTimeTimer = window.setInterval(() => {
           const state = get().sessionStates.get(sttId);
           if (state && state.recordingStatus === "recording") {
-            updateSessionState(sttId, { recordingTime: state.recordingTime + 1 });
+            updateSessionState(sttId, {
+              recordingTime: state.recordingTime + 1,
+            });
           }
         }, 1000);
 
-        // 10초마다 오디오 청크 업로드 타이머
         const chunkTimer = window.setInterval(async () => {
           const currentSession = sessions.get(sttId);
           const sessionState = get().sessionStates.get(sttId);
-          if (currentSession && sessionState && sessionState.recordingStatus === "recording" && currentSession.audioChunks.length > 0) {
-            const chunkToUpload = new Blob(currentSession.audioChunks, { type: "audio/wav" });
+          if (
+            currentSession &&
+            sessionState &&
+            sessionState.recordingStatus === "recording" &&
+            currentSession.audioChunks.length > 0
+          ) {
+            const chunkToUpload = new Blob(currentSession.audioChunks, {
+              type: "audio/wav",
+            });
             currentSession.audioChunks = [];
             const formData = new FormData();
             formData.append("file", chunkToUpload, "chunk.wav");
@@ -256,7 +261,6 @@ const useRecordingStore = create<RecordingState>((set, get) => {
           }
         }, 10000);
 
-        // 비직렬화 객체들을 세션에 저장
         const session: RecordingSession = {
           stt: newStt,
           mediaRecorder: recorder,
@@ -275,20 +279,21 @@ const useRecordingStore = create<RecordingState>((set, get) => {
 
         recorder.onstop = () => {
           const onStopSession = sessions.get(sttId);
-          if(onStopSession) {
+          if (onStopSession) {
             clearInterval(onStopSession.recordTimeTimer);
             clearInterval(onStopSession.chunkTimer);
             updateSessionState(sttId, { recordingStatus: "encoding" });
           }
         };
 
-        recorder.start(1000); // 1초마다 ondataavailable 트리거
+        recorder.start(1000);
 
         return newStt;
       } catch (error) {
         console.error(error);
-        alert("마이크 권한이 없습니다. 권한 허용 후 다시 시도해주세요. \n(모바일의 경우 앱 설정에서 브라우저 마이크 권한 설정)");
-        await cancelRecording(sttId);
+        alert(
+          "마이크 권한이 없습니다. 권한 허용 후 다시 시도해주세요. \n(모바일의 경우 앱 설정에서 브라우저 마이크 권한 설정)"
+        );
         return null;
       }
     },
@@ -318,7 +323,9 @@ const useRecordingStore = create<RecordingState>((set, get) => {
         session.mediaStream.getTracks().forEach((track) => track.stop());
 
         if (session.audioChunks.length > 0) {
-          const finalChunk = new Blob(session.audioChunks, { type: "audio/wav" });
+          const finalChunk = new Blob(session.audioChunks, {
+            type: "audio/wav",
+          });
           session.audioChunks = [];
           const formData = new FormData();
           formData.append("file", finalChunk, "final.wav");
@@ -337,7 +344,7 @@ const useRecordingStore = create<RecordingState>((set, get) => {
           updateSessionState(sttId, { recordingStatus: "finished" });
         }
       }
-      return null;
+      return null; // Can't return STT directly anymore
     },
 
     confirmUpload: async (sttId: number): Promise<STT | null> => {
@@ -359,20 +366,25 @@ const useRecordingStore = create<RecordingState>((set, get) => {
         console.error("Failed to delete STT on cancel:", error);
       }
     },
-    
+
     handleLastChunk: async () => {
       const { sessionStates, stopRecording } = get();
       let activeSttId: number | null = null;
-  
+
       for (const sessionState of sessionStates.values()) {
-        if (sessionState.recordingStatus === "recording" || sessionState.recordingStatus === "paused") {
+        if (
+          sessionState.recordingStatus === "recording" ||
+          sessionState.recordingStatus === "paused"
+        ) {
           activeSttId = sessionState.sttId;
           break;
         }
       }
-  
+
       if (activeSttId !== null) {
-        console.log(`Handling last chunk for active recording session: ${activeSttId}`);
+        console.log(
+          `Handling last chunk for active recording session: ${activeSttId}`
+        );
         await stopRecording(activeSttId);
       }
     },
@@ -380,7 +392,10 @@ const useRecordingStore = create<RecordingState>((set, get) => {
     getActiveRecordingDetails: () => {
       const { sessionStates } = get();
       for (const sessionState of sessionStates.values()) {
-        if (sessionState.recordingStatus === "recording" || sessionState.recordingStatus === "paused") {
+        if (
+          sessionState.recordingStatus === "recording" ||
+          sessionState.recordingStatus === "paused"
+        ) {
           const session = sessions.get(sessionState.sttId);
           if (session) {
             return {
@@ -392,7 +407,7 @@ const useRecordingStore = create<RecordingState>((set, get) => {
       }
       return null;
     },
-  };
+  }
 });
-
 export default useRecordingStore;
+
