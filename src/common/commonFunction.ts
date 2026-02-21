@@ -56,3 +56,26 @@ export function convertStatusMessage(message?: string): string {
   const statusCode = match[1];
   return message.replace(statusCode, getStatusLabel(statusCode));
 }
+
+function toKoreanStatus(value: string): string {
+  return (
+    ({ PLANNED: "진행전", IN_PROGRESS: "진행중", COMPLETED: "진행완료" } as Record<string, string>)[value] ?? value
+  );
+}
+
+export function formatLogMessage(message?: string): string {
+  if (!message) return "";
+  try {
+    const parsed = JSON.parse(message);
+    if (parsed.type === "CREATE") return `등록 > ${parsed.after ?? ""}`;
+    if (parsed.type === "DELETE") return `삭제 > ${parsed.before ?? ""}`;
+    if (parsed.type === "UPDATE") {
+      const after = toKoreanStatus(String(parsed.after ?? ""));
+      return `${parsed.field} > ${after}`;
+    }
+  } catch {
+    // 레거시 plain text 데이터 (마이그레이션 전)
+    return convertStatusMessage(message);
+  }
+  return message;
+}

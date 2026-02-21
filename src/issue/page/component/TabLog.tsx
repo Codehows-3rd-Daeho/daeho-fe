@@ -5,7 +5,7 @@ import { getIssueLog } from "../../api/issueLogApi";
 import { useParams } from "react-router-dom";
 import { ListDataGrid } from "../../../common/List/ListDataGrid";
 import type { ApiError } from "../../../config/httpClient";
-import { convertStatusMessage } from "../../../common/commonFunction";
+import { formatLogMessage } from "../../../common/commonFunction";
 
 export type IssueLoglist = {
   id: number;
@@ -125,7 +125,7 @@ export default function TabLog() {
         const rawText = params.value as string;
         if (!rawText) return "";
 
-        const text = convertStatusMessage(rawText);
+        const text = formatLogMessage(rawText);
         const maxLength = 30;
 
         return (

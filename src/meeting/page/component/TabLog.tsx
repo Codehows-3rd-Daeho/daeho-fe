@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { ListDataGrid } from "../../../common/List/ListDataGrid";
 import { getMeetingLog } from "../../api/MeetingLogApi";
 import type { ApiError } from "../../../config/httpClient";
-import { convertStatusMessage } from "../../../common/commonFunction";
+import { formatLogMessage } from "../../../common/commonFunction";
 
 export type MeetingLoglist = {
   id: number;
@@ -133,7 +133,7 @@ export default function TabLog({ meetingId }: TabLogProps) {
         const rawText = params.value as string;
         if (!rawText) return "";
 
-        const text = convertStatusMessage(rawText);
+        const text = formatLogMessage(rawText);
         const maxLength = 30;
 
         return (
